@@ -234,6 +234,11 @@
       border-top: 0.5px solid var(--border-subtle);
     }
 
+    /* Wraps rail + center for desktop `display: contents` (three-column grid) and mobile column layouts. */
+    .cockpit-left {
+      display: contents;
+    }
+
     .rail {
       background: var(--bg-rail);
       border-right: 0.5px solid var(--border);
@@ -635,7 +640,7 @@
       border-color: rgba(127, 119, 221, 0.45);
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 767px) {
       .layer-row-main {
         grid-template-columns: auto minmax(0, 1fr);
       }
@@ -999,37 +1004,419 @@
       background: rgba(255, 255, 255, 0.45);
     }
 
-    @media (max-width: 900px) {
-      .cockpit-body {
-        grid-template-columns: var(--rail-w) minmax(0, 1fr);
-        grid-template-rows: 1fr auto;
-      }
-
-      .sfx-rail {
-        grid-column: 1 / -1;
-        border-top: 0.5px solid var(--border);
-        max-height: 42vh;
-      }
-
-      .center-stack {
-        border-right: none;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .cockpit-body {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
+    /* ---------- Narrow width OR phone-style landscape (e.g. iPhone 14 @ 844×390): shared mobile chrome ---------- */
+    @media (max-width: 767px),
+      (orientation: landscape) and (max-height: 450px) and (max-width: 926px) {
+      .cockpit-left {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
       }
 
       .rail {
-        max-height: 28vh;
+        flex-direction: row;
+        align-items: stretch;
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 0;
         border-right: none;
         border-bottom: 0.5px solid var(--border);
       }
 
+      .rail-header {
+        display: none;
+      }
+
+      .rail-scroll {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding: 8px 8px 10px;
+      }
+
+      .rail-footer {
+        flex: 0 0 auto;
+        border-top: none;
+        border-left: 0.5px solid var(--border);
+        padding: 8px;
+        display: flex;
+        align-items: center;
+      }
+
+      .rail-footer #create-new-scene {
+        width: auto;
+        white-space: nowrap;
+        min-height: 44px;
+        padding: 10px 14px;
+      }
+
+      .scene-buttons {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .scene-card {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 72px;
+        max-width: min(240px, 72vw);
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-radius: 999px;
+        border: 0.5px solid var(--border);
+      }
+
+      .scene-card.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(127, 119, 221, 0.35);
+      }
+
+      .scene-card-tags,
+      .scene-card-actions {
+        display: none !important;
+      }
+
+      .scene-btn {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 16px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 999px;
+      }
+
+      .scene-selector-empty {
+        flex: 0 0 auto;
+        align-self: center;
+        padding: 10px 8px;
+        white-space: nowrap;
+      }
+
+      .topbar {
+        gap: 8px;
+        padding: 0 10px;
+        min-height: 48px;
+        flex-wrap: nowrap;
+      }
+
+      .topbar-title {
+        flex: 0 1 auto;
+        min-width: 0;
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .topbar-master {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: none;
+        margin: 0;
+        gap: 6px;
+      }
+
+      .topbar-master label {
+        flex-shrink: 0;
+      }
+
+      .topbar-master input[type="range"] {
+        min-height: 44px;
+        padding: 20px 0;
+        box-sizing: border-box;
+      }
+
+      .topbar-actions {
+        flex-shrink: 0;
+        gap: 6px;
+      }
+
+      .account-sign-in,
+      .account-sign-out,
+      #edit-scene-top {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 10px 12px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .account-signed-in {
+        max-width: min(160px, 38vw);
+      }
+
+      .panel-header {
+        min-height: 44px;
+        padding: 10px 12px;
+      }
+
+      .panel-header-vol input[type="range"] {
+        min-height: 44px;
+        padding: 18px 0;
+        box-sizing: border-box;
+      }
+
+      .ambient-panel-actions .ambient-bulk-btn {
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+
+      .music-controls button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 10px;
+      }
+
+      .music-meta-row button {
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+
+      .music-progress-row input[type="range"] {
+        min-height: 44px;
+        padding: 20px 0;
+        box-sizing: border-box;
+      }
+
+      .playlist li {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 10px 10px;
+      }
+
+      .playlist .fav-star {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      .layer-toggle {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+      }
+
+      .layer-vol-row input[type="range"] {
+        min-height: 44px;
+        padding: 18px 0;
+        box-sizing: border-box;
+      }
+
+      .sfx-filter-pill {
+        min-height: 44px;
+        padding: 10px 14px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      #sfx-search {
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+
+      .fx-grid button {
+        min-height: 48px;
+        padding: 10px 48px 10px 10px;
+      }
+
+      .fx-grid button .fx-btn-ctrls {
+        top: 4px;
+        right: 6px;
+        gap: 4px;
+      }
+
+      .fx-grid button .fav-star {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        top: 0;
+        right: 0;
+        font-size: 16px;
+      }
+
+      .fx-grid .user-tag-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+      }
+
+      .fx-grid .user-tag-btn-icon {
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    @media (max-width: 767px) and (orientation: portrait) {
+      html,
+      body {
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .app-shell {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        max-width: none;
+        grid-template-rows: auto auto;
+      }
+
+      .cockpit-body {
+        display: flex;
+        flex-direction: column;
+        flex: 0 1 auto;
+        min-height: 0;
+        overflow: visible;
+      }
+
+      .cockpit-left {
+        flex: 0 0 auto;
+        overflow: visible;
+      }
+
       .center-stack {
-        min-height: 38vh;
+        flex: 0 0 auto;
+        min-height: 0;
+        border-right: none;
+      }
+
+      .panel {
+        flex: 0 0 auto;
+        min-height: 0;
+      }
+
+      .panel-body {
+        flex: 0 0 auto;
+        min-height: 0;
+        overflow: visible;
+      }
+
+      .playlist-scroll {
+        flex: 0 0 auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      .layer-grid {
+        flex: 0 0 auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      .sfx-rail {
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 0;
+        border-left: none;
+        border-top: 0.5px solid var(--border);
+      }
+
+      .sfx-rail-body {
+        overflow: visible;
+      }
+
+      .fx-grid-wrap {
+        overflow: visible;
+        max-height: none;
+      }
+
+      .fx-grid {
+        width: 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    /* Two-column cockpit: narrow landscape, or typical phone landscape (short viewport height). */
+    @media (orientation: landscape) and (max-height: 450px) and (max-width: 926px) {
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .app-shell {
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        max-width: none;
+        overflow: hidden;
+      }
+
+      .cockpit-body {
+        display: grid;
+        grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+        grid-template-rows: minmax(0, 1fr);
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .cockpit-left {
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border-right: 0.5px solid var(--border);
+      }
+
+      .center-stack {
+        flex: 0 0 auto;
+        min-height: 0;
+        border-right: none;
+      }
+
+      .panel {
+        flex: 0 0 auto;
+      }
+
+      .panel-body {
+        overflow: visible;
+      }
+
+      .playlist-scroll {
+        max-height: none;
+        overflow: visible;
+      }
+
+      .layer-grid {
+        max-height: none;
+        overflow: visible;
+      }
+
+      .sfx-rail {
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border-left: none;
+      }
+
+      .sfx-rail-body {
+        min-height: 0;
+      }
+
+      .fx-grid-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: visible;
       }
     }
 
@@ -1536,7 +1923,8 @@
     </header>
 
     <div class="cockpit-body">
-      <aside class="rail" aria-label="Scene selector">
+      <div class="cockpit-left">
+        <aside class="rail" aria-label="Scene selector">
         <div class="rail-header">Scenes</div>
         <div class="rail-scroll">
           <div class="scene-buttons" id="scene-buttons-bar" role="group" aria-label="Choose scene">
@@ -1647,6 +2035,7 @@
             <div class="layer-grid" id="custom-bgm-layers" hidden></div>
           </div>
         </section>
+      </div>
       </div>
 
       <aside class="sfx-rail" aria-labelledby="sfx-title">
