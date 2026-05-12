@@ -1,0 +1,1771 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DnD Mood Builder</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --bg-elevated: #141418;
+      --bg-rail: #121215;
+      --panel: #18181d;
+      --panel-2: #1e1e24;
+      --text: #f2f2f5;
+      --muted: #9b9ba8;
+      --accent: #7f77dd;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-subtle: rgba(255, 255, 255, 0.04);
+      --font-ui: system-ui, "Segoe UI", Roboto, sans-serif;
+      --topbar-h: 48px;
+      --rail-w: 180px;
+      --sfx-w: 400px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-rows: var(--topbar-h) 1fr;
+      height: 100vh;
+      min-width: 320px;
+      max-width: 1024px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 14px;
+      background: #0c0c0f;
+      border-bottom: 0.5px solid var(--border);
+      min-height: var(--topbar-h);
+    }
+
+    .topbar-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .topbar-master {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .topbar-master label {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .topbar-master input[type="range"] {
+      flex: 1;
+      min-width: 0;
+      height: 4px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-account {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .account-sign-in {
+      font-size: 11px;
+      padding: 5px 10px;
+      opacity: 0.85;
+      background: transparent;
+      border: 0.5px solid var(--border);
+      color: var(--muted);
+    }
+
+    .account-sign-in:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .account-signed-in {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 220px;
+    }
+
+    #account-signed-in[hidden],
+    #account-sign-in[hidden] {
+      display: none !important;
+    }
+
+    .account-email {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .account-sign-out {
+      font-size: 11px;
+      padding: 4px 8px;
+      flex-shrink: 0;
+    }
+
+    .auth-modal-backdrop,
+    .scene-limit-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 16, 0.72);
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 12px;
+    }
+
+    .auth-modal-backdrop.open,
+    .scene-limit-modal-backdrop.open {
+      display: flex;
+    }
+
+    .auth-modal-panel,
+    .scene-limit-modal-panel {
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      padding: 18px 20px 20px;
+    }
+
+    .auth-modal-panel h3,
+    .scene-limit-modal-panel h3 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+
+    .auth-modal-panel .auth-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .auth-modal-panel label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .auth-modal-panel input[type="email"],
+    .auth-modal-panel input[type="password"] {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 0.5px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .auth-modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    .auth-modal-actions button.secondary {
+      background: var(--panel-2);
+    }
+
+    .auth-modal-error {
+      color: #e87878;
+      font-size: 12px;
+      margin: 0 0 8px;
+      min-height: 1.2em;
+    }
+
+    .scene-limit-modal-panel p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .cockpit-body {
+      display: grid;
+      grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--sfx-w);
+      min-height: 0;
+      border-top: 0.5px solid var(--border-subtle);
+    }
+
+    .rail {
+      background: var(--bg-rail);
+      border-right: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .rail-header {
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .rail-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      min-height: 0;
+    }
+
+    .rail-footer {
+      padding: 8px;
+      border-top: 0.5px solid var(--border);
+    }
+
+    .scene-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .scene-card {
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      border-left: 3px solid transparent;
+    }
+
+    .scene-card.active {
+      border-left-color: var(--accent);
+      background: var(--panel-2);
+    }
+
+    .scene-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 0 6px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .scene-btn:hover {
+      background: transparent;
+      color: var(--text);
+    }
+
+    .scene-btn.active {
+      background: transparent;
+      color: var(--accent);
+      box-shadow: none;
+      border: none;
+    }
+
+    .scene-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .tag-pill {
+      font-size: 10px;
+      line-height: 1;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: rgba(127, 119, 221, 0.18);
+      color: #d6d2f2;
+      border: 0.5px solid rgba(127, 119, 221, 0.35);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .scene-card-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .scene-card-actions .scene-edit-btn,
+    .scene-card-actions .scene-delete-btn {
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    .scene-selector-empty {
+      margin: 0;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 8px 4px;
+      line-height: 1.4;
+    }
+
+    .center-stack {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg-elevated);
+      border-right: 0.5px solid var(--border);
+    }
+
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .panel:last-child {
+      border-bottom: none;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--panel);
+      border-bottom: 0.5px solid var(--border);
+      min-height: 36px;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+
+    .panel-header-vol {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .panel-header-vol label {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .panel-header-vol input[type="range"] {
+      width: 88px;
+      height: 4px;
+    }
+
+    .panel-body {
+      flex: 1;
+      padding: 10px 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .music-now {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .music-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .music-controls button {
+      padding: 6px 8px;
+      min-width: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      background: var(--panel-2);
+      border: 0.5px solid var(--border);
+      color: var(--text);
+    }
+
+    .music-controls button:hover {
+      background: #25252c;
+    }
+
+    .music-controls button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(127, 119, 221, 0.12);
+    }
+
+    .music-controls button svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .music-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .music-progress-row input[type="range"] {
+      flex: 1;
+      min-width: 0;
+      height: 3px;
+    }
+
+    .music-progress-time {
+      font-size: 10px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 2.5rem;
+    }
+
+    .music-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .music-meta-row button {
+      font-size: 10px;
+      padding: 4px 8px;
+    }
+
+    .ambient-panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .ambient-panel-actions .ambient-bulk-btn {
+      font-size: 10px;
+      padding: 4px 8px;
+    }
+
+    .playlist-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      margin: 0 -4px;
+      padding: 0 4px;
+    }
+
+    .playlist {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .playlist li {
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .playlist li.active {
+      background: rgba(127, 119, 221, 0.2);
+      color: var(--text);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .playlist li.next-up {
+      border-color: rgba(127, 119, 221, 0.45);
+      background: rgba(127, 119, 221, 0.08);
+    }
+
+    .layer-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding-right: 2px;
+    }
+
+    .layer {
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+
+    .layer-row-main {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) minmax(96px, 170px) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .layer-toggle {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border-radius: 5px;
+      background: var(--panel-2);
+      border: 0.5px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+    }
+
+    .layer-toggle svg {
+      width: 12px;
+      height: 12px;
+      display: block;
+      fill: currentColor;
+    }
+
+    .layer-name-col,
+    .layer-vol-row {
+      min-width: 0;
+    }
+
+    .layer-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .layer-vol-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layer-vol-row input[type="range"] {
+      flex: 1;
+      min-width: 0;
+      height: 4px;
+    }
+
+    .layer-vol-pct {
+      font-size: 10px;
+      color: var(--muted);
+      width: 2.25rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .layer-toggle.active,
+    .layer.active .layer-toggle {
+      background: rgba(127, 119, 221, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .layer.active {
+      border-color: rgba(127, 119, 221, 0.45);
+    }
+
+    @media (max-width: 640px) {
+      .layer-row-main {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+      .layer-vol-row {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .sfx-rail {
+      background: var(--bg-rail);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .sfx-rail .panel-header {
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .sfx-rail-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 8px;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .sfx-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .sfx-filter-pill {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 0.5px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      line-height: 1.2;
+    }
+
+    .sfx-filter-pill:hover {
+      color: var(--text);
+    }
+
+    .sfx-filter-pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(127, 119, 221, 0.12);
+    }
+
+    #sfx-search {
+      width: 100%;
+      margin: 0;
+      font-size: 12px;
+      padding: 7px 9px;
+    }
+
+    .fx-grid-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .fx-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .fx-grid button {
+      min-height: 44px;
+      text-align: left;
+      padding: 6px 46px 6px 8px;
+      border-radius: 6px;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      position: relative;
+    }
+
+    .fx-grid button .fx-btn-ctrls {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .fx-grid button .fx-btn-ctrls .fav-star {
+      position: static;
+    }
+
+    .user-tag-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      margin: 0;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: rgba(155, 155, 168, 0.55);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .user-tag-btn:hover {
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .user-tag-btn:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .user-tag-btn-icon {
+      width: 13px;
+      height: 13px;
+      display: block;
+    }
+
+    .user-tag-btn--tagged {
+      color: var(--accent);
+      opacity: 0.95;
+    }
+
+    .user-tag-btn--tagged::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.9;
+    }
+
+    .user-tag-popover {
+      position: fixed;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    }
+
+    .user-tag-popover[hidden] {
+      display: none !important;
+    }
+
+    .user-tag-popover-input {
+      width: 140px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+    }
+
+    .user-tag-popover-submit {
+      padding: 5px 10px;
+      font-size: 11px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .user-tag-signin-hint {
+      position: fixed;
+      z-index: 1200;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--text);
+      background: var(--panel-2);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      max-width: 200px;
+      text-align: center;
+    }
+
+    .file-picker-star-tag-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .file-picker-star-tag-wrap .user-tag-btn {
+      width: 22px;
+      height: 22px;
+    }
+
+    .file-picker-star-tag-wrap .user-tag-btn-icon {
+      width: 14px;
+      height: 14px;
+    }
+
+    .fav-star {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      line-height: 1;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 50%;
+      user-select: none;
+    }
+
+    .fav-star:hover {
+      color: var(--text);
+    }
+
+    .fav-star.is-fav {
+      color: #f5c518;
+    }
+
+    .fav-star:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .sfx-filter-pill.sfx-filter-pill-fav {
+      padding: 8px 10px;
+    }
+
+    .sfx-filter-pill.sfx-filter-pill-fav .fav-icon {
+      color: #f5c518;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .playlist li {
+      position: relative;
+    }
+
+    .playlist .playlist-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .playlist .playlist-title {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .playlist .fav-star {
+      position: static;
+      flex-shrink: 0;
+    }
+
+    .file-picker-row-star.fav-star {
+      position: static;
+      width: 22px;
+      height: 22px;
+      font-size: 14px;
+      margin-right: 4px;
+    }
+
+    .file-picker-fav-toggle {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 0.5px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .file-picker-fav-toggle .fav-icon {
+      color: #f5c518;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .file-picker-fav-toggle.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(127, 119, 221, 0.12);
+    }
+
+    .fx-grid button .fx-cat {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      line-height: 1.1;
+    }
+
+    .fx-grid button .fx-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .fx-grid button.fx-playing {
+      border-color: var(--accent);
+      background: rgba(127, 119, 221, 0.18);
+    }
+
+    .fx-grid button.fx-flash {
+      border-color: var(--accent);
+      background: rgba(127, 119, 221, 0.28);
+    }
+
+    .fx-grid button.fx-unavailable {
+      opacity: 0.72;
+      position: relative;
+    }
+
+    .fx-grid button.fx-unavailable::after {
+      content: "";
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    @media (max-width: 900px) {
+      .cockpit-body {
+        grid-template-columns: var(--rail-w) minmax(0, 1fr);
+        grid-template-rows: 1fr auto;
+      }
+
+      .sfx-rail {
+        grid-column: 1 / -1;
+        border-top: 0.5px solid var(--border);
+        max-height: 42vh;
+      }
+
+      .center-stack {
+        border-right: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .cockpit-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+      }
+
+      .rail {
+        max-height: 28vh;
+        border-right: none;
+        border-bottom: 0.5px solid var(--border);
+      }
+
+      .center-stack {
+        min-height: 38vh;
+      }
+    }
+
+    .scene-delete-btn {
+      background: #4a2832;
+      border-color: #6d3d4a;
+    }
+
+    .scene-delete-btn:hover {
+      background: #5c3240;
+    }
+
+    .delete-scene-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 16, 0.72);
+      z-index: 1150;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 12px;
+    }
+
+    .delete-scene-backdrop.open {
+      display: flex;
+    }
+
+    .delete-scene-dialog {
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      max-width: 420px;
+      width: 100%;
+      padding: 18px 20px 20px;
+    }
+
+    .delete-scene-dialog h3 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+
+    .delete-scene-message {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .delete-scene-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .delete-scene-actions button.secondary {
+      background: var(--panel-2);
+    }
+
+    .scene-editor-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 16, 0.72);
+      z-index: 1000;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 12px;
+      overflow-y: auto;
+    }
+
+    .scene-editor-backdrop.open {
+      display: flex;
+    }
+
+    .scene-editor-panel {
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      max-width: 640px;
+      width: 100%;
+      padding: 18px 20px 20px;
+    }
+
+    .scene-editor-panel h3 {
+      margin: 0 0 14px;
+      font-size: 1.2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .editor-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .editor-field label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .editor-field input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .editor-subblock {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .editor-subblock h4 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    .editor-list {
+      list-style: none;
+      margin: 0 0 10px;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .editor-list li {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .editor-list li span {
+      flex: 1;
+      min-width: 0;
+      word-break: break-all;
+    }
+
+    .editor-row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .editor-row-actions input[type="text"] {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .ambient-editor-row {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .ambient-editor-row .row-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    @media (max-width: 520px) {
+      .ambient-editor-row .row-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sfx-editor-row {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .sfx-editor-row .row-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .editor-inline-label {
+      display: inline-block;
+      min-height: 1.25rem;
+      color: var(--text);
+      cursor: text;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.18);
+      line-height: 1.25;
+    }
+
+    .editor-inline-label:empty::before {
+      content: "Click to edit";
+      color: var(--muted);
+    }
+
+    .editor-inline-input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .scene-editor-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .scene-editor-actions button.secondary {
+      background: var(--panel-2);
+    }
+
+    .file-picker-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 16, 0.72);
+      z-index: 1100;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 12px;
+      overflow-y: auto;
+    }
+
+    .file-picker-backdrop.open {
+      display: flex;
+    }
+
+    .file-picker-panel {
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      max-width: 760px;
+      width: 100%;
+      padding: 18px 20px 20px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .file-picker-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .file-picker-tab.active {
+      background: rgba(127, 119, 221, 0.22);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .file-picker-search {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .file-picker-tag-filters {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 2px 0;
+    }
+
+    .file-picker-filter-step {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .file-picker-tag-filters-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+      width: 100%;
+      flex-basis: 100%;
+      margin: 0;
+    }
+
+    .file-picker-clear-filters {
+      align-self: flex-start;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .file-picker-clear-filters:hover {
+      color: var(--text);
+      border-color: #4a5570;
+    }
+
+    .file-picker-tag {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .file-picker-tag:hover {
+      color: var(--text);
+      border-color: #4a5570;
+    }
+
+    .file-picker-tag.active {
+      background: rgba(127, 119, 221, 0.18);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .file-picker-pending {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+      width: 1.1em;
+      height: 1.1em;
+      border-radius: 50%;
+      font-size: 0.65rem;
+      line-height: 1;
+      font-weight: 800;
+      color: #0f1522;
+      background: #e8a23e;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    .file-picker-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+      max-height: 360px;
+      overflow: auto;
+    }
+
+    .file-picker-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .file-picker-file-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .file-picker-file-title {
+      min-width: 0;
+    }
+
+    .file-picker-file-title .file-name {
+      word-break: break-word;
+      font-size: 0.86rem;
+      line-height: 1.25;
+    }
+
+    .file-picker-actions {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .file-picker-multi-check {
+      align-self: center;
+      width: 1.1rem;
+      height: 1.1rem;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .file-picker-preview-btn {
+      min-width: 28px;
+      height: 28px;
+      padding: 0 6px;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .editor-selected-file {
+      display: inline-block;
+      min-width: 160px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      word-break: break-all;
+    }
+
+    .editor-file-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--panel-2);
+      border: 0.5px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    button:hover {
+      background: #25252c;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .rail-footer #create-new-scene {
+      width: 100%;
+      font-size: 12px;
+      padding: 8px 10px;
+    }
+
+    .panel-body .track-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    #music-progress {
+      flex: 1;
+      min-width: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <h1 class="topbar-title">DnD Mood Builder</h1>
+      <div class="topbar-master">
+        <label for="master-volume">Master</label>
+        <input id="master-volume" type="range" min="0" max="100" value="70" aria-label="Master volume" />
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-account" id="topbar-account">
+          <button type="button" id="account-sign-in" class="account-sign-in">Sign in</button>
+          <div class="account-signed-in" id="account-signed-in" hidden>
+            <span class="account-email" id="account-email"></span>
+            <button type="button" id="account-sign-out" class="account-sign-out">Sign out</button>
+          </div>
+        </div>
+        <button type="button" id="edit-scene-top">Edit Scene</button>
+      </div>
+    </header>
+
+    <div class="cockpit-body">
+      <aside class="rail" aria-label="Scene selector">
+        <div class="rail-header">Scenes</div>
+        <div class="rail-scroll">
+          <div class="scene-buttons" id="scene-buttons-bar" role="group" aria-label="Choose scene">
+            <p class="scene-selector-empty" id="scene-selector-empty" hidden>No scenes yet. Use &quot;+ New Scene&quot; below.</p>
+          </div>
+        </div>
+        <div class="rail-footer">
+          <button type="button" id="create-new-scene">+ New Scene</button>
+        </div>
+      </aside>
+
+      <div class="center-stack">
+        <section class="panel panel-music" aria-labelledby="music-title">
+          <div class="panel-header">
+            <h2 id="music-title">Music</h2>
+            <div class="panel-header-vol">
+              <label for="music-volume">Vol</label>
+              <input id="music-volume" type="range" min="0" max="100" value="70" aria-label="Music volume" />
+            </div>
+          </div>
+          <div class="panel-body" aria-live="polite">
+            <p class="track-title">Now Playing: â€”</p>
+
+            <div class="music-controls" role="group" aria-label="Music controls">
+              <button id="music-prev" type="button" aria-label="Previous track" title="Previous track">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M15.5 5.5L8 12l7.5 6.5"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button id="music-play" type="button" aria-label="Play" title="Play">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M9 6l12 6-12 6V6z" />
+                </svg>
+              </button>
+              <button id="music-pause" type="button" aria-label="Pause" title="Pause">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="7" y="5" width="3.2" height="14" rx="1.2" />
+                  <rect x="13.8" y="5" width="3.2" height="14" rx="1.2" />
+                </svg>
+              </button>
+              <button id="music-next" type="button" aria-label="Next track" title="Next track">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M8.5 5.5L16 12l-7.5 6.5"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button id="music-shuffle" type="button" aria-label="Shuffle" title="Shuffle" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M16 3h5v5M4 20v-3a3 3 0 0 1 3-3h2l11-11M20 16v5h-5M4 4l5 5h3a3 3 0 0 1 3 3v1"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div class="music-progress-row">
+              <span id="music-progress-current" class="music-progress-time" aria-hidden="true">0:00</span>
+              <input
+                id="music-progress"
+                type="range"
+                min="0"
+                max="1"
+                value="0"
+                step="any"
+                disabled
+                aria-label="Playback position"
+                aria-valuemin="0"
+                aria-valuemax="1"
+                aria-valuenow="0"
+              />
+              <span id="music-progress-duration" class="music-progress-time" aria-hidden="true">0:00</span>
+            </div>
+
+            <div class="music-meta-row">
+              <button id="music-repeat-toggle" type="button" aria-label="Repeat mode">Repeat: List</button>
+            </div>
+
+            <div class="playlist-scroll">
+              <ul class="playlist" id="music-playlist"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel panel-ambient" aria-labelledby="ambient-title">
+          <div class="panel-header">
+            <h2 id="ambient-title">Ambient BGM</h2>
+            <div class="ambient-panel-actions" id="ambient-panel-actions" hidden>
+              <button type="button" id="ambient-play-all" class="ambient-bulk-btn">Play all</button>
+              <button type="button" id="ambient-stop-all" class="ambient-bulk-btn">Stop all</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="layer-grid" id="custom-bgm-layers" hidden></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="sfx-rail" aria-labelledby="sfx-title">
+        <div class="panel-header">
+          <h2 id="sfx-title">Sound FX</h2>
+          <div class="panel-header-vol">
+            <label for="sfx-volume">Vol</label>
+            <input id="sfx-volume" type="range" min="0" max="100" value="70" aria-label="Sound FX volume" />
+          </div>
+        </div>
+        <div class="sfx-rail-body">
+          <div class="sfx-filters" id="sfx-section-filters" role="group" aria-label="SFX sections"></div>
+          <input id="sfx-search" class="file-picker-search" type="text" placeholder="Search SFX..." autocomplete="off" />
+          <div class="fx-grid-wrap">
+            <div class="fx-grid" id="fx-grid"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="scene-editor-backdrop" id="scene-editor-backdrop" inert>
+    <div class="scene-editor-panel" role="dialog" aria-labelledby="scene-editor-title" aria-modal="true">
+      <h3 id="scene-editor-title">Scene editor</h3>
+
+      <div class="editor-field">
+        <label for="editor-scene-name">Scene name</label>
+        <input id="editor-scene-name" type="text" autocomplete="off" />
+      </div>
+
+      <div class="editor-field">
+        <label for="editor-scene-tags">Scene tags (comma-separated)</label>
+        <input id="editor-scene-tags" type="text" placeholder="combat, ambient, social" autocomplete="off" />
+      </div>
+
+      <div class="editor-subblock">
+        <h4>Playlist</h4>
+        <ul class="editor-list" id="editor-playlist-list"></ul>
+        <div class="editor-row-actions">
+          <input id="editor-playlist-file" type="hidden" />
+          <span class="editor-selected-file" id="editor-playlist-selected-file">No file selected</span>
+          <button type="button" id="editor-playlist-browse">Browse</button>
+          <button type="button" id="editor-playlist-add">Add track</button>
+        </div>
+      </div>
+
+      <div class="editor-subblock">
+        <h4>Ambient BGM layers (max 6)</h4>
+        <div id="editor-ambient-rows"></div>
+        <button type="button" id="editor-ambient-add">Add layer</button>
+      </div>
+
+      <div class="scene-editor-actions">
+        <button type="button" id="editor-save-scene">Save Scene</button>
+        <button type="button" class="secondary" id="editor-cancel-scene">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="file-picker-backdrop" id="file-picker-backdrop" inert>
+    <div class="file-picker-panel" role="dialog" aria-labelledby="file-picker-title" aria-modal="true">
+      <h3 id="file-picker-title">Choose audio file</h3>
+      <div class="file-picker-tabs" id="file-picker-tabs">
+        <button type="button" class="file-picker-tab active" data-audio-type="music">Music</button>
+        <button type="button" class="file-picker-tab" data-audio-type="ambient">Ambient</button>
+        <button type="button" class="file-picker-tab" data-audio-type="sfx">SFX</button>
+      </div>
+      <input id="file-picker-search" class="file-picker-search" type="text" placeholder="Search title..." autocomplete="off" />
+      <div id="file-picker-tag-filters-wrap" class="file-picker-tag-filters" aria-label="Audio filters"></div>
+      <ul class="file-picker-list" id="file-picker-list"></ul>
+      <div class="file-picker-actions">
+        <button type="button" id="file-picker-add-selected" hidden>Add selected tracks</button>
+        <button type="button" id="file-picker-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="delete-scene-backdrop" id="delete-scene-backdrop" aria-hidden="true">
+    <div class="delete-scene-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-scene-title" aria-describedby="delete-scene-message">
+      <h3 id="delete-scene-title">Delete scene?</h3>
+      <p id="delete-scene-message" class="delete-scene-message"></p>
+      <div class="delete-scene-actions">
+        <button type="button" class="secondary" id="delete-scene-cancel">Cancel</button>
+        <button type="button" id="delete-scene-confirm">Delete scene</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-modal-backdrop" id="auth-modal-backdrop" aria-hidden="true">
+    <div class="auth-modal-panel" role="dialog" aria-labelledby="auth-modal-title" aria-modal="true">
+      <h3 id="auth-modal-title">Sign in</h3>
+      <p id="auth-modal-error" class="auth-modal-error" aria-live="polite"></p>
+      <div class="auth-field">
+        <label for="auth-email">Email</label>
+        <input id="auth-email" type="email" autocomplete="email" />
+      </div>
+      <div class="auth-field">
+        <label for="auth-password">Password</label>
+        <input id="auth-password" type="password" autocomplete="current-password" />
+      </div>
+      <div class="auth-modal-actions">
+        <button type="button" class="secondary" id="auth-modal-cancel">Cancel</button>
+        <button type="button" class="secondary" id="auth-modal-sign-up">Create account</button>
+        <button type="button" id="auth-modal-submit">Sign in</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scene-limit-modal-backdrop" id="scene-limit-modal-backdrop" aria-hidden="true">
+    <div class="scene-limit-modal-panel" role="dialog" aria-labelledby="scene-limit-modal-title" aria-modal="true">
+      <h3 id="scene-limit-modal-title">Save more scenes</h3>
+      <p>Anonymous sessions can keep up to 5 scenes on this device. Create a free account to save unlimited scenes and sync them when you sign in.</p>
+      <div class="auth-modal-actions">
+        <button type="button" class="secondary" id="scene-limit-modal-dismiss">Not now</button>
+        <button type="button" id="scene-limit-modal-sign-up">Create free account</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
