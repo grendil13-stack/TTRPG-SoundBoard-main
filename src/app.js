@@ -482,7 +482,12 @@ const AudioLibrary = (() => {
     })();
 
     const UserTags = (() => {
-      const taggedAudioIds = new Set();
+      /** @type {Map<string, Set<string>>} */
+      const tagsByAudioId = new Map();
+      /** @type {{ audio_id: string, tag: string, created_at?: string }[]} */
+      let lastRows = [];
+      /** @type {{ tag: string, count: number, audio_ids: string[] }[]} */
+      let myTagSummary = [];
       /** @type {string | null} */
       let cloudUserId = null;
 
@@ -498,27 +503,66 @@ const AudioLibrary = (() => {
         });
       };
 
+      function refreshSummary() {
+        const m = new Map();
+        tagsByAudioId.forEach((set, aid) => {
+          set.forEach((tag) => {
+            if (!m.has(tag)) {
+              m.set(tag, new Set());
+            }
+            m.get(tag).add(String(aid));
+          });
+        });
+        myTagSummary = [...m.entries()]
+          .map(([tag, ids]) => ({ tag, count: ids.size, audio_ids: [...ids] }))
+          .sort((a, b) => a.tag.localeCompare(b.tag));
+      }
+
+      function recomputeFromRows(rows) {
+        tagsByAudioId.clear();
+        lastRows = Array.isArray(rows) ? rows.slice() : [];
+        for (const row of lastRows) {
+          const aid = row.audio_id != null ? String(row.audio_id) : "";
+          const tag = String(row.tag || "").trim();
+          if (!aid || !tag) {
+            continue;
+          }
+          if (!tagsByAudioId.has(aid)) {
+            tagsByAudioId.set(aid, new Set());
+          }
+          tagsByAudioId.get(aid).add(tag);
+        }
+        refreshSummary();
+        notify();
+      }
+
       async function syncFromSupabase(userId) {
-        taggedAudioIds.clear();
         cloudUserId = userId;
-        const { data, error } = await supabase
+        let query = supabase
           .from("user_tags")
-          .select("audio_id")
-          .eq("user_id", userId);
+          .select("audio_id, tag, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+        let { data, error } = await query;
+        if (error) {
+          const r2 = await supabase
+            .from("user_tags")
+            .select("audio_id, tag")
+            .eq("user_id", userId);
+          data = r2.data;
+          error = r2.error;
+        }
         if (error) {
           console.error("user_tags load error", error);
           return;
         }
-        for (const row of data || []) {
-          if (row.audio_id != null) {
-            taggedAudioIds.add(String(row.audio_id));
-          }
-        }
-        notify();
+        recomputeFromRows(data || []);
       }
 
       function clear() {
-        taggedAudioIds.clear();
+        tagsByAudioId.clear();
+        lastRows = [];
+        myTagSummary = [];
         cloudUserId = null;
         notify();
       }
@@ -527,7 +571,37 @@ const AudioLibrary = (() => {
         if (audioId == null) {
           return false;
         }
-        return taggedAudioIds.has(String(audioId));
+        const set = tagsByAudioId.get(String(audioId));
+        return Boolean(set && set.size > 0);
+      }
+
+      function getTagsForAudio(audioId) {
+        return new Set(tagsByAudioId.get(String(audioId)) || []);
+      }
+
+      function getRecentTagNames(limit = 6) {
+        const seen = new Set();
+        const out = [];
+        for (const row of lastRows) {
+          const t = String(row.tag || "").trim();
+          if (!t || seen.has(t)) {
+            continue;
+          }
+          seen.add(t);
+          out.push(t);
+          if (out.length >= limit) {
+            break;
+          }
+        }
+        return out;
+      }
+
+      function pushSyntheticRow(audioId, tag) {
+        lastRows.unshift({
+          audio_id: String(audioId),
+          tag: String(tag).trim(),
+          created_at: new Date().toISOString(),
+        });
       }
 
       async function addTag(userId, audioId, tagText) {
@@ -535,13 +609,43 @@ const AudioLibrary = (() => {
         if (!tag || !userId || audioId == null) {
           return { error: new Error("Invalid tag") };
         }
+        const aid = String(audioId);
         const { error } = await supabase.from("user_tags").insert({
           user_id: userId,
-          audio_id: String(audioId),
+          audio_id: aid,
           tag,
         });
         if (!error) {
-          taggedAudioIds.add(String(audioId));
+          if (!tagsByAudioId.has(aid)) {
+            tagsByAudioId.set(aid, new Set());
+          }
+          tagsByAudioId.get(aid).add(tag);
+          pushSyntheticRow(aid, tag);
+          refreshSummary();
+          notify();
+        }
+        return { error };
+      }
+
+      async function removeTag(userId, audioId, tagText) {
+        const tag = String(tagText || "").trim();
+        if (!tag || !userId || audioId == null) {
+          return { error: new Error("Invalid tag") };
+        }
+        const aid = String(audioId);
+        const { error } = await supabase
+          .from("user_tags")
+          .delete()
+          .match({ user_id: userId, audio_id: aid, tag });
+        if (!error) {
+          tagsByAudioId.get(aid)?.delete(tag);
+          lastRows = lastRows.filter(
+            (r) => !(String(r.audio_id) === aid && String(r.tag || "").trim() === tag),
+          );
+          if (tagsByAudioId.get(aid)?.size === 0) {
+            tagsByAudioId.delete(aid);
+          }
+          refreshSummary();
           notify();
         }
         return { error };
@@ -558,10 +662,55 @@ const AudioLibrary = (() => {
         syncFromSupabase,
         clear,
         hasTagged,
+        getTagsForAudio,
+        getRecentTagNames,
         addTag,
+        removeTag,
+        getMyTagSummary: () => myTagSummary.slice(),
         subscribe,
       };
     })();
+
+    const SUGGESTED_TAG_CATEGORY_ORDER = ["Moment", "Quality", "Campaign"];
+    /** @type {Record<string, { tag: string, category: string }[]>} */
+    let suggestedTagsByCategory = { Moment: [], Quality: [], Campaign: [] };
+    let suggestedTagsLoaded = false;
+
+    async function loadSuggestedTagsOnce() {
+      if (suggestedTagsLoaded) {
+        return;
+      }
+      const { data, error } = await supabase
+        .from("suggested_tags")
+        .select("tag, category")
+        .order("tag");
+      if (error) {
+        console.error("suggested_tags load error", error);
+        suggestedTagsLoaded = true;
+        return;
+      }
+      const buckets = { Moment: [], Quality: [], Campaign: [] };
+      for (const row of data || []) {
+        const tag = String(row.tag || "").trim();
+        if (!tag) {
+          continue;
+        }
+        const rawCat = String(row.category || "").trim();
+        const cat =
+          rawCat.toLowerCase() === "moment"
+            ? "Moment"
+            : rawCat.toLowerCase() === "quality"
+              ? "Quality"
+              : rawCat.toLowerCase() === "campaign"
+                ? "Campaign"
+                : null;
+        if (cat && buckets[cat]) {
+          buckets[cat].push({ tag, category: cat });
+        }
+      }
+      suggestedTagsByCategory = buckets;
+      suggestedTagsLoaded = true;
+    }
 
     /** Shared tag popover (single instance). */
     let userTagPopoverWrap = null;
@@ -578,21 +727,55 @@ const AudioLibrary = (() => {
       const wrap = document.createElement("div");
       wrap.className = "user-tag-popover";
       wrap.setAttribute("role", "dialog");
-      wrap.setAttribute("aria-label", "Add tag");
+      wrap.setAttribute("aria-label", "Personal tags");
+      wrap.tabIndex = -1;
       wrap.hidden = true;
+
+      const scroll = document.createElement("div");
+      scroll.className = "tag-popover-scroll";
+
+      const recentBlock = document.createElement("div");
+      const recentLabel = document.createElement("p");
+      recentLabel.className = "tag-popover-block-label";
+      recentLabel.textContent = "Recently used";
+      const recentRow = document.createElement("div");
+      recentRow.className = "tag-pill-row";
+      recentBlock.appendChild(recentLabel);
+      recentBlock.appendChild(recentRow);
+
+      const suggestedHost = document.createElement("div");
+
+      const appliedBlock = document.createElement("div");
+      const appliedLabel = document.createElement("p");
+      appliedLabel.className = "tag-popover-block-label";
+      appliedLabel.textContent = "On this sound";
+      const appliedRow = document.createElement("div");
+      appliedRow.className = "tag-pill-row";
+      appliedBlock.appendChild(appliedLabel);
+      appliedBlock.appendChild(appliedRow);
+
+      const footer = document.createElement("div");
+      footer.className = "tag-popover-footer";
       const input = document.createElement("input");
       input.type = "text";
       input.className = "user-tag-popover-input";
-      input.setAttribute("aria-label", "Tag");
-      input.placeholder = "Tag…";
-      const submit = document.createElement("button");
-      submit.type = "button";
-      submit.className = "user-tag-popover-submit";
-      submit.textContent = "Add";
-      wrap.appendChild(input);
-      wrap.appendChild(submit);
+      input.setAttribute("aria-label", "Custom tag");
+      input.placeholder = "or type your own";
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "tag-popover-add-btn user-tag-popover-submit";
+      addBtn.textContent = "Add";
+      footer.appendChild(input);
+      footer.appendChild(addBtn);
+
+      scroll.appendChild(recentBlock);
+      scroll.appendChild(suggestedHost);
+      scroll.appendChild(appliedBlock);
+      scroll.appendChild(footer);
+      wrap.appendChild(scroll);
       document.body.appendChild(wrap);
       userTagPopoverWrap = wrap;
+
       const closePopover = () => {
         wrap.hidden = true;
         userTagPopoverAnchor = null;
@@ -602,6 +785,7 @@ const AudioLibrary = (() => {
           userTagPopoverDocMousedown = null;
         }
       };
+
       const positionNear = (anchor) => {
         const r = anchor.getBoundingClientRect();
         const margin = 6;
@@ -613,72 +797,197 @@ const AudioLibrary = (() => {
           wrap.style.top = `${Math.max(margin, r.top - wrap.offsetHeight - margin)}px`;
         }
       };
-      const submitTag = async () => {
+
+      const handleRemove = async (tagName) => {
         const { data: { session } } = await supabase.auth.getSession();
         const uid = session?.user?.id;
         const aid = userTagPopoverAudioId;
-        if (!uid || aid == null) {
-          closePopover();
+        const tag = String(tagName || "").trim();
+        if (!uid || !aid || !tag) {
           return;
         }
-        const tagText = input.value.trim();
-        if (!tagText) {
-          input.focus();
+        await UserTags.removeTag(uid, aid, tag);
+        await refreshContents();
+        if (userTagPopoverAnchor) {
+          requestAnimationFrame(() => positionNear(userTagPopoverAnchor));
+        }
+      };
+
+      const handleAdd = async (tagName) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uid = session?.user?.id;
+        const aid = userTagPopoverAudioId;
+        const tag = String(tagName || "").trim();
+        if (!uid || !aid || !tag) {
           return;
         }
-        const { error } = await UserTags.addTag(uid, aid, tagText);
+        const existing = UserTags.getTagsForAudio(aid);
+        if (existing.has(tag)) {
+          return;
+        }
+        const { error } = await UserTags.addTag(uid, aid, tag);
         if (error) {
           console.error("user_tags insert error", error);
           return;
         }
-        input.value = "";
-        closePopover();
+        await refreshContents();
+        if (userTagPopoverAnchor) {
+          requestAnimationFrame(() => positionNear(userTagPopoverAnchor));
+        }
       };
-      submit.addEventListener("click", () => {
-        void submitTag();
+
+      const refreshContents = async () => {
+        const aid = userTagPopoverAudioId;
+        if (aid == null) {
+          return;
+        }
+        const { data: { session } } = await supabase.auth.getSession();
+        const canEdit = Boolean(session?.user?.id);
+        input.disabled = !canEdit;
+        addBtn.disabled = !canEdit;
+        const appliedSet = UserTags.getTagsForAudio(aid);
+        const appliedSorted = [...appliedSet].sort((a, b) => a.localeCompare(b));
+        const anonTitle = "Sign in to tag sounds";
+
+        recentRow.innerHTML = "";
+        for (const tag of UserTags.getRecentTagNames(6)) {
+          const isOn = appliedSet.has(tag);
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "tag-pill";
+          b.textContent = tag;
+          b.dataset.tagPill = "1";
+          b.dataset.tagName = tag;
+          if (isOn) {
+            b.classList.add("tag-pill-applied");
+            b.dataset.tagApplied = "1";
+          }
+          b.disabled = !canEdit;
+          b.title = canEdit ? (isOn ? "Remove tag" : "Add tag") : anonTitle;
+          recentRow.appendChild(b);
+        }
+
+        suggestedHost.innerHTML = "";
+        for (const cat of SUGGESTED_TAG_CATEGORY_ORDER) {
+          const list = suggestedTagsByCategory[cat] || [];
+          if (!list.length) {
+            continue;
+          }
+          const catLab = document.createElement("p");
+          catLab.className = "tag-popover-cat-label";
+          catLab.textContent = cat;
+          suggestedHost.appendChild(catLab);
+          const grid = document.createElement("div");
+          grid.className = "tag-suggested-grid";
+          for (const row of list) {
+            const tag = row.tag;
+            const isOn = appliedSet.has(tag);
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "tag-pill";
+            b.textContent = tag;
+            b.dataset.tagPill = "1";
+            b.dataset.tagName = tag;
+            if (isOn) {
+              b.classList.add("tag-pill-applied");
+              b.dataset.tagApplied = "1";
+            }
+            b.disabled = !canEdit;
+            b.title = canEdit ? (isOn ? "Remove tag" : "Add tag") : anonTitle;
+            grid.appendChild(b);
+          }
+          suggestedHost.appendChild(grid);
+        }
+
+        appliedRow.innerHTML = "";
+        for (const tag of appliedSorted) {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "tag-pill tag-pill-applied";
+          chip.dataset.appliedTagChip = "1";
+          chip.dataset.tagName = tag;
+          const lab = document.createElement("span");
+          lab.className = "tag-pill-label";
+          lab.textContent = tag;
+          const x = document.createElement("span");
+          x.className = "tag-pill-remove";
+          x.setAttribute("aria-hidden", "true");
+          x.textContent = "×";
+          chip.appendChild(lab);
+          chip.appendChild(x);
+          chip.disabled = !canEdit;
+          chip.title = canEdit ? "Remove tag" : anonTitle;
+          appliedRow.appendChild(chip);
+        }
+
+        input.value = "";
+      };
+
+      scroll.addEventListener("click", (e) => {
+        const chip = e.target.closest("[data-applied-tag-chip]");
+        if (chip) {
+          if (chip.disabled) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          const name = chip.dataset.tagName;
+          if (name) {
+            void handleRemove(name);
+          }
+          return;
+        }
+        const pill = e.target.closest("[data-tag-pill]");
+        if (!pill || pill.disabled) {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        const name = pill.dataset.tagName;
+        if (!name) {
+          return;
+        }
+        if (pill.dataset.tagApplied === "1") {
+          void handleRemove(name);
+        } else {
+          void handleAdd(name);
+        }
       });
+
+      addBtn.addEventListener("click", () => {
+        void (async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) {
+            return;
+          }
+          const t = input.value.trim();
+          if (!t) {
+            input.focus();
+            return;
+          }
+          await handleAdd(t);
+        })();
+      });
+
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
-          void submitTag();
+          addBtn.click();
         } else if (e.key === "Escape") {
           e.preventDefault();
           closePopover();
         }
       });
+
       wrap._close = closePopover;
       wrap._positionNear = positionNear;
       wrap._input = input;
+      wrap._refresh = refreshContents;
       return wrap;
     }
 
-    function showSignInToTagHint(anchorEl) {
-      const hint = document.createElement("div");
-      hint.className = "user-tag-signin-hint";
-      hint.textContent = "Sign in to tag sounds";
-      document.body.appendChild(hint);
-      const r = anchorEl.getBoundingClientRect();
-      const margin = 6;
-      requestAnimationFrame(() => {
-        const w = hint.offsetWidth;
-        const left = Math.min(
-          window.innerWidth - w - margin,
-          Math.max(margin, r.left + r.width / 2 - w / 2),
-        );
-        hint.style.left = `${left}px`;
-        hint.style.top = `${r.bottom + margin}px`;
-      });
-      window.setTimeout(() => {
-        hint.remove();
-      }, 2200);
-    }
-
     async function openUserTagPopover(anchorEl, audioId) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        showSignInToTagHint(anchorEl);
-        return;
-      }
+      await loadSuggestedTagsOnce();
       const wrap = ensureUserTagPopover();
       if (wrap._close && userTagPopoverAnchor && userTagPopoverAnchor !== anchorEl) {
         wrap._close();
@@ -686,18 +995,28 @@ const AudioLibrary = (() => {
       userTagPopoverAnchor = anchorEl;
       userTagPopoverAudioId = audioId != null ? String(audioId) : null;
       wrap.hidden = false;
-      wrap._input.value = "";
+      await wrap._refresh();
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           wrap._positionNear(anchorEl);
-          wrap._input.focus();
+          void supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user && wrap._input) {
+              wrap._input.focus();
+            }
+          });
         });
       });
       if (userTagPopoverDocMousedown) {
         document.removeEventListener("mousedown", userTagPopoverDocMousedown, true);
       }
       userTagPopoverDocMousedown = (e) => {
-        if (!wrap.hidden && e.target && !wrap.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) {
+        if (
+          !wrap.hidden &&
+          e.target &&
+          !wrap.contains(e.target) &&
+          e.target !== anchorEl &&
+          !anchorEl.contains(e.target)
+        ) {
           wrap._close();
         }
       };
@@ -711,7 +1030,7 @@ const AudioLibrary = (() => {
       btn.type = "button";
       btn.className = "user-tag-btn";
       btn.dataset.userTagBtn = "1";
-      btn.setAttribute("aria-label", "Add personal tag");
+      btn.setAttribute("aria-label", "Personal tags");
       btn.title = "Tag";
       btn.innerHTML =
         '<svg class="user-tag-btn-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2 3h5l1 1v4l-6 6V3zm3.5 1.25a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5zM11 7h1.25v1.75H14v1.25h-1.75V12h-1.25v-1.75H9.25V8.75h1.75V7z" opacity=".88"/></svg>';
@@ -857,6 +1176,8 @@ const AudioLibrary = (() => {
     let filePickerSelectedMood = null;
     let filePickerSelectedSfxSection = null;
     let filePickerFavoritesOnly = false;
+    /** @type {string | null} */
+    let filePickerMyTagFilter = null;
     const nowPlayingTitle = document.querySelector(".track-title");
     const musicProgressRange = document.getElementById("music-progress");
     const musicProgressCurrentEl = document.getElementById("music-progress-current");
@@ -891,6 +1212,8 @@ const AudioLibrary = (() => {
     let musicShuffleEnabled = false;
     let sfxSectionFilter = null;
     let sfxSearchTerm = "";
+    /** @type {string | null} */
+    let sfxMyTagFilter = null;
 
     function setMusicRepeatMode(mode) {
       if (mode !== "list" && mode !== "one") {
@@ -957,10 +1280,17 @@ const AudioLibrary = (() => {
           b.setAttribute("aria-pressed", sfxFavoritesOnlyFilter ? "true" : "false");
           return;
         }
+        if (b.dataset.sfxMyTag != null && b.dataset.sfxMyTag !== "") {
+          const active = sfxMyTagFilter === b.dataset.sfxMyTag;
+          b.classList.toggle("active", active);
+          b.setAttribute("aria-pressed", active ? "true" : "false");
+          return;
+        }
         const sec = b.dataset.sfxSection;
         const active =
           sfxSectionFilter == null ? sec === "" : sec === sfxSectionFilter;
         b.classList.toggle("active", active);
+        b.setAttribute("aria-pressed", active ? "true" : "false");
       });
     }
 
@@ -1002,6 +1332,37 @@ const AudioLibrary = (() => {
       addFavoritesPill();
       addPill("All", "");
       desiredOrder.forEach((section) => addPill(section, section));
+      const { data: { session } } = await supabase.auth.getSession();
+      const tagSummary = UserTags.getMyTagSummary();
+      if (session?.user && tagSummary.length) {
+        const myWrap = document.createElement("div");
+        myWrap.className = "sfx-my-tags-step";
+        const myLab = document.createElement("p");
+        myLab.className = "sfx-my-tags-label";
+        myLab.textContent = "My Tags";
+        myWrap.appendChild(myLab);
+        for (const row of tagSummary) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "sfx-filter-pill sfx-my-tag-pill";
+          b.dataset.sfxMyTag = row.tag;
+          const nm = document.createElement("span");
+          nm.className = "file-picker-my-tag-name";
+          nm.textContent = row.tag;
+          const ct = document.createElement("span");
+          ct.className = "file-picker-my-tag-count";
+          ct.textContent = String(row.count);
+          b.appendChild(nm);
+          b.appendChild(ct);
+          b.addEventListener("click", () => {
+            sfxMyTagFilter = sfxMyTagFilter === row.tag ? null : row.tag;
+            syncSfxFilterPillsActive();
+            void renderFxButtons();
+          });
+          myWrap.appendChild(b);
+        }
+        sfxSectionFiltersEl.appendChild(myWrap);
+      }
       syncSfxFilterPillsActive();
     }
 
@@ -2336,6 +2697,13 @@ const AudioLibrary = (() => {
         if (sfxFavoritesOnlyFilter && !Favorites.has("sfx", entry.id)) {
           return;
         }
+        if (sfxMyTagFilter) {
+          const row = UserTags.getMyTagSummary().find((r) => r.tag === sfxMyTagFilter);
+          const ids = row?.audio_ids ? row.audio_ids.map(String) : [];
+          if (!ids.includes(String(entry.id))) {
+            return;
+          }
+        }
         const title =
           formatAutoLabelFromPath(entry.manifestPath) ||
           entry.name ||
@@ -2361,8 +2729,6 @@ const AudioLibrary = (() => {
 
         const ctrls = document.createElement("span");
         ctrls.className = "fx-btn-ctrls";
-        const tagBtn = createUserTagButton(entry.id);
-        ctrls.appendChild(tagBtn);
         const star = createFavoriteStarButton(
           Favorites.has("sfx", entry.id),
           () => {
@@ -2372,6 +2738,8 @@ const AudioLibrary = (() => {
           },
         );
         ctrls.appendChild(star);
+        const tagBtn = createUserTagButton(entry.id);
+        ctrls.appendChild(tagBtn);
         soundButton.appendChild(ctrls);
 
         soundButton.addEventListener("click", (e) => {
@@ -2677,6 +3045,13 @@ const AudioLibrary = (() => {
 
     function fileEntryMatchesFilePickerFilters(file) {
       const t = filePickerActiveType;
+      if (filePickerMyTagFilter) {
+        const row = UserTags.getMyTagSummary().find((r) => r.tag === filePickerMyTagFilter);
+        const ids = row?.audio_ids ? row.audio_ids.map(String) : [];
+        if (!ids.includes(String(file.id))) {
+          return false;
+        }
+      }
       if (t === "music" && filePickerFavoritesOnly) {
         if (!Favorites.has("music", file.id)) {
           return false;
@@ -2708,6 +3083,7 @@ const AudioLibrary = (() => {
         filePickerSelectedMood = null;
         filePickerSelectedSfxSection = null;
         filePickerFavoritesOnly = false;
+        filePickerMyTagFilter = null;
         void renderFilePickerFilters();
         void renderFilePickerList();
       });
@@ -2741,8 +3117,50 @@ const AudioLibrary = (() => {
       container.appendChild(wrap);
     }
 
+    function appendFilePickerMyTagsFilterGroup(container, session) {
+      const summary = UserTags.getMyTagSummary();
+      if (!session?.user?.id || !summary.length) {
+        return;
+      }
+      const wrap = document.createElement("div");
+      wrap.className = "file-picker-filter-step file-picker-my-tags-step";
+      wrap.setAttribute("role", "group");
+      wrap.setAttribute("aria-label", "My Tags");
+      const lab = document.createElement("p");
+      lab.className = "file-picker-tag-filters-label";
+      lab.textContent = "My Tags";
+      wrap.appendChild(lab);
+      const row = document.createElement("div");
+      row.className = "tag-pill-row";
+      for (const rowSummary of summary) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "file-picker-my-tag-pill";
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "file-picker-my-tag-name";
+        nameSpan.textContent = rowSummary.tag;
+        const countSpan = document.createElement("span");
+        countSpan.className = "file-picker-my-tag-count";
+        countSpan.textContent = String(rowSummary.count);
+        b.appendChild(nameSpan);
+        b.appendChild(countSpan);
+        const active = filePickerMyTagFilter === rowSummary.tag;
+        b.classList.toggle("active", active);
+        b.setAttribute("aria-pressed", active ? "true" : "false");
+        b.addEventListener("click", () => {
+          filePickerMyTagFilter = filePickerMyTagFilter === rowSummary.tag ? null : rowSummary.tag;
+          void renderFilePickerFilters();
+          void renderFilePickerList();
+        });
+        row.appendChild(b);
+      }
+      wrap.appendChild(row);
+      container.appendChild(wrap);
+    }
+
     async function renderFilePickerFilters() {
       filePickerTagFiltersWrap.innerHTML = "";
+      const { data: { session } } = await supabase.auth.getSession();
       const readme = await AudioLibrary.getReadmeFilterLists();
 
       if (filePickerActiveType === "sfx") {
@@ -2772,6 +3190,7 @@ const AudioLibrary = (() => {
           group.appendChild(btn);
         });
         filePickerTagFiltersWrap.appendChild(group);
+        appendFilePickerMyTagsFilterGroup(filePickerTagFiltersWrap, session);
         appendFilePickerClearButton(filePickerTagFiltersWrap);
         return;
       }
@@ -2847,6 +3266,7 @@ const AudioLibrary = (() => {
       });
       filePickerTagFiltersWrap.appendChild(moodGroup);
 
+      appendFilePickerMyTagsFilterGroup(filePickerTagFiltersWrap, session);
       appendFilePickerClearButton(filePickerTagFiltersWrap);
     }
 
@@ -2941,28 +3361,10 @@ const AudioLibrary = (() => {
           li.appendChild(checkbox);
         }
 
-        if (filePickerActiveType === "music") {
-          const starTagWrap = document.createElement("div");
-          starTagWrap.className = "file-picker-star-tag-wrap";
-          const tagBtn = createUserTagButton(file.id);
-          starTagWrap.appendChild(tagBtn);
-          const star = createFavoriteStarButton(
-            Favorites.has("music", file.id),
-            () => {
-              void Favorites.toggle("music", file.id).then(() => {
-                star.sync(Favorites.has("music", file.id));
-                if (filePickerFavoritesOnly) {
-                  void renderFilePickerList();
-                }
-              });
-            },
-          );
-          star.classList.add("file-picker-row-star");
-          starTagWrap.appendChild(star);
-          li.appendChild(starTagWrap);
-        }
-
         li.appendChild(info);
+
+        const rowActions = document.createElement("div");
+        rowActions.className = "file-picker-row-actions";
 
         const playButton = document.createElement("button");
         playButton.type = "button";
@@ -2981,8 +3383,7 @@ const AudioLibrary = (() => {
           });
           filePickerPreviewAudio = preview;
         });
-
-        li.appendChild(playButton);
+        rowActions.appendChild(playButton);
 
         if (!useMultiRow) {
           const selectButton = document.createElement("button");
@@ -2994,8 +3395,31 @@ const AudioLibrary = (() => {
             }
             closeFilePicker();
           });
-          li.appendChild(selectButton);
+          rowActions.appendChild(selectButton);
         }
+
+        if (filePickerActiveType === "music") {
+          const starTagWrap = document.createElement("div");
+          starTagWrap.className = "file-picker-star-tag-wrap";
+          const star = createFavoriteStarButton(
+            Favorites.has("music", file.id),
+            () => {
+              void Favorites.toggle("music", file.id).then(() => {
+                star.sync(Favorites.has("music", file.id));
+                if (filePickerFavoritesOnly) {
+                  void renderFilePickerList();
+                }
+              });
+            },
+          );
+          star.classList.add("file-picker-row-star");
+          const tagBtn = createUserTagButton(file.id);
+          starTagWrap.appendChild(star);
+          starTagWrap.appendChild(tagBtn);
+          rowActions.appendChild(starTagWrap);
+        }
+
+        li.appendChild(rowActions);
 
         filePickerList.appendChild(li);
       });
@@ -3009,6 +3433,7 @@ const AudioLibrary = (() => {
       filePickerSelectedMood = null;
       filePickerSelectedSfxSection = null;
       filePickerFavoritesOnly = false;
+      filePickerMyTagFilter = null;
       filePickerTabs.querySelectorAll(".file-picker-tab").forEach((button) => {
         button.classList.toggle("active", button.dataset.audioType === audioType);
       });
@@ -3501,8 +3926,20 @@ const AudioLibrary = (() => {
     });
 
     UserTags.subscribe(() => {
+      const summary = UserTags.getMyTagSummary();
+      if (filePickerMyTagFilter && !summary.some((r) => r.tag === filePickerMyTagFilter)) {
+        filePickerMyTagFilter = null;
+      }
+      if (sfxMyTagFilter && !summary.some((r) => r.tag === sfxMyTagFilter)) {
+        sfxMyTagFilter = null;
+      }
+      void buildSfxSectionFilterPills();
       void renderFxButtons();
+      if (userTagPopoverWrap && !userTagPopoverWrap.hidden && typeof userTagPopoverWrap._refresh === "function") {
+        void userTagPopoverWrap._refresh();
+      }
       if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
+        void renderFilePickerFilters();
         void renderFilePickerList();
       }
     });
@@ -3630,9 +4067,11 @@ const AudioLibrary = (() => {
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
         restorePersistedActiveSceneOrDefault();
+        void buildSfxSectionFilterPills();
         void renderFxButtons();
         renderMusicPlaylist();
         if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
+          void renderFilePickerFilters();
           void renderFilePickerList();
         }
         return;
@@ -3641,18 +4080,22 @@ const AudioLibrary = (() => {
         closeAuthModal();
         Favorites.loadFromLocalStorage();
         UserTags.clear();
+        sfxMyTagFilter = null;
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
         restorePersistedActiveSceneOrDefault();
+        void buildSfxSectionFilterPills();
         void renderFxButtons();
         renderMusicPlaylist();
         if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
+          void renderFilePickerFilters();
           void renderFilePickerList();
         }
       }
     }
 
     void (async () => {
+      void loadSuggestedTagsOnce();
       supabase.auth.onAuthStateChange((event, nextSession) => {
         void handleSupabaseAuthChange(event, nextSession);
       });
@@ -3667,6 +4110,7 @@ const AudioLibrary = (() => {
       } else {
         Favorites.loadFromLocalStorage();
         UserTags.clear();
+        sfxMyTagFilter = null;
       }
       await refreshCustomScenesList();
       refreshSceneSelectorBar();
