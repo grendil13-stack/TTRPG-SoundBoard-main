@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>DnD Mood Builder</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <style>
@@ -154,7 +154,8 @@
     }
 
     .auth-modal-backdrop,
-    .scene-limit-modal-backdrop {
+    .scene-limit-modal-backdrop,
+    .feedback-modal-backdrop {
       position: fixed;
       inset: 0;
       background: rgba(8, 10, 16, 0.72);
@@ -162,16 +163,19 @@
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 24px 12px;
+      padding: max(24px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+        max(24px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
     }
 
     .auth-modal-backdrop.open,
-    .scene-limit-modal-backdrop.open {
+    .scene-limit-modal-backdrop.open,
+    .feedback-modal-backdrop.open {
       display: flex;
     }
 
     .auth-modal-panel,
-    .scene-limit-modal-panel {
+    .scene-limit-modal-panel,
+    .feedback-modal-panel {
       background: var(--panel);
       border: 0.5px solid var(--border);
       border-radius: 12px;
@@ -181,7 +185,8 @@
     }
 
     .auth-modal-panel h3,
-    .scene-limit-modal-panel h3 {
+    .scene-limit-modal-panel h3,
+    .feedback-modal-panel h3 {
       margin: 0 0 10px;
       font-size: 1.15rem;
     }
@@ -231,6 +236,149 @@
       color: var(--muted);
       font-size: 0.95rem;
       line-height: 1.45;
+    }
+
+    .feedback-modal-panel {
+      max-width: 420px;
+    }
+
+    .feedback-modal-panel .feedback-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .feedback-field-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .feedback-modal-panel label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .feedback-modal-panel textarea,
+    .feedback-modal-panel input[type="email"] {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 0.5px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    .feedback-modal-panel textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .feedback-category-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .feedback-category-btn {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 0.5px solid var(--border);
+      background: var(--panel-2);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .feedback-category-btn:hover {
+      color: var(--text);
+    }
+
+    .feedback-category-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(127, 119, 221, 0.12);
+    }
+
+    .feedback-thanks-msg {
+      margin: 8px 0 0;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .feedback-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      line-height: 1.2;
+    }
+
+    .feedback-btn:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .feedback-btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+
+    .feedback-btn--desktop {
+      position: fixed;
+      left: max(12px, env(safe-area-inset-left, 0px));
+      bottom: max(12px, env(safe-area-inset-bottom, 0px));
+      z-index: 99;
+      display: none;
+      padding: 8px 12px;
+    }
+
+    .feedback-btn--dock {
+      display: none;
+      flex-shrink: 0;
+      padding: 6px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      max-width: 38vw;
+    }
+
+    .feedback-btn--dock .feedback-btn-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (min-width: 768px) {
+      .feedback-btn--desktop {
+        display: inline-flex;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 450px) and (max-width: 926px) {
+      .feedback-btn--desktop {
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 767px),
+      (orientation: landscape) and (max-height: 450px) and (max-width: 926px) {
+      .feedback-btn--dock {
+        display: inline-flex;
+      }
     }
 
     .cockpit-body {
@@ -1014,7 +1162,7 @@
     @media (max-width: 767px),
       (orientation: landscape) and (max-height: 450px) and (max-width: 926px) {
       .app-shell {
-        padding-bottom: calc(var(--master-dock-h) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(var(--master-dock-h) + 8px + env(safe-area-inset-bottom, 0px));
       }
 
       .cockpit-left {
@@ -1136,7 +1284,7 @@
         bottom: 0;
         z-index: 100;
         min-height: var(--master-dock-h);
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
         background: #0c0c0f;
         border-top: 0.5px solid var(--border);
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35);
@@ -2224,6 +2372,12 @@
 
   <div class="master-volume-dock" id="master-volume-dock">
     <div class="master-volume-dock-inner">
+      <button type="button" class="feedback-btn feedback-btn--dock" id="feedback-btn-dock" aria-label="Feedback">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15a4 4 0 0 1-4 4H7l-5 3V5a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10z" />
+        </svg>
+        <span class="feedback-btn-text">Feedback</span>
+      </button>
       <label class="master-volume-dock-label" for="master-volume-mobile">Master</label>
       <span id="master-volume-pct" class="master-volume-pct">70%</span>
       <div class="master-volume-dock-slider">
@@ -2231,6 +2385,13 @@
       </div>
     </div>
   </div>
+
+  <button type="button" class="feedback-btn feedback-btn--desktop" id="feedback-btn-desktop" aria-label="Feedback">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 15a4 4 0 0 1-4 4H7l-5 3V5a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10z" />
+    </svg>
+    <span class="feedback-btn-text">Feedback</span>
+  </button>
 
   <div class="scene-editor-backdrop" id="scene-editor-backdrop" inert>
     <div class="scene-editor-panel" role="dialog" aria-labelledby="scene-editor-title" aria-modal="true">
@@ -2326,6 +2487,38 @@
       <div class="auth-modal-actions">
         <button type="button" class="secondary" id="scene-limit-modal-dismiss">Not now</button>
         <button type="button" id="scene-limit-modal-sign-up">Create free account</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="feedback-modal-backdrop" id="feedback-modal-backdrop" aria-hidden="true">
+    <div class="feedback-modal-panel" role="dialog" aria-labelledby="feedback-modal-title" aria-modal="true">
+      <h3 id="feedback-modal-title">Share Feedback or Report a Bug</h3>
+      <div id="feedback-modal-form-wrap">
+        <div class="feedback-field">
+          <span class="feedback-field-label" id="feedback-category-label">Category</span>
+          <div class="feedback-category-group" role="group" aria-labelledby="feedback-category-label">
+            <button type="button" class="feedback-category-btn" data-feedback-category="bug_report">Bug Report</button>
+            <button type="button" class="feedback-category-btn" data-feedback-category="feature_request">Feature Request</button>
+            <button type="button" class="feedback-category-btn" data-feedback-category="general_feedback">General Feedback</button>
+          </div>
+        </div>
+        <div class="feedback-field">
+          <label for="feedback-message">Message</label>
+          <textarea id="feedback-message" rows="4" maxlength="8000" placeholder="Describe the issue or idea" autocomplete="off"></textarea>
+        </div>
+        <div class="feedback-field">
+          <label for="feedback-email">Email (optional)</label>
+          <input id="feedback-email" type="email" maxlength="320" placeholder="Your email optional for follow up" autocomplete="email" />
+        </div>
+        <p id="feedback-submit-error" class="auth-modal-error" aria-live="polite"></p>
+        <div class="auth-modal-actions">
+          <button type="button" class="secondary" id="feedback-modal-cancel">Cancel</button>
+          <button type="button" id="feedback-modal-submit">Submit</button>
+        </div>
+      </div>
+      <div id="feedback-modal-thanks" class="feedback-thanks-wrap" hidden>
+        <p class="feedback-thanks-msg">Thank you — we appreciate your input.</p>
       </div>
     </div>
   </div>

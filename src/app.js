@@ -822,9 +822,21 @@ const AudioLibrary = (() => {
     const sceneLimitModalBackdrop = document.getElementById("scene-limit-modal-backdrop");
     const sceneLimitDismissBtn = document.getElementById("scene-limit-modal-dismiss");
     const sceneLimitSignUpBtn = document.getElementById("scene-limit-modal-sign-up");
+    const feedbackModalBackdrop = document.getElementById("feedback-modal-backdrop");
+    const feedbackBtnDesktop = document.getElementById("feedback-btn-desktop");
+    const feedbackBtnDock = document.getElementById("feedback-btn-dock");
+    const feedbackFormWrap = document.getElementById("feedback-modal-form-wrap");
+    const feedbackThanksWrap = document.getElementById("feedback-modal-thanks");
+    const feedbackMessageEl = document.getElementById("feedback-message");
+    const feedbackEmailEl = document.getElementById("feedback-email");
+    const feedbackSubmitBtn = document.getElementById("feedback-modal-submit");
+    const feedbackCancelBtn = document.getElementById("feedback-modal-cancel");
+    const feedbackSubmitErrorEl = document.getElementById("feedback-submit-error");
 
     const ANON_CUSTOM_SCENE_LIMIT = 5;
 
+    let selectedFeedbackCategory = null;
+    let feedbackCloseTimerId = null;
     let pendingDeleteSceneKey = null;
     let sceneEditorDraftPlaylist = [];
     let sceneEditorDraftAmbient = [];
@@ -1146,6 +1158,109 @@ const AudioLibrary = (() => {
       }
       sceneLimitModalBackdrop.classList.remove("open");
       sceneLimitModalBackdrop.setAttribute("aria-hidden", "true");
+    }
+
+    function openFeedbackModal() {
+      if (!feedbackModalBackdrop) {
+        return;
+      }
+      if (feedbackCloseTimerId) {
+        clearTimeout(feedbackCloseTimerId);
+        feedbackCloseTimerId = null;
+      }
+      selectedFeedbackCategory = null;
+      document.querySelectorAll("[data-feedback-category]").forEach((b) => {
+        b.classList.remove("active");
+      });
+      if (feedbackSubmitErrorEl) {
+        feedbackSubmitErrorEl.textContent = "";
+      }
+      if (feedbackMessageEl) {
+        feedbackMessageEl.value = "";
+      }
+      if (feedbackEmailEl) {
+        feedbackEmailEl.value = "";
+      }
+      if (feedbackFormWrap) {
+        feedbackFormWrap.hidden = false;
+      }
+      if (feedbackThanksWrap) {
+        feedbackThanksWrap.hidden = true;
+      }
+      if (feedbackSubmitBtn) {
+        feedbackSubmitBtn.disabled = false;
+      }
+      feedbackModalBackdrop.classList.add("open");
+      feedbackModalBackdrop.setAttribute("aria-hidden", "false");
+      if (feedbackMessageEl) {
+        feedbackMessageEl.focus();
+      }
+    }
+
+    function closeFeedbackModal() {
+      if (feedbackCloseTimerId) {
+        clearTimeout(feedbackCloseTimerId);
+        feedbackCloseTimerId = null;
+      }
+      if (!feedbackModalBackdrop) {
+        return;
+      }
+      feedbackModalBackdrop.classList.remove("open");
+      feedbackModalBackdrop.setAttribute("aria-hidden", "true");
+    }
+
+    async function submitFeedbackForm() {
+      if (!feedbackSubmitErrorEl || !feedbackMessageEl) {
+        return;
+      }
+      feedbackSubmitErrorEl.textContent = "";
+      const message = feedbackMessageEl.value.trim();
+      if (!selectedFeedbackCategory) {
+        feedbackSubmitErrorEl.textContent = "Please choose a category.";
+        return;
+      }
+      if (!message) {
+        feedbackSubmitErrorEl.textContent = "Please enter a message.";
+        return;
+      }
+      const emailRaw = feedbackEmailEl ? feedbackEmailEl.value.trim() : "";
+      if (feedbackSubmitBtn) {
+        feedbackSubmitBtn.disabled = true;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const row = {
+        category: selectedFeedbackCategory,
+        message,
+        email: emailRaw || null,
+        user_id: session?.user?.id ?? null,
+        page_url: typeof window !== "undefined" ? window.location.href : "",
+      };
+      const { error } = await supabase.from("feedback").insert(row);
+      if (feedbackSubmitBtn) {
+        feedbackSubmitBtn.disabled = false;
+      }
+      if (error) {
+        console.error("feedback insert", error);
+        feedbackSubmitErrorEl.textContent =
+          error.message || "Could not submit feedback. Please try again.";
+        return;
+      }
+      if (feedbackFormWrap) {
+        feedbackFormWrap.hidden = true;
+      }
+      if (feedbackThanksWrap) {
+        feedbackThanksWrap.hidden = false;
+      }
+      feedbackCloseTimerId = window.setTimeout(() => {
+        feedbackCloseTimerId = null;
+        closeFeedbackModal();
+        if (feedbackFormWrap) {
+          feedbackFormWrap.hidden = false;
+        }
+        if (feedbackThanksWrap) {
+          feedbackThanksWrap.hidden = true;
+        }
+      }, 2000);
     }
 
     function getCustomSceneByKey(sceneKey) {
@@ -3470,6 +3585,37 @@ const AudioLibrary = (() => {
         if (e.target === sceneLimitModalBackdrop) {
           closeSceneLimitModal();
         }
+      });
+    }
+
+    document.querySelectorAll("[data-feedback-category]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const cat = btn.getAttribute("data-feedback-category");
+        selectedFeedbackCategory = cat;
+        document.querySelectorAll("[data-feedback-category]").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+      });
+    });
+    if (feedbackBtnDesktop) {
+      feedbackBtnDesktop.addEventListener("click", () => openFeedbackModal());
+    }
+    if (feedbackBtnDock) {
+      feedbackBtnDock.addEventListener("click", () => openFeedbackModal());
+    }
+    if (feedbackCancelBtn) {
+      feedbackCancelBtn.addEventListener("click", () => closeFeedbackModal());
+    }
+    if (feedbackModalBackdrop) {
+      feedbackModalBackdrop.addEventListener("click", (e) => {
+        if (e.target === feedbackModalBackdrop) {
+          closeFeedbackModal();
+        }
+      });
+    }
+    if (feedbackSubmitBtn) {
+      feedbackSubmitBtn.addEventListener("click", () => {
+        void submitFeedbackForm();
       });
     }
 
