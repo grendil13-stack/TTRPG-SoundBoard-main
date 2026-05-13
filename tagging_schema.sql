@@ -53,3 +53,31 @@ SELECT
   array_agg(audio_id ORDER BY audio_id) AS audio_ids
 FROM user_tags
 GROUP BY user_id, tag;
+
+-- ---------------------------------------------------------------------------
+-- Sessions (campaign folders). Table may already exist in your project; this
+-- block documents RLS required for the app. Apply missing pieces in SQL editor.
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can insert own sessions" ON public.sessions;
+CREATE POLICY "Users can insert own sessions"
+  ON public.sessions FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- The app lists and updates sessions; add these if not already present.
+DROP POLICY IF EXISTS "Users read own sessions" ON public.sessions;
+CREATE POLICY "Users read own sessions"
+  ON public.sessions FOR SELECT
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users update own sessions" ON public.sessions;
+CREATE POLICY "Users update own sessions"
+  ON public.sessions FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users delete own sessions" ON public.sessions;
+CREATE POLICY "Users delete own sessions"
+  ON public.sessions FOR DELETE
+  USING (auth.uid() = user_id);

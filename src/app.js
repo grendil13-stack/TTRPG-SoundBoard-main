@@ -1499,10 +1499,15 @@ const AudioLibrary = (() => {
         .select("id,name,description,sort_order")
         .single();
       if (error) {
-        console.error("session insert error", error);
-        return null;
+        console.error("session insert error (full)", error);
+        try {
+          console.error("session insert error (JSON)", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        } catch {
+          /* ignore */
+        }
+        return { data: null, error };
       }
-      return data;
+      return { data, error: null };
     }
 
     async function attachOrphanScenesToDefaultSession(userId, defaultSessionId) {
@@ -1519,8 +1524,11 @@ const AudioLibrary = (() => {
     async function ensureSessionsForUser(userId) {
       let sessions = await fetchSessionsFromDb(userId);
       if (!sessions.length) {
-        const created = await insertSessionRow(userId, "My Scenes", 0);
-        if (!created) {
+        const { data: created, error: createErr } = await insertSessionRow(userId, "My Scenes", 0);
+        if (createErr || !created) {
+          if (createErr) {
+            console.error("default session insert error (full)", createErr);
+          }
           sessionsList = [];
           activeSessionId = null;
           return false;
@@ -1725,11 +1733,6 @@ const AudioLibrary = (() => {
       newToggle.type = "button";
       newToggle.className = "session-menu-item session-menu-new-toggle";
       newToggle.textContent = "+ New Session";
-      newToggle.addEventListener("click", () => {
-        newToggle.hidden = true;
-        form.hidden = false;
-        nameInput.focus();
-      });
 
       const form = document.createElement("div");
       form.className = "session-menu-new-form";
@@ -1738,6 +1741,10 @@ const AudioLibrary = (() => {
       nameInput.type = "text";
       nameInput.placeholder = "Session name";
       nameInput.autocomplete = "off";
+      const createErrEl = document.createElement("p");
+      createErrEl.className = "session-menu-create-error";
+      createErrEl.hidden = true;
+      createErrEl.setAttribute("role", "alert");
       const actions = document.createElement("div");
       actions.className = "session-menu-new-form-actions";
       const createBtn = document.createElement("button");
@@ -1748,41 +1755,90 @@ const AudioLibrary = (() => {
       cancelBtn.className = "secondary";
       cancelBtn.textContent = "Cancel";
 
+      const showSessionCreateError = (message) => {
+        createErrEl.textContent = message;
+        createErrEl.hidden = false;
+      };
+
+      const clearSessionCreateError = () => {
+        createErrEl.textContent = "";
+        createErrEl.hidden = true;
+      };
+
       const finishNew = async (commit) => {
-        newToggle.hidden = false;
-        form.hidden = true;
-        nameInput.value = "";
         if (!commit) {
+          clearSessionCreateError();
+          newToggle.hidden = false;
+          form.hidden = true;
+          nameInput.value = "";
           return;
         }
         const nm = nameInput.value.trim();
         if (!nm) {
           return;
         }
+        clearSessionCreateError();
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) {
+          showSessionCreateError("You must be signed in to create a session.");
           return;
         }
         const maxSort = sessionsList.reduce(
           (m, s) => Math.max(m, Number(s.sort_order) || 0),
           -1,
         );
-        const row = await insertSessionRow(session.user.id, nm, maxSort + 1);
-        if (!row) {
-          window.alert("Could not create session.");
+        const { data: inserted, error: insertErr } = await insertSessionRow(
+          session.user.id,
+          nm,
+          maxSort + 1,
+        );
+        if (insertErr || !inserted) {
+          const detail =
+            insertErr && typeof insertErr === "object" && "message" in insertErr
+              ? String(insertErr.message)
+              : "Unknown error";
+          console.error("session create failed (full)", insertErr);
+          try {
+            console.error(
+              "session create failed (JSON)",
+              JSON.stringify(insertErr, Object.getOwnPropertyNames(insertErr || {})),
+            );
+          } catch {
+            /* ignore */
+          }
+          showSessionCreateError(
+            `Could not create session: ${detail}. Check the console for details.`,
+          );
           return;
         }
-        sessionsList = [...sessionsList, row].sort((a, b) => {
-          const ao = Number(a.sort_order) || 0;
-          const bo = Number(b.sort_order) || 0;
-          if (ao !== bo) {
-            return ao - bo;
-          }
-          return String(a.name).localeCompare(String(b.name));
-        });
-        setActiveSessionId(row.id);
-        renderSessionSelectorUI();
+        const refetched = await fetchSessionsFromDb(session.user.id);
+        const refetchHasRow =
+          Array.isArray(refetched) && refetched.some((s) => s.id === inserted.id);
+        if (refetched.length && refetchHasRow) {
+          sessionsList = refetched;
+        } else {
+          sessionsList = [...sessionsList, inserted].sort((a, b) => {
+            const ao = Number(a.sort_order) || 0;
+            const bo = Number(b.sort_order) || 0;
+            if (ao !== bo) {
+              return ao - bo;
+            }
+            return String(a.name).localeCompare(String(b.name));
+          });
+        }
+        newToggle.hidden = false;
+        form.hidden = true;
+        nameInput.value = "";
+        clearSessionCreateError();
+        setActiveSessionId(inserted.id);
       };
+
+      newToggle.addEventListener("click", () => {
+        clearSessionCreateError();
+        newToggle.hidden = true;
+        form.hidden = false;
+        nameInput.focus();
+      });
 
       createBtn.addEventListener("click", () => {
         void finishNew(true);
@@ -1803,6 +1859,7 @@ const AudioLibrary = (() => {
       actions.appendChild(cancelBtn);
       actions.appendChild(createBtn);
       form.appendChild(nameInput);
+      form.appendChild(createErrEl);
       form.appendChild(actions);
 
       newWrap.appendChild(newToggle);
