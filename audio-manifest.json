@@ -10179,7 +10179,7 @@
       "id": "punch-sound",
       "title": "punch-sound",
       "filename": "punch-sound.ogg",
-      "path": "sound/sfx/combat/punch-sound.ogg",
+      "path": "sounds/sfx/combat/punch-sound.ogg",
       "type": "sfx",
       "section": "Combat",
       "mood_tags": [

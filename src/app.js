@@ -31,7 +31,9 @@ const AudioLibrary = (() => {
         }
         const trimmed = rawPath.trim().replace(/\\/g, "/");
         const withoutPrefix = trimmed.replace(/^(\.\.\/)+/i, "");
-        const normalizedSounds = withoutPrefix.replace(/^sounds\//i, "sounds/");
+        /* Manifest typo `sound/...` must map like `sounds/...` (bucket is music|ambient|sfx). */
+        const withSoundsRoot = withoutPrefix.replace(/^sound\//i, "sounds/");
+        const normalizedSounds = withSoundsRoot.replace(/^sounds\//i, "sounds/");
         return normalizedSounds;
       };
 
