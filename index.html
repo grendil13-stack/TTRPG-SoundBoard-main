@@ -52,6 +52,11 @@
       margin: 0 auto;
     }
 
+    /* Hidden on desktop; shown in mobile breakpoints below (must precede those rules). */
+    .master-volume-dock {
+      display: none;
+    }
+
     .topbar {
       display: flex;
       align-items: center;
@@ -2041,10 +2046,6 @@
     input[type="range"] {
       width: 100%;
       accent-color: var(--accent);
-    }
-
-    .master-volume-dock {
-      display: none;
     }
 
     .rail-footer #create-new-scene {
