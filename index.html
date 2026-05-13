@@ -511,6 +511,209 @@
       line-height: 1.4;
     }
 
+    .session-selector-wrap {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .session-selector-wrap.session-transition + .scene-buttons {
+      opacity: 0.55;
+      transition: opacity 0.09s ease;
+    }
+
+    .session-selector-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .session-selector-trigger:hover {
+      background: var(--panel-2);
+    }
+
+    .session-selector-trigger .session-selector-trigger-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .session-selector-trigger .session-selector-chevron {
+      flex-shrink: 0;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .session-selector-menu {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 30;
+      max-height: min(320px, 55vh);
+      overflow-y: auto;
+      padding: 4px 0;
+      border-radius: 8px;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .session-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      font-size: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      width: 100%;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 4px;
+    }
+
+    .session-menu-item:hover,
+    .session-menu-item:focus-visible {
+      background: var(--panel-2);
+    }
+
+    .session-menu-item.is-active {
+      color: var(--accent);
+    }
+
+    .session-menu-item-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .session-menu-item-count {
+      font-size: 10px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .session-menu-item-wrap {
+      display: flex;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .session-menu-item-wrap .session-menu-item {
+      flex: 1;
+      width: auto;
+      min-width: 0;
+    }
+
+    .session-menu-item-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .session-menu-icon-btn {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .session-menu-icon-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .session-menu-new {
+      border-top: 0.5px solid var(--border);
+      margin-top: 4px;
+      padding-top: 4px;
+    }
+
+    .session-menu-new-toggle {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .session-menu-new-form {
+      padding: 6px 8px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .session-menu-new-form input {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 0.5px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .session-menu-new-form-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .session-menu-new-form-actions button {
+      font-size: 11px;
+      padding: 5px 10px;
+    }
+
+    .session-selector-locked {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      color: var(--muted);
+    }
+
+    .session-selector-locked-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .session-selector-lock {
+      flex-shrink: 0;
+      font-size: 13px;
+      cursor: help;
+    }
+
     .center-stack {
       display: flex;
       flex-direction: column;
@@ -2406,6 +2609,7 @@
         <aside class="rail" aria-label="Scene selector">
         <div class="rail-header">Scenes</div>
         <div class="rail-scroll">
+          <div id="session-selector-wrap" class="session-selector-wrap" hidden aria-label="Session"></div>
           <div class="scene-buttons" id="scene-buttons-bar" role="group" aria-label="Choose scene">
             <p class="scene-selector-empty" id="scene-selector-empty" hidden>No scenes yet. Use &quot;+ New Scene&quot; below.</p>
           </div>
@@ -2571,6 +2775,11 @@
       <div class="editor-field">
         <label for="editor-scene-tags">Scene tags (comma-separated)</label>
         <input id="editor-scene-tags" type="text" placeholder="combat, ambient, social" autocomplete="off" />
+      </div>
+
+      <div class="editor-field" id="editor-session-field" hidden>
+        <label for="editor-scene-session">Session</label>
+        <select id="editor-scene-session"></select>
       </div>
 
       <div class="editor-subblock">

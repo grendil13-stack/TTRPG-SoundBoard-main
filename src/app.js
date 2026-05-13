@@ -1100,7 +1100,20 @@ const AudioLibrary = (() => {
     let ambientFadePendingEntries = null;
     const CUSTOM_SCENES_STORAGE_KEY = "dndMoodBuilder.v1.customScenes";
     const ACTIVE_SCENE_STORAGE_KEY = "dndMoodBuilder.v1.activeSceneKey";
+    const ACTIVE_SESSION_STORAGE_KEY = "dndMoodBuilder.v1.activeSessionId";
     let customScenesList = [];
+    /** @type {{ id: string, name: string, description: string | null, sort_order: number }[]} */
+    let sessionsList = [];
+    /** @type {string | null} */
+    let activeSessionId = null;
+    /** Last auth session from Supabase; used for session UI without async. */
+    let lastAuthSession = null;
+    let sessionMenuOpen = false;
+    let sessionMenuGlobalCloseBound = false;
+
+    const sessionSelectorWrap = document.getElementById("session-selector-wrap");
+    const editorSessionField = document.getElementById("editor-session-field");
+    const editorSceneSessionSelect = document.getElementById("editor-scene-session");
 
     const sceneEditorBackdrop = document.getElementById("scene-editor-backdrop");
     const createNewSceneButton = document.getElementById("create-new-scene");
@@ -1153,6 +1166,8 @@ const AudioLibrary = (() => {
     const feedbackSubmitErrorEl = document.getElementById("feedback-submit-error");
 
     const ANON_CUSTOM_SCENE_LIMIT = 5;
+    /** Free signed-in accounts (when subscription is wired): max scenes in their single session. */
+    const FREE_SIGNED_IN_SCENE_LIMIT = 5;
 
     let selectedFeedbackCategory = null;
     let feedbackCloseTimerId = null;
@@ -1398,6 +1413,635 @@ const AudioLibrary = (() => {
         .filter(Boolean);
     }
 
+    /**
+     * When Stripe is integrated, return false for free-tier signed-in users.
+     * Today: any signed-in user is treated as paid for sessions and scene limits.
+     */
+    function userHasPaidSessionFeatures(authSession) {
+      return Boolean(authSession?.user);
+    }
+
+    function countScenesInSession(sessionId) {
+      if (!sessionId) {
+        return customScenesList.length;
+      }
+      return customScenesList.filter((s) => (s.sessionId || sessionsList[0]?.id) === sessionId).length;
+    }
+
+    function customScenesInActiveSession() {
+      if (!lastAuthSession?.user || !activeSessionId) {
+        return customScenesList;
+      }
+      return customScenesList.filter(
+        (s) => (s.sessionId || sessionsList[0]?.id) === activeSessionId,
+      );
+    }
+
+    function persistActiveSessionId() {
+      if (!activeSessionId) {
+        return;
+      }
+      try {
+        localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, activeSessionId);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    function resolveActiveSessionIdFromStorage() {
+      let saved = null;
+      try {
+        saved = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+      } catch {
+        saved = null;
+      }
+      if (saved && sessionsList.some((s) => s.id === saved)) {
+        activeSessionId = saved;
+        return;
+      }
+      activeSessionId = sessionsList[0]?.id ?? null;
+    }
+
+    function clearSessionStateForSignOut() {
+      sessionsList = [];
+      activeSessionId = null;
+      sessionMenuOpen = false;
+      try {
+        localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    async function fetchSessionsFromDb(userId) {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id,name,description,sort_order")
+        .eq("user_id", userId)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (error) {
+        console.error("sessions load error", error);
+        return [];
+      }
+      return data || [];
+    }
+
+    async function insertSessionRow(userId, name, sortOrder) {
+      const { data, error } = await supabase
+        .from("sessions")
+        .insert({
+          user_id: userId,
+          name,
+          description: null,
+          sort_order: sortOrder,
+        })
+        .select("id,name,description,sort_order")
+        .single();
+      if (error) {
+        console.error("session insert error", error);
+        return null;
+      }
+      return data;
+    }
+
+    async function attachOrphanScenesToDefaultSession(userId, defaultSessionId) {
+      const { error } = await supabase
+        .from("scenes")
+        .update({ session_id: defaultSessionId })
+        .eq("user_id", userId)
+        .is("session_id", null);
+      if (error) {
+        console.error("scene session_id backfill error", error);
+      }
+    }
+
+    async function ensureSessionsForUser(userId) {
+      let sessions = await fetchSessionsFromDb(userId);
+      if (!sessions.length) {
+        const created = await insertSessionRow(userId, "My Scenes", 0);
+        if (!created) {
+          sessionsList = [];
+          activeSessionId = null;
+          return false;
+        }
+        sessions = [created];
+      }
+      sessionsList = sessions;
+      const defaultId = sessions[0].id;
+      await attachOrphanScenesToDefaultSession(userId, defaultId);
+      resolveActiveSessionIdFromStorage();
+      persistActiveSessionId();
+      return true;
+    }
+
+    function closeSessionMenu() {
+      sessionMenuOpen = false;
+      if (!sessionSelectorWrap) {
+        return;
+      }
+      const menu = sessionSelectorWrap.querySelector(".session-selector-menu");
+      if (menu) {
+        menu.hidden = true;
+      }
+      const trig = sessionSelectorWrap.querySelector(".session-selector-trigger");
+      if (trig) {
+        trig.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    function bindSessionMenuGlobalClose() {
+      if (sessionMenuGlobalCloseBound) {
+        return;
+      }
+      sessionMenuGlobalCloseBound = true;
+      document.addEventListener(
+        "pointerdown",
+        (e) => {
+          if (!sessionSelectorWrap || sessionSelectorWrap.hidden) {
+            return;
+          }
+          const menu = sessionSelectorWrap.querySelector(".session-selector-menu");
+          if (!menu || menu.hidden) {
+            return;
+          }
+          if (sessionSelectorWrap.contains(e.target)) {
+            return;
+          }
+          closeSessionMenu();
+        },
+        true,
+      );
+    }
+
+    function setActiveSessionId(nextId, opts = {}) {
+      if (!nextId || !sessionsList.some((s) => s.id === nextId)) {
+        return;
+      }
+      const skipPersist = Boolean(opts.skipPersist);
+      const skipReselectScene = Boolean(opts.skipReselectScene);
+      const prev = activeSessionId;
+      activeSessionId = nextId;
+      if (!skipPersist) {
+        persistActiveSessionId();
+      }
+      if (sessionSelectorWrap) {
+        sessionSelectorWrap.classList.add("session-transition");
+      }
+      closeSessionMenu();
+      renderSessionSelectorUI();
+      refreshSceneSelectorBar();
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          if (sessionSelectorWrap) {
+            sessionSelectorWrap.classList.remove("session-transition");
+          }
+        });
+      });
+      if (skipReselectScene) {
+        const cur = currentScene;
+        if (cur && isCustomSceneKey(cur)) {
+          const cs = getCustomSceneByKey(cur);
+          const sid = cs ? (cs.sessionId || sessionsList[0]?.id) : null;
+          if (cs && sid === nextId) {
+            setActiveSceneButton(cur);
+          }
+        }
+        return;
+      }
+      if (prev === nextId) {
+        return;
+      }
+      const cur = currentScene;
+      if (cur && isCustomSceneKey(cur)) {
+        const cs = getCustomSceneByKey(cur);
+        if (cs && (cs.sessionId || sessionsList[0]?.id) === nextId) {
+          setActiveSceneButton(cur);
+          return;
+        }
+      }
+      selectFirstCustomSceneOrNone();
+    }
+
+    function populateEditorSessionSelect(selectedId) {
+      if (!editorSceneSessionSelect || !editorSessionField) {
+        return;
+      }
+      editorSceneSessionSelect.innerHTML = "";
+      if (!lastAuthSession?.user) {
+        editorSessionField.hidden = true;
+        return;
+      }
+      editorSessionField.hidden = false;
+      const paid = userHasPaidSessionFeatures(lastAuthSession);
+      sessionsList.forEach((sess) => {
+        const opt = document.createElement("option");
+        opt.value = sess.id;
+        opt.textContent = sess.name;
+        editorSceneSessionSelect.appendChild(opt);
+      });
+      const fallback = activeSessionId || sessionsList[0]?.id || "";
+      editorSceneSessionSelect.value = selectedId || fallback;
+      editorSceneSessionSelect.disabled = !paid;
+      editorSceneSessionSelect.title = paid
+        ? ""
+        : "Upgrade to organize scenes into multiple sessions";
+    }
+
+    function updateSessionSelectorTriggerLabel() {
+      if (!sessionSelectorWrap || sessionSelectorWrap.hidden) {
+        return;
+      }
+      const label = sessionSelectorWrap.querySelector(".session-selector-trigger-label");
+      if (!label) {
+        return;
+      }
+      const s = sessionsList.find((x) => x.id === activeSessionId);
+      label.textContent = s?.name || "Session";
+    }
+
+    function populateSessionMenuBody(menuEl) {
+      menuEl.innerHTML = "";
+      sessionsList.forEach((sess) => {
+        const row = document.createElement("div");
+        row.className = "session-menu-item-wrap";
+        row.dataset.sessionId = sess.id;
+
+        const mainBtn = document.createElement("button");
+        mainBtn.type = "button";
+        mainBtn.className = "session-menu-item";
+        if (sess.id === activeSessionId) {
+          mainBtn.classList.add("is-active");
+        }
+        const nm = document.createElement("span");
+        nm.className = "session-menu-item-name";
+        nm.textContent = sess.name;
+        const ct = document.createElement("span");
+        ct.className = "session-menu-item-count";
+        ct.textContent = String(countScenesInSession(sess.id));
+        mainBtn.appendChild(nm);
+        mainBtn.appendChild(ct);
+        mainBtn.addEventListener("click", () => {
+          setActiveSessionId(sess.id);
+        });
+
+        const actions = document.createElement("div");
+        actions.className = "session-menu-item-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "session-menu-icon-btn";
+        editBtn.title = "Rename session";
+        editBtn.setAttribute("aria-label", "Rename session");
+        editBtn.textContent = "✎";
+        editBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          startInlineSessionRename(row, sess);
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "session-menu-icon-btn";
+        delBtn.title = "Delete session";
+        delBtn.setAttribute("aria-label", "Delete session");
+        delBtn.textContent = "🗑";
+        delBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          void deleteSessionById(sess.id);
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+
+        row.appendChild(mainBtn);
+        row.appendChild(actions);
+        menuEl.appendChild(row);
+      });
+
+      const newWrap = document.createElement("div");
+      newWrap.className = "session-menu-new";
+
+      const newToggle = document.createElement("button");
+      newToggle.type = "button";
+      newToggle.className = "session-menu-item session-menu-new-toggle";
+      newToggle.textContent = "+ New Session";
+      newToggle.addEventListener("click", () => {
+        newToggle.hidden = true;
+        form.hidden = false;
+        nameInput.focus();
+      });
+
+      const form = document.createElement("div");
+      form.className = "session-menu-new-form";
+      form.hidden = true;
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = "Session name";
+      nameInput.autocomplete = "off";
+      const actions = document.createElement("div");
+      actions.className = "session-menu-new-form-actions";
+      const createBtn = document.createElement("button");
+      createBtn.type = "button";
+      createBtn.textContent = "Create";
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "secondary";
+      cancelBtn.textContent = "Cancel";
+
+      const finishNew = async (commit) => {
+        newToggle.hidden = false;
+        form.hidden = true;
+        nameInput.value = "";
+        if (!commit) {
+          return;
+        }
+        const nm = nameInput.value.trim();
+        if (!nm) {
+          return;
+        }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          return;
+        }
+        const maxSort = sessionsList.reduce(
+          (m, s) => Math.max(m, Number(s.sort_order) || 0),
+          -1,
+        );
+        const row = await insertSessionRow(session.user.id, nm, maxSort + 1);
+        if (!row) {
+          window.alert("Could not create session.");
+          return;
+        }
+        sessionsList = [...sessionsList, row].sort((a, b) => {
+          const ao = Number(a.sort_order) || 0;
+          const bo = Number(b.sort_order) || 0;
+          if (ao !== bo) {
+            return ao - bo;
+          }
+          return String(a.name).localeCompare(String(b.name));
+        });
+        setActiveSessionId(row.id);
+        renderSessionSelectorUI();
+      };
+
+      createBtn.addEventListener("click", () => {
+        void finishNew(true);
+      });
+      cancelBtn.addEventListener("click", () => {
+        void finishNew(false);
+      });
+      nameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          void finishNew(true);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          void finishNew(false);
+        }
+      });
+
+      actions.appendChild(cancelBtn);
+      actions.appendChild(createBtn);
+      form.appendChild(nameInput);
+      form.appendChild(actions);
+
+      newWrap.appendChild(newToggle);
+      newWrap.appendChild(form);
+      menuEl.appendChild(newWrap);
+    }
+
+    function startInlineSessionRename(rowEl, sess) {
+      const existing = rowEl.querySelector(".session-rename-input");
+      if (existing) {
+        existing.focus();
+        existing.select();
+        return;
+      }
+      rowEl.querySelectorAll(".session-menu-item, .session-menu-item-actions").forEach((n) => {
+        n.hidden = true;
+      });
+      const wrap = document.createElement("div");
+      wrap.className = "session-menu-new-form";
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.className = "session-rename-input";
+      inp.value = sess.name;
+      inp.autocomplete = "off";
+      const actions = document.createElement("div");
+      actions.className = "session-menu-new-form-actions";
+      const ok = document.createElement("button");
+      ok.type = "button";
+      ok.textContent = "Save";
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "secondary";
+      cancel.textContent = "Cancel";
+
+      const teardown = () => {
+        wrap.remove();
+        rowEl.querySelectorAll(".session-menu-item, .session-menu-item-actions").forEach((n) => {
+          n.hidden = false;
+        });
+      };
+
+      const commit = async (save) => {
+        if (!save) {
+          teardown();
+          return;
+        }
+        const nm = inp.value.trim();
+        if (!nm || nm === sess.name) {
+          teardown();
+          return;
+        }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          teardown();
+          return;
+        }
+        const { error } = await supabase
+          .from("sessions")
+          .update({ name: nm })
+          .eq("id", sess.id)
+          .eq("user_id", session.user.id);
+        if (error) {
+          console.error("rename session", error);
+          window.alert(`Could not rename: ${error.message}`);
+          teardown();
+          return;
+        }
+        sessionsList = sessionsList.map((s) =>
+          s.id === sess.id ? { ...s, name: nm } : s,
+        );
+        teardown();
+        renderSessionSelectorUI();
+        refreshSceneSelectorBar();
+      };
+
+      ok.addEventListener("click", () => {
+        void commit(true);
+      });
+      cancel.addEventListener("click", () => {
+        void commit(false);
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          void commit(true);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          void commit(false);
+        }
+      });
+
+      actions.appendChild(cancel);
+      actions.appendChild(ok);
+      wrap.appendChild(inp);
+      wrap.appendChild(actions);
+      rowEl.appendChild(wrap);
+      inp.focus();
+      inp.select();
+    }
+
+    async function deleteSessionById(sessionId) {
+      if (sessionsList.length <= 1) {
+        window.alert("You need at least one session.");
+        return;
+      }
+      const sess = sessionsList.find((s) => s.id === sessionId);
+      if (!sess) {
+        return;
+      }
+      const ok = window.confirm(
+        `Delete session "${sess.name}"? Its scenes will be moved to your default session.`,
+      );
+      if (!ok) {
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        return;
+      }
+      const sorted = [...sessionsList].sort((a, b) => {
+        const ao = Number(a.sort_order) || 0;
+        const bo = Number(b.sort_order) || 0;
+        if (ao !== bo) {
+          return ao - bo;
+        }
+        return String(a.name).localeCompare(String(b.name));
+      });
+      const target = sorted.find((s) => s.id !== sessionId);
+      if (!target) {
+        return;
+      }
+      const { error: uerr } = await supabase
+        .from("scenes")
+        .update({ session_id: target.id })
+        .eq("user_id", session.user.id)
+        .eq("session_id", sessionId);
+      if (uerr) {
+        console.error("move scenes on session delete", uerr);
+        window.alert(`Could not move scenes: ${uerr.message}`);
+        return;
+      }
+      const { error: derr } = await supabase
+        .from("sessions")
+        .delete()
+        .eq("id", sessionId)
+        .eq("user_id", session.user.id);
+      if (derr) {
+        console.error("delete session", derr);
+        window.alert(`Could not delete session: ${derr.message}`);
+        return;
+      }
+      sessionsList = sessionsList.filter((s) => s.id !== sessionId);
+      closeSessionMenu();
+      await refreshCustomScenesList();
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(target.id, { skipPersist: false, skipReselectScene: false });
+      } else {
+        renderSessionSelectorUI();
+        refreshSceneSelectorBar();
+      }
+    }
+
+    function openSessionMenu(menuEl, triggerEl) {
+      sessionMenuOpen = true;
+      menuEl.hidden = false;
+      populateSessionMenuBody(menuEl);
+      if (triggerEl) {
+        triggerEl.setAttribute("aria-expanded", "true");
+      }
+    }
+
+    function renderSessionSelectorUI() {
+      bindSessionMenuGlobalClose();
+      if (!sessionSelectorWrap) {
+        return;
+      }
+      sessionSelectorWrap.innerHTML = "";
+      const auth = lastAuthSession;
+      if (!auth?.user) {
+        sessionSelectorWrap.hidden = true;
+        return;
+      }
+      sessionSelectorWrap.hidden = false;
+
+      if (!userHasPaidSessionFeatures(auth)) {
+        const row = document.createElement("div");
+        row.className = "session-selector-locked";
+        const nm = document.createElement("span");
+        nm.className = "session-selector-locked-name";
+        const s = sessionsList.find((x) => x.id === activeSessionId) || sessionsList[0];
+        nm.textContent = s?.name || "My Scenes";
+        const lock = document.createElement("span");
+        lock.className = "session-selector-lock";
+        lock.textContent = "🔒";
+        lock.title = "Upgrade to organize scenes into sessions";
+        row.appendChild(nm);
+        row.appendChild(lock);
+        sessionSelectorWrap.appendChild(row);
+        return;
+      }
+
+      const trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className = "session-selector-trigger";
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.setAttribute("aria-haspopup", "true");
+      const lab = document.createElement("span");
+      lab.className = "session-selector-trigger-label";
+      const s0 = sessionsList.find((x) => x.id === activeSessionId) || sessionsList[0];
+      lab.textContent = s0?.name || "Session";
+      const chev = document.createElement("span");
+      chev.className = "session-selector-chevron";
+      chev.textContent = "▾";
+      chev.setAttribute("aria-hidden", "true");
+      trigger.appendChild(lab);
+      trigger.appendChild(chev);
+
+      const menu = document.createElement("div");
+      menu.className = "session-selector-menu";
+      menu.hidden = true;
+      menu.setAttribute("role", "menu");
+
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!menu.hidden) {
+          closeSessionMenu();
+          return;
+        }
+        openSessionMenu(menu, trigger);
+      });
+
+      sessionSelectorWrap.appendChild(trigger);
+      sessionSelectorWrap.appendChild(menu);
+
+      if (sessionMenuOpen) {
+        openSessionMenu(menu, trigger);
+      }
+    }
+
     function sceneRowToApp(row) {
       return {
         id: row.id,
@@ -1405,11 +2049,12 @@ const AudioLibrary = (() => {
         tags: Array.isArray(row.tags) ? row.tags.join(", ") : String(row.tags || ""),
         playlist: Array.isArray(row.playlist) ? row.playlist : [],
         ambientLayers: Array.isArray(row.ambient_layers) ? row.ambient_layers : [],
+        sessionId: row.session_id != null ? row.session_id : null,
       };
     }
 
     function appSceneToRow(scene, userId) {
-      return {
+      const row = {
         id: scene.id,
         user_id: userId,
         name: scene.name,
@@ -1417,12 +2062,17 @@ const AudioLibrary = (() => {
         playlist: scene.playlist || [],
         ambient_layers: scene.ambientLayers || [],
       };
+      const sid = scene.sessionId || activeSessionId || sessionsList[0]?.id;
+      if (sid) {
+        row.session_id = sid;
+      }
+      return row;
     }
 
     async function fetchCloudScenesForUser(userId) {
       const { data, error } = await supabase
         .from("scenes")
-        .select("id,user_id,name,tags,playlist,ambient_layers")
+        .select("id,user_id,name,tags,playlist,ambient_layers,session_id")
         .eq("user_id", userId)
         .order("name");
       if (error) {
@@ -1437,7 +2087,14 @@ const AudioLibrary = (() => {
       if (!local.length) {
         return;
       }
-      const rows = local.map((s) => appSceneToRow(s, userId));
+      await ensureSessionsForUser(userId);
+      const defaultSid = activeSessionId || sessionsList[0]?.id;
+      const rows = local.map((s) =>
+        appSceneToRow(
+          defaultSid ? { ...s, sessionId: defaultSid } : s,
+          userId,
+        ),
+      );
       const { error } = await supabase.from("scenes").upsert(rows, { onConflict: "id" });
       if (error) {
         console.error("scene migration error", error);
@@ -1453,13 +2110,17 @@ const AudioLibrary = (() => {
     async function refreshCustomScenesList() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        await ensureSessionsForUser(session.user.id);
         customScenesList = await fetchCloudScenesForUser(session.user.id);
       } else {
+        clearSessionStateForSignOut();
         customScenesList = loadCustomScenesFromStorage();
       }
+      renderSessionSelectorUI();
     }
 
     function updateAccountUI(session) {
+      lastAuthSession = session;
       if (!accountSignInBtn || !accountSignedInEl || !accountEmailEl) {
         return;
       }
@@ -2787,7 +3448,8 @@ const AudioLibrary = (() => {
     }
 
     function getFirstCustomSceneKey() {
-      return customScenesList.length ? `custom:${customScenesList[0].id}` : null;
+      const list = customScenesInActiveSession();
+      return list.length ? `custom:${list[0].id}` : null;
     }
 
     function applyNoSceneSelection() {
@@ -2830,10 +3492,17 @@ const AudioLibrary = (() => {
       } catch (_) {
         saved = null;
       }
-      if (saved && isCustomSceneKey(saved) && getCustomSceneByKey(saved)) {
-        setActiveSceneButton(saved);
-        activateSceneKey(saved);
-        return;
+      if (saved && isCustomSceneKey(saved)) {
+        const cs = getCustomSceneByKey(saved);
+        const sid = cs ? (cs.sessionId || sessionsList[0]?.id) : null;
+        if (cs && lastAuthSession?.user && sid && activeSessionId && sid !== activeSessionId) {
+          setActiveSessionId(sid, { skipPersist: false, skipReselectScene: true });
+        }
+        if (getCustomSceneByKey(saved)) {
+          setActiveSceneButton(saved);
+          activateSceneKey(saved);
+          return;
+        }
       }
       selectFirstCustomSceneOrNone();
     }
@@ -2842,7 +3511,8 @@ const AudioLibrary = (() => {
       sceneButtonsBar.querySelectorAll("[data-custom-scene-area]").forEach((el) => {
         el.remove();
       });
-      customScenesList.forEach((scene) => {
+      const visibleScenes = customScenesInActiveSession();
+      visibleScenes.forEach((scene) => {
         const key = `custom:${scene.id}`;
         const wrap = document.createElement("div");
         wrap.className = "scene-card";
@@ -2896,8 +3566,9 @@ const AudioLibrary = (() => {
 
       const emptyHint = document.getElementById("scene-selector-empty");
       if (emptyHint) {
-        emptyHint.hidden = customScenesList.length > 0;
+        emptyHint.hidden = visibleScenes.length > 0;
       }
+      updateSessionSelectorTriggerLabel();
     }
 
     function closeDeleteSceneConfirm() {
@@ -3652,6 +4323,8 @@ const AudioLibrary = (() => {
         : [];
       renderEditorPlaylist();
       renderEditorAmbient();
+      const sessPick = scene ? (scene.sessionId || activeSessionId) : activeSessionId;
+      populateEditorSessionSelect(sessPick || null);
     }
 
     function openSceneEditorNew() {
@@ -3700,6 +4373,15 @@ const AudioLibrary = (() => {
         }))
         .filter((r) => r.file);
 
+      let nextSessionId = activeSessionId || sessionsList[0]?.id || null;
+      if (
+        editorSceneSessionSelect &&
+        !editorSceneSessionSelect.disabled &&
+        editorSceneSessionSelect.value
+      ) {
+        nextSessionId = editorSceneSessionSelect.value;
+      }
+
       const sceneObj = {
         id: sceneEditorEditingId || (typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
@@ -3708,10 +4390,18 @@ const AudioLibrary = (() => {
         tags: editorSceneTags.value.trim(),
         playlist: sceneEditorDraftPlaylist.map((p) => p.trim()).filter(Boolean),
         ambientLayers: ambientLayers.slice(0, 6),
+        sessionId: nextSessionId || undefined,
       };
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        if (!sceneEditorEditingId && !userHasPaidSessionFeatures(session)) {
+          const n = countScenesInSession(activeSessionId || sessionsList[0]?.id);
+          if (n >= FREE_SIGNED_IN_SCENE_LIMIT) {
+            openSceneLimitModal();
+            return;
+          }
+        }
         const row = appSceneToRow(sceneObj, session.user.id);
         const { error } = await supabase.from("scenes").upsert(row, { onConflict: "id" });
         if (error) {
@@ -3727,11 +4417,12 @@ const AudioLibrary = (() => {
             return;
           }
         }
-        let list = loadCustomScenesFromStorage();
+        const anonScene = { ...sceneObj };
+        delete anonScene.sessionId;
         if (sceneEditorEditingId) {
-          list = list.map((s) => (s.id === sceneEditorEditingId ? sceneObj : s));
+          list = list.map((s) => (s.id === sceneEditorEditingId ? anonScene : s));
         } else {
-          list.push(sceneObj);
+          list.push(anonScene);
         }
         saveCustomScenesToStorage(list);
         await refreshCustomScenesList();
@@ -3788,6 +4479,12 @@ const AudioLibrary = (() => {
       if (!session?.user) {
         const n = loadCustomScenesFromStorage().length;
         if (n >= ANON_CUSTOM_SCENE_LIMIT) {
+          openSceneLimitModal();
+          return;
+        }
+      } else if (!userHasPaidSessionFeatures(session)) {
+        const n = countScenesInSession(activeSessionId || sessionsList[0]?.id);
+        if (n >= FREE_SIGNED_IN_SCENE_LIMIT) {
           openSceneLimitModal();
           return;
         }
