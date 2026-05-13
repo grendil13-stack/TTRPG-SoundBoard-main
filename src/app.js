@@ -778,6 +778,7 @@ const AudioLibrary = (() => {
     /** When a fade is in progress; cancelled fades dispose these entries. */
     let ambientFadePendingEntries = null;
     const CUSTOM_SCENES_STORAGE_KEY = "dndMoodBuilder.v1.customScenes";
+    const ACTIVE_SCENE_STORAGE_KEY = "dndMoodBuilder.v1.activeSceneKey";
     let customScenesList = [];
 
     const sceneEditorBackdrop = document.getElementById("scene-editor-backdrop");
@@ -852,7 +853,9 @@ const AudioLibrary = (() => {
     const musicNextButton = document.getElementById("music-next");
     const musicShuffleButton = document.getElementById("music-shuffle");
     const editSceneTopButton = document.getElementById("edit-scene-top");
-    const masterVolumeSlider = document.getElementById("master-volume");
+    const masterVolumeSliderDesktop = document.getElementById("master-volume");
+    const masterVolumeSliderMobile = document.getElementById("master-volume-mobile");
+    const masterVolumePctEl = document.getElementById("master-volume-pct");
     const musicVolumeSlider = document.getElementById("music-volume");
     const sfxVolumeSlider = document.getElementById("sfx-volume");
     const musicPlaylistElement = document.getElementById("music-playlist");
@@ -1151,8 +1154,29 @@ const AudioLibrary = (() => {
       return customScenesList.find((s) => s.id === id) || null;
     }
 
+    function readMasterVolumeInput() {
+      const el = masterVolumeSliderDesktop || masterVolumeSliderMobile;
+      if (!el) {
+        return 70;
+      }
+      return Number(el.value);
+    }
+
     function getMasterLevel() {
-      return Number(masterVolumeSlider.value) / 100;
+      return readMasterVolumeInput() / 100;
+    }
+
+    function syncMasterVolumeUiFrom(sourceEl) {
+      const v = String(sourceEl.value);
+      if (masterVolumeSliderDesktop && masterVolumeSliderDesktop !== sourceEl) {
+        masterVolumeSliderDesktop.value = v;
+      }
+      if (masterVolumeSliderMobile && masterVolumeSliderMobile !== sourceEl) {
+        masterVolumeSliderMobile.value = v;
+      }
+      if (masterVolumePctEl) {
+        masterVolumePctEl.textContent = `${Math.round(Number(v))}%`;
+      }
     }
 
     function getMusicGroupLevel() {
@@ -1865,9 +1889,20 @@ const AudioLibrary = (() => {
       musicPrevButton.addEventListener("click", () => {
         goToPreviousTrack(!musicPlayer.paused);
       });
-      masterVolumeSlider.addEventListener("input", () => {
+      const primaryMaster = masterVolumeSliderDesktop || masterVolumeSliderMobile;
+      if (primaryMaster) {
+        syncMasterVolumeUiFrom(primaryMaster);
+      }
+      const onMasterInput = (e) => {
+        syncMasterVolumeUiFrom(e.target);
         refreshMasterAndGroupVolumes();
-      });
+      };
+      if (masterVolumeSliderDesktop) {
+        masterVolumeSliderDesktop.addEventListener("input", onMasterInput);
+      }
+      if (masterVolumeSliderMobile) {
+        masterVolumeSliderMobile.addEventListener("input", onMasterInput);
+      }
       musicVolumeSlider.addEventListener("input", () => {
         refreshMasterAndGroupVolumes();
       });
@@ -2239,6 +2274,15 @@ const AudioLibrary = (() => {
       const previousSceneKey = currentScene;
       setSceneMusic(sceneKey);
       renderAmbientLayersForScene(sceneKey, previousSceneKey);
+      try {
+        if (sceneKey && isCustomSceneKey(sceneKey)) {
+          localStorage.setItem(ACTIVE_SCENE_STORAGE_KEY, sceneKey);
+        } else {
+          localStorage.removeItem(ACTIVE_SCENE_STORAGE_KEY);
+        }
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function setActiveSceneButton(sceneKey) {
@@ -2277,6 +2321,11 @@ const AudioLibrary = (() => {
       setActiveSceneButton(null);
       setSceneMusic(null);
       renderAmbientLayersForScene(null, ambientPrevSceneKey);
+      try {
+        localStorage.removeItem(ACTIVE_SCENE_STORAGE_KEY);
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     function selectFirstCustomSceneOrNone() {
@@ -2287,6 +2336,21 @@ const AudioLibrary = (() => {
       }
       setActiveSceneButton(key);
       activateSceneKey(key);
+    }
+
+    function restorePersistedActiveSceneOrDefault() {
+      let saved = null;
+      try {
+        saved = localStorage.getItem(ACTIVE_SCENE_STORAGE_KEY);
+      } catch (_) {
+        saved = null;
+      }
+      if (saved && isCustomSceneKey(saved) && getCustomSceneByKey(saved)) {
+        setActiveSceneButton(saved);
+        activateSceneKey(saved);
+        return;
+      }
+      selectFirstCustomSceneOrNone();
     }
 
     function refreshSceneSelectorBar() {
@@ -3417,7 +3481,7 @@ const AudioLibrary = (() => {
         await UserTags.syncFromSupabase(nextSession.user.id);
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
-        selectFirstCustomSceneOrNone();
+        restorePersistedActiveSceneOrDefault();
         void renderFxButtons();
         renderMusicPlaylist();
         if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
@@ -3431,7 +3495,7 @@ const AudioLibrary = (() => {
         UserTags.clear();
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
-        selectFirstCustomSceneOrNone();
+        restorePersistedActiveSceneOrDefault();
         void renderFxButtons();
         renderMusicPlaylist();
         if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
@@ -3458,7 +3522,7 @@ const AudioLibrary = (() => {
       }
       await refreshCustomScenesList();
       refreshSceneSelectorBar();
-      selectFirstCustomSceneOrNone();
+      restorePersistedActiveSceneOrDefault();
       void buildSfxSectionFilterPills();
       void renderFxButtons();
       initializeMusicPlayer();

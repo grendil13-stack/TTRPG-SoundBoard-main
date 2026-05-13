@@ -19,6 +19,7 @@
       --border-subtle: rgba(255, 255, 255, 0.04);
       --font-ui: system-ui, "Segoe UI", Roboto, sans-serif;
       --topbar-h: 48px;
+      --master-dock-h: 56px;
       --rail-w: 180px;
       --sfx-w: 400px;
     }
@@ -1007,6 +1008,10 @@
     /* ---------- Narrow width OR phone-style landscape (e.g. iPhone 14 @ 844×390): shared mobile chrome ---------- */
     @media (max-width: 767px),
       (orientation: landscape) and (max-height: 450px) and (max-width: 926px) {
+      .app-shell {
+        padding-bottom: calc(var(--master-dock-h) + env(safe-area-inset-bottom, 0px));
+      }
+
       .cockpit-left {
         display: flex;
         flex-direction: column;
@@ -1114,22 +1119,106 @@
         text-overflow: ellipsis;
       }
 
-      .topbar-master {
-        flex: 1 1 0;
-        min-width: 0;
-        max-width: none;
-        margin: 0;
-        gap: 6px;
+      .topbar-master--desktop {
+        display: none !important;
       }
 
-      .topbar-master label {
+      .master-volume-dock {
+        display: block;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 100;
+        min-height: var(--master-dock-h);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: #0c0c0f;
+        border-top: 0.5px solid var(--border);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35);
+      }
+
+      .master-volume-dock-inner {
+        max-width: 1024px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        min-height: var(--master-dock-h);
+      }
+
+      .master-volume-dock-label {
         flex-shrink: 0;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
       }
 
-      .topbar-master input[type="range"] {
-        min-height: 44px;
-        padding: 20px 0;
-        box-sizing: border-box;
+      .master-volume-pct {
+        flex-shrink: 0;
+        min-width: 2.25rem;
+        font-size: 10px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .master-volume-dock-slider {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+      }
+
+      .master-volume-dock input[type="range"] {
+        width: 100%;
+        margin: 0;
+        height: 32px;
+        min-height: 32px;
+        background: transparent;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .master-volume-dock input[type="range"]::-webkit-slider-runnable-track {
+        height: 8px;
+        min-height: 6px;
+        border-radius: 4px;
+        background: var(--panel-2);
+        border: 0.5px solid var(--border);
+      }
+
+      .master-volume-dock input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 28px;
+        height: 28px;
+        margin-top: -10px;
+        border-radius: 50%;
+        background: var(--text);
+        border: 2px solid var(--accent);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        cursor: pointer;
+      }
+
+      .master-volume-dock input[type="range"]::-moz-range-track {
+        height: 8px;
+        min-height: 6px;
+        border-radius: 4px;
+        background: var(--panel-2);
+        border: 0.5px solid var(--border);
+      }
+
+      .master-volume-dock input[type="range"]::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--text);
+        border: 2px solid var(--accent);
+        cursor: pointer;
       }
 
       .topbar-actions {
@@ -1358,6 +1447,8 @@
         max-height: 100dvh;
         max-width: none;
         overflow: hidden;
+        min-height: 0;
+        grid-template-rows: var(--topbar-h) minmax(0, 1fr);
       }
 
       .cockpit-body {
@@ -1367,9 +1458,17 @@
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
+        height: 100%;
+      }
+
+      .cockpit-body > .cockpit-left,
+      .cockpit-body > .sfx-rail {
+        min-height: 0;
       }
 
       .cockpit-left {
+        height: 100%;
+        max-height: 100%;
         min-height: 0;
         overflow-x: hidden;
         overflow-y: auto;
@@ -1402,21 +1501,82 @@
       }
 
       .sfx-rail {
+        height: 100%;
+        max-height: 100%;
         min-height: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
         border-left: none;
       }
 
       .sfx-rail-body {
+        flex: 1 1 auto;
         min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
       }
 
       .fx-grid-wrap {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
         min-height: 0;
         overflow: visible;
+      }
+    }
+
+    /* Very narrow phones (e.g. Pixel portrait): extra spacing, wrapped scene pills */
+    @media (max-width: 420px) {
+      .app-shell {
+        padding-left: max(12px, env(safe-area-inset-left, 0px));
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
+      }
+
+      .master-volume-dock-inner {
+        padding-left: max(14px, env(safe-area-inset-left, 0px));
+        padding-right: max(14px, env(safe-area-inset-right, 0px));
+      }
+
+      .topbar {
+        padding-left: max(12px, env(safe-area-inset-left, 0px));
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
+      }
+
+      .rail-scroll {
+        padding: 10px 12px 12px;
+      }
+
+      .scene-buttons {
+        flex-wrap: wrap;
+        row-gap: 10px;
+        column-gap: 8px;
+      }
+
+      .scene-card {
+        max-width: min(280px, 88vw);
+      }
+
+      .panel-header {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .panel-body {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .music-controls {
+        gap: 12px;
+      }
+
+      .sfx-rail-body {
+        padding: 10px 12px;
+        gap: 10px;
+      }
+
+      .fx-grid {
+        gap: 10px;
       }
     }
 
@@ -1883,6 +2043,10 @@
       accent-color: var(--accent);
     }
 
+    .master-volume-dock {
+      display: none;
+    }
+
     .rail-footer #create-new-scene {
       width: 100%;
       font-size: 12px;
@@ -1906,7 +2070,7 @@
   <div class="app-shell">
     <header class="topbar">
       <h1 class="topbar-title">DnD Mood Builder</h1>
-      <div class="topbar-master">
+      <div class="topbar-master topbar-master--desktop">
         <label for="master-volume">Master</label>
         <input id="master-volume" type="range" min="0" max="100" value="70" aria-label="Master volume" />
       </div>
@@ -2054,6 +2218,16 @@
           </div>
         </div>
       </aside>
+    </div>
+  </div>
+
+  <div class="master-volume-dock" id="master-volume-dock">
+    <div class="master-volume-dock-inner">
+      <label class="master-volume-dock-label" for="master-volume-mobile">Master</label>
+      <span id="master-volume-pct" class="master-volume-pct">70%</span>
+      <div class="master-volume-dock-slider">
+        <input id="master-volume-mobile" type="range" min="0" max="100" value="70" aria-label="Master volume" />
+      </div>
     </div>
   </div>
 
