@@ -676,6 +676,26 @@ const AudioLibrary = (() => {
     let suggestedTagsByCategory = { Moment: [], Quality: [], Campaign: [] };
     let suggestedTagsLoaded = false;
 
+    function normalizeSuggestedCategory(raw) {
+      const s = String(raw || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]+/g, " ");
+      if (!s) {
+        return null;
+      }
+      if (s.includes("moment")) {
+        return "Moment";
+      }
+      if (s.includes("quality")) {
+        return "Quality";
+      }
+      if (s.includes("campaign")) {
+        return "Campaign";
+      }
+      return null;
+    }
+
     async function loadSuggestedTagsOnce() {
       if (suggestedTagsLoaded) {
         return;
@@ -685,8 +705,15 @@ const AudioLibrary = (() => {
         .select("tag, category")
         .order("tag");
       if (error) {
-        console.error("suggested_tags load error", error);
-        suggestedTagsLoaded = true;
+        console.error("suggested_tags load error (full)", error);
+        try {
+          console.error(
+            "suggested_tags load error (JSON)",
+            JSON.stringify(error, Object.getOwnPropertyNames(error)),
+          );
+        } catch {
+          /* ignore */
+        }
         return;
       }
       const buckets = { Moment: [], Quality: [], Campaign: [] };
@@ -695,17 +722,14 @@ const AudioLibrary = (() => {
         if (!tag) {
           continue;
         }
-        const rawCat = String(row.category || "").trim();
-        const cat =
-          rawCat.toLowerCase() === "moment"
-            ? "Moment"
-            : rawCat.toLowerCase() === "quality"
-              ? "Quality"
-              : rawCat.toLowerCase() === "campaign"
-                ? "Campaign"
-                : null;
+        const cat = normalizeSuggestedCategory(row.category);
         if (cat && buckets[cat]) {
           buckets[cat].push({ tag, category: cat });
+        } else if (String(row.category || "").trim()) {
+          console.warn(
+            "suggested_tags: skipped row (unknown category)",
+            { tag, category: row.category },
+          );
         }
       }
       suggestedTagsByCategory = buckets;
@@ -786,16 +810,67 @@ const AudioLibrary = (() => {
         }
       };
 
-      const positionNear = (anchor) => {
-        const r = anchor.getBoundingClientRect();
-        const margin = 6;
-        wrap.style.left = `${Math.min(window.innerWidth - wrap.offsetWidth - margin, Math.max(margin, r.left))}px`;
-        const below = r.bottom + margin;
-        if (below + wrap.offsetHeight < window.innerHeight - margin) {
-          wrap.style.top = `${below}px`;
-        } else {
-          wrap.style.top = `${Math.max(margin, r.top - wrap.offsetHeight - margin)}px`;
+      const ensurePopoverOnBody = () => {
+        if (wrap.parentElement !== document.body) {
+          document.body.appendChild(wrap);
         }
+      };
+
+      const positionNear = (anchor) => {
+        if (!anchor || !wrap.isConnected) {
+          return;
+        }
+        ensurePopoverOnBody();
+        wrap.style.position = "fixed";
+        const vv = window.visualViewport;
+        const margin = 8;
+        const gap = 8;
+        const r = anchor.getBoundingClientRect();
+        const ox = vv ? vv.offsetLeft : 0;
+        const oy = vv ? vv.offsetTop : 0;
+        const vw = vv ? vv.width : window.innerWidth;
+        const vh = vv ? vv.height : window.innerHeight;
+        const rightLimit = ox + vw - margin;
+        const bottomLimit = oy + vh - margin;
+        const leftLimit = ox + margin;
+        const topLimit = oy + margin;
+
+        const br = wrap.getBoundingClientRect();
+        const pw = Math.max(br.width, wrap.offsetWidth, 200);
+        const ph = Math.max(br.height, wrap.offsetHeight, 80);
+
+        let left;
+        let top;
+
+        if (r.right + gap + pw <= rightLimit) {
+          left = r.right + gap;
+          top = r.top;
+        } else if (r.left - gap - pw >= leftLimit) {
+          left = r.left - gap - pw;
+          top = r.top;
+        } else {
+          left = Math.min(Math.max(r.left, leftLimit), rightLimit - pw);
+          top = r.bottom + gap;
+          if (top + ph > bottomLimit) {
+            top = r.top - gap - ph;
+          }
+        }
+
+        if (top + ph > bottomLimit) {
+          top = bottomLimit - ph;
+        }
+        if (top < topLimit) {
+          top = topLimit;
+        }
+        if (left + pw > rightLimit) {
+          left = rightLimit - pw;
+        }
+        if (left < leftLimit) {
+          left = leftLimit;
+        }
+
+        wrap.style.left = `${Math.round(left)}px`;
+        wrap.style.top = `${Math.round(top)}px`;
       };
 
       const handleRemove = async (tagName) => {
@@ -837,6 +912,7 @@ const AudioLibrary = (() => {
       };
 
       const refreshContents = async () => {
+        ensurePopoverOnBody();
         const aid = userTagPopoverAudioId;
         if (aid == null) {
           return;
@@ -848,6 +924,18 @@ const AudioLibrary = (() => {
         const appliedSet = UserTags.getTagsForAudio(aid);
         const appliedSorted = [...appliedSet].sort((a, b) => a.localeCompare(b));
         const anonTitle = "Sign in to tag sounds";
+
+        const suggestedFlat = SUGGESTED_TAG_CATEGORY_ORDER.flatMap((cat) =>
+          (suggestedTagsByCategory[cat] || []).map((row) => row.tag),
+        );
+        console.log("[tag popover] render", {
+          audioId: aid,
+          suggestedTags: suggestedFlat,
+          suggestedTagsCount: suggestedFlat.length,
+          recentTags: UserTags.getRecentTagNames(6),
+          appliedTags: appliedSorted,
+          signedIn: canEdit,
+        });
 
         recentRow.innerHTML = "";
         for (const tag of UserTags.getRecentTagNames(6)) {
@@ -981,6 +1069,7 @@ const AudioLibrary = (() => {
 
       wrap._close = closePopover;
       wrap._positionNear = positionNear;
+      wrap._ensureOnBody = ensurePopoverOnBody;
       wrap._input = input;
       wrap._refresh = refreshContents;
       return wrap;
@@ -989,6 +1078,9 @@ const AudioLibrary = (() => {
     async function openUserTagPopover(anchorEl, audioId) {
       await loadSuggestedTagsOnce();
       const wrap = ensureUserTagPopover();
+      if (typeof wrap._ensureOnBody === "function") {
+        wrap._ensureOnBody();
+      }
       if (wrap._close && userTagPopoverAnchor && userTagPopoverAnchor !== anchorEl) {
         wrap._close();
       }
