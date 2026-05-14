@@ -2679,6 +2679,11 @@
         max(16px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
     }
 
+    /* Author `display: flex` above beats the UA [hidden] rule; force hide when JS sets modal.hidden = true. */
+    .product-tour-modal[hidden] {
+      display: none !important;
+    }
+
     .product-tour-tooltip {
       position: fixed;
       inset: 0;
