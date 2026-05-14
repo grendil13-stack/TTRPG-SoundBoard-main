@@ -737,7 +737,7 @@ const AudioLibrary = (() => {
       suggestedTagsLoaded = true;
     }
 
-    /** Shared tag popover (single instance). */
+    /** Tracks the tag popover instance while open; null when removed from DOM. */
     let userTagPopoverWrap = null;
     /** @type {HTMLElement | null} */
     let userTagPopoverAnchor = null;
@@ -745,16 +745,16 @@ const AudioLibrary = (() => {
     let userTagPopoverAudioId = null;
     let userTagPopoverDocMousedown = null;
 
-    function ensureUserTagPopover() {
-      if (userTagPopoverWrap) {
-        return userTagPopoverWrap;
-      }
+    /**
+     * POPOVER CREATED ONLY ON USER CLICK — DO NOT MOVE OR CALL ELSEWHERE.
+     * Builds a new popover DOM tree; must only be invoked from openUserTagPopover (tag button click).
+     */
+    function createUserTagPopoverDomForUserClick() {
       const wrap = document.createElement("div");
       wrap.className = "user-tag-popover";
       wrap.setAttribute("role", "dialog");
       wrap.setAttribute("aria-label", "Personal tags");
       wrap.tabIndex = -1;
-      wrap.hidden = true;
 
       const scroll = document.createElement("div");
       scroll.className = "tag-popover-scroll";
@@ -802,14 +802,15 @@ const AudioLibrary = (() => {
       userTagPopoverWrap = wrap;
 
       const closePopover = () => {
-        wrap.hidden = true;
         userTagPopoverAnchor = null;
         userTagPopoverAudioId = null;
         if (userTagPopoverDocMousedown) {
           document.removeEventListener("mousedown", userTagPopoverDocMousedown, true);
           userTagPopoverDocMousedown = null;
         }
-        wrap.remove();
+        if (wrap.parentNode) {
+          wrap.remove();
+        }
         if (userTagPopoverWrap === wrap) {
           userTagPopoverWrap = null;
         }
@@ -929,18 +930,6 @@ const AudioLibrary = (() => {
         const appliedSet = UserTags.getTagsForAudio(aid);
         const appliedSorted = [...appliedSet].sort((a, b) => a.localeCompare(b));
         const anonTitle = "Sign in to tag sounds";
-
-        const suggestedFlat = SUGGESTED_TAG_CATEGORY_ORDER.flatMap((cat) =>
-          (suggestedTagsByCategory[cat] || []).map((row) => row.tag),
-        );
-        console.log("[tag popover] render", {
-          audioId: aid,
-          suggestedTags: suggestedFlat,
-          suggestedTagsCount: suggestedFlat.length,
-          recentTags: UserTags.getRecentTagNames(6),
-          appliedTags: appliedSorted,
-          signedIn: canEdit,
-        });
 
         recentRow.innerHTML = "";
         for (const tag of UserTags.getRecentTagNames(6)) {
@@ -1085,25 +1074,28 @@ const AudioLibrary = (() => {
         return;
       }
       await loadSuggestedTagsOnce();
-      if (userTagPopoverWrap && userTagPopoverWrap._close && userTagPopoverAnchor && userTagPopoverAnchor !== anchorEl) {
+      if (userTagPopoverWrap && typeof userTagPopoverWrap._close === "function") {
         userTagPopoverWrap._close();
       }
-      const wrap = ensureUserTagPopover();
+      const wrap = createUserTagPopoverDomForUserClick();
       if (typeof wrap._ensureOnBody === "function") {
         wrap._ensureOnBody();
       }
+      wrap.style.visibility = "hidden";
+      wrap.style.pointerEvents = "none";
       userTagPopoverAnchor = anchorEl;
       userTagPopoverAudioId = audioId != null ? String(audioId) : null;
-      wrap.hidden = false;
+      wrap.style.visibility = "hidden";
+      wrap.style.pointerEvents = "none";
       await wrap._refresh();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          wrap._positionNear(anchorEl);
-          void supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user && wrap._input) {
-              wrap._input.focus();
-            }
-          });
+      wrap._positionNear(anchorEl);
+      wrap.style.visibility = "";
+      wrap.style.pointerEvents = "";
+      window.requestAnimationFrame(() => {
+        void supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user && wrap._input && wrap.isConnected) {
+            wrap._input.focus();
+          }
         });
       });
       if (userTagPopoverDocMousedown) {
@@ -1111,14 +1103,15 @@ const AudioLibrary = (() => {
       }
       userTagPopoverDocMousedown = (e) => {
         if (
-          !wrap.hidden &&
-          e.target &&
-          !wrap.contains(e.target) &&
-          e.target !== anchorEl &&
-          !anchorEl.contains(e.target)
+          !wrap.isConnected ||
+          !e.target ||
+          wrap.contains(e.target) ||
+          e.target === anchorEl ||
+          anchorEl.contains(e.target)
         ) {
-          wrap._close();
+          return;
         }
+        wrap._close();
       };
       window.setTimeout(() => {
         document.addEventListener("mousedown", userTagPopoverDocMousedown, true);
@@ -4885,7 +4878,11 @@ const AudioLibrary = (() => {
       }
       void buildSfxSectionFilterPills();
       void renderFxButtons();
-      if (userTagPopoverWrap && !userTagPopoverWrap.hidden && typeof userTagPopoverWrap._refresh === "function") {
+      if (
+        userTagPopoverWrap &&
+        userTagPopoverWrap.isConnected &&
+        typeof userTagPopoverWrap._refresh === "function"
+      ) {
         void userTagPopoverWrap._refresh();
       }
       if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
