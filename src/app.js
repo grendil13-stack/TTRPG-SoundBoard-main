@@ -1610,6 +1610,30 @@ const AudioLibrary = (() => {
       return { data, error: null };
     }
 
+    /**
+     * Scene editor: if the in-memory sessions list is empty, insert "My Scenes" and
+     * populate `sessionsList` before any UI so the session dropdown can save immediately.
+     */
+    async function ensureDefaultSessionRowIfEmptyForSignedInEditor(userId) {
+      if (!userId || sessionsList.length > 0) {
+        return;
+      }
+      const { data: created, error } = await insertSessionRow(userId, "My Scenes", 0);
+      if (error || !created) {
+        if (error) {
+          console.error("editor default session insert error", error);
+        }
+        return;
+      }
+      sessionsList = [created];
+      const sid = created.id != null ? String(created.id) : "";
+      if (sid) {
+        await attachOrphanScenesToDefaultSession(userId, sid);
+      }
+      resolveActiveSessionIdFromStorage();
+      persistActiveSessionId();
+    }
+
     async function attachOrphanScenesToDefaultSession(userId, defaultSessionId) {
       const { error } = await supabase
         .from("scenes")
@@ -1743,7 +1767,7 @@ const AudioLibrary = (() => {
       if (!sessionsList.length) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          await ensureSessionsForUser(session.user.id);
+          await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
         }
       }
       if (!sessionsList.length) {
@@ -1753,13 +1777,32 @@ const AudioLibrary = (() => {
       editorSessionField.hidden = false;
       const paid = userHasPaidSessionFeatures(lastAuthSession);
       sessionsList.forEach((sess) => {
+        const id = sess && sess.id != null ? String(sess.id) : "";
+        const name = sess && sess.name != null ? String(sess.name).trim() : "";
+        if (!id) {
+          return;
+        }
         const opt = document.createElement("option");
-        opt.value = sess.id;
-        opt.textContent = sess.name;
+        opt.value = id;
+        opt.textContent = name || "My Scenes";
         editorSceneSessionSelect.appendChild(opt);
       });
-      const fallback = activeSessionId || sessionsList[0]?.id || "";
-      editorSceneSessionSelect.value = selectedId || fallback;
+      const optionIds = new Set(
+        Array.from(editorSceneSessionSelect.options)
+          .map((o) => o.value)
+          .filter(Boolean),
+      );
+      const pick = selectedId != null && selectedId !== "" ? String(selectedId) : "";
+      const fallback =
+        (activeSessionId && optionIds.has(String(activeSessionId)) ? String(activeSessionId) : "") ||
+        (sessionsList[0] && sessionsList[0].id != null ? String(sessionsList[0].id) : "");
+      if (pick && optionIds.has(pick)) {
+        editorSceneSessionSelect.value = pick;
+      } else if (fallback && optionIds.has(fallback)) {
+        editorSceneSessionSelect.value = fallback;
+      } else if (editorSceneSessionSelect.options.length) {
+        editorSceneSessionSelect.selectedIndex = 0;
+      }
       editorSceneSessionSelect.disabled = !paid;
       editorSceneSessionSelect.title = paid
         ? ""
@@ -4474,10 +4517,6 @@ const AudioLibrary = (() => {
     }
 
     async function resetEditorDraftFromSceneObject(scene) {
-      const { data: { session: editorSession } } = await supabase.auth.getSession();
-      if (editorSession?.user) {
-        await ensureSessionsForUser(editorSession.user.id);
-      }
       sceneEditorEditingId = scene ? scene.id : null;
       editorSceneName.value = scene ? scene.name : "";
       editorSceneTags.value = scene ? (scene.tags || "") : "";
@@ -4499,6 +4538,10 @@ const AudioLibrary = (() => {
     }
 
     async function openSceneEditorNew() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
+      }
       const ae = document.activeElement;
       sceneEditorReturnFocus = ae instanceof HTMLElement ? ae : null;
       sceneEditorBackdrop.removeAttribute("inert");
@@ -4511,6 +4554,10 @@ const AudioLibrary = (() => {
     }
 
     async function openSceneEditorForEdit(sceneKey) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
+      }
       if (!isCustomSceneKey(sceneKey)) {
         return;
       }
