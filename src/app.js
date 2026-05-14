@@ -1760,22 +1760,20 @@ const AudioLibrary = (() => {
         return;
       }
       editorSceneSessionSelect.innerHTML = "";
-      if (!lastAuthSession?.user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
         editorSessionField.hidden = true;
         return;
       }
       if (!sessionsList.length) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
-        }
+        await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
       }
       if (!sessionsList.length) {
         editorSessionField.hidden = true;
         return;
       }
       editorSessionField.hidden = false;
-      const paid = userHasPaidSessionFeatures(lastAuthSession);
+      const paid = userHasPaidSessionFeatures(session);
       sessionsList.forEach((sess) => {
         const id = sess && sess.id != null ? String(sess.id) : "";
         const name = sess && sess.name != null ? String(sess.name).trim() : "";
@@ -4541,6 +4539,8 @@ const AudioLibrary = (() => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
+      } else if (editorSessionField) {
+        editorSessionField.hidden = true;
       }
       const ae = document.activeElement;
       sceneEditorReturnFocus = ae instanceof HTMLElement ? ae : null;
@@ -4557,6 +4557,8 @@ const AudioLibrary = (() => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
+      } else if (editorSessionField) {
+        editorSessionField.hidden = true;
       }
       if (!isCustomSceneKey(sceneKey)) {
         return;
@@ -4591,13 +4593,18 @@ const AudioLibrary = (() => {
         }))
         .filter((r) => r.file);
 
-      let nextSessionId = activeSessionId || sessionsList[0]?.id || null;
-      if (
-        editorSceneSessionSelect &&
-        !editorSceneSessionSelect.disabled &&
-        editorSceneSessionSelect.value
-      ) {
-        nextSessionId = editorSceneSessionSelect.value;
+      const { data: { session } } = await supabase.auth.getSession();
+
+      let nextSessionId = null;
+      if (session?.user) {
+        nextSessionId = activeSessionId || sessionsList[0]?.id || null;
+        if (
+          editorSceneSessionSelect &&
+          !editorSceneSessionSelect.disabled &&
+          editorSceneSessionSelect.value
+        ) {
+          nextSessionId = editorSceneSessionSelect.value;
+        }
       }
 
       const sceneObj = {
@@ -4608,10 +4615,9 @@ const AudioLibrary = (() => {
         tags: editorSceneTags.value.trim(),
         playlist: sceneEditorDraftPlaylist.map((p) => p.trim()).filter(Boolean),
         ambientLayers: ambientLayers.slice(0, 6),
-        sessionId: nextSessionId || undefined,
+        ...(session?.user ? { sessionId: nextSessionId || undefined } : {}),
       };
 
-      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         if (!sceneEditorEditingId && !userHasPaidSessionFeatures(session)) {
           const n = countScenesInSession(activeSessionId || sessionsList[0]?.id);
@@ -4628,15 +4634,14 @@ const AudioLibrary = (() => {
         }
         await refreshCustomScenesList();
       } else {
+        let list = loadCustomScenesFromStorage();
         if (!sceneEditorEditingId) {
-          const list = loadCustomScenesFromStorage();
           if (list.length >= ANON_CUSTOM_SCENE_LIMIT) {
             openSceneLimitModal();
             return;
           }
         }
         const anonScene = { ...sceneObj };
-        delete anonScene.sessionId;
         if (sceneEditorEditingId) {
           list = list.map((s) => (s.id === sceneEditorEditingId ? anonScene : s));
         } else {
