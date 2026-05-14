@@ -1212,8 +1212,36 @@ const AudioLibrary = (() => {
     let sessionMenuGlobalCloseBound = false;
 
     const sessionSelectorWrap = document.getElementById("session-selector-wrap");
-    const editorSessionField = document.getElementById("editor-session-field");
-    const editorSceneSessionSelect = document.getElementById("editor-scene-session");
+    const editorSessionFieldMount = document.getElementById("editor-session-field-mount");
+
+    function getEditorSessionField() {
+      return document.getElementById("editor-session-field");
+    }
+
+    function getEditorSceneSessionSelect() {
+      return document.getElementById("editor-scene-session");
+    }
+
+    /**
+     * Scene editor session UI exists only for signed-in users. Clears the mount when anonymous.
+     */
+    async function buildSceneEditorSessionSectionIfSignedIn() {
+      const mount = editorSessionFieldMount || document.getElementById("editor-session-field-mount");
+      if (!mount) {
+        return;
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      const isSignedIn = !!user;
+      mount.innerHTML = "";
+      if (!isSignedIn) {
+        return;
+      }
+      mount.innerHTML =
+        '<div class="editor-field" id="editor-session-field">' +
+        '<label for="editor-scene-session">Session</label>' +
+        '<select id="editor-scene-session"></select>' +
+        "</div>";
+    }
 
     const sceneEditorBackdrop = document.getElementById("scene-editor-backdrop");
     const createNewSceneButton = document.getElementById("create-new-scene");
@@ -1756,23 +1784,26 @@ const AudioLibrary = (() => {
     }
 
     async function populateEditorSessionSelect(selectedId) {
+      const editorSessionField = getEditorSessionField();
+      const editorSceneSessionSelect = getEditorSceneSessionSelect();
       if (!editorSceneSessionSelect || !editorSessionField) {
         return;
       }
       editorSceneSessionSelect.innerHTML = "";
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        editorSessionField.hidden = true;
         return;
       }
       if (!sessionsList.length) {
         await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
       }
       if (!sessionsList.length) {
-        editorSessionField.hidden = true;
+        const mount = editorSessionFieldMount || document.getElementById("editor-session-field-mount");
+        if (mount) {
+          mount.innerHTML = "";
+        }
         return;
       }
-      editorSessionField.hidden = false;
       const paid = userHasPaidSessionFeatures(session);
       sessionsList.forEach((sess) => {
         const id = sess && sess.id != null ? String(sess.id) : "";
@@ -4536,11 +4567,10 @@ const AudioLibrary = (() => {
     }
 
     async function openSceneEditorNew() {
+      await buildSceneEditorSessionSectionIfSignedIn();
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
-      } else if (editorSessionField) {
-        editorSessionField.hidden = true;
       }
       const ae = document.activeElement;
       sceneEditorReturnFocus = ae instanceof HTMLElement ? ae : null;
@@ -4554,18 +4584,17 @@ const AudioLibrary = (() => {
     }
 
     async function openSceneEditorForEdit(sceneKey) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
-      } else if (editorSessionField) {
-        editorSessionField.hidden = true;
-      }
       if (!isCustomSceneKey(sceneKey)) {
         return;
       }
       const scene = getCustomSceneByKey(sceneKey);
       if (!scene) {
         return;
+      }
+      await buildSceneEditorSessionSectionIfSignedIn();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await ensureDefaultSessionRowIfEmptyForSignedInEditor(session.user.id);
       }
       const ae = document.activeElement;
       sceneEditorReturnFocus = ae instanceof HTMLElement ? ae : null;
@@ -4598,6 +4627,7 @@ const AudioLibrary = (() => {
       let nextSessionId = null;
       if (session?.user) {
         nextSessionId = activeSessionId || sessionsList[0]?.id || null;
+        const editorSceneSessionSelect = getEditorSceneSessionSelect();
         if (
           editorSceneSessionSelect &&
           !editorSceneSessionSelect.disabled &&
