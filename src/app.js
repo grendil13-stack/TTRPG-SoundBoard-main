@@ -1,4 +1,5 @@
 import { supabase } from "../supabase.js";
+import { initProductTour } from "./tour.js";
 
 const AudioLibrary = (() => {
       const STORAGE_BASE_URL =
@@ -4965,3 +4966,7 @@ const AudioLibrary = (() => {
       void renderFxButtons();
       initializeMusicPlayer();
     })();
+
+    initProductTour({
+      helpButton: document.getElementById("tour-help-btn"),
+    });

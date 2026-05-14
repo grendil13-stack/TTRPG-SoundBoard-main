@@ -105,6 +105,33 @@
       gap: 8px;
     }
 
+    .tour-help-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      margin: 0;
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .tour-help-btn:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .tour-help-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
     .topbar-account {
       display: flex;
       align-items: center;
@@ -2594,6 +2621,264 @@
       flex: 1;
       min-width: 0;
     }
+
+    /* ---------- First-time product tour ---------- */
+    .product-tour {
+      position: fixed;
+      inset: 0;
+      z-index: 1250;
+      pointer-events: none;
+    }
+
+    .product-tour.product-tour--open {
+      pointer-events: auto;
+    }
+
+    .product-tour-dim-full {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .product-tour-dim-panels {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .product-tour-dim {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.5);
+      pointer-events: auto;
+    }
+
+    .product-tour-highlight-ring {
+      position: absolute;
+      border-radius: 10px;
+      border: 2px solid var(--accent);
+      box-shadow:
+        0 0 0 1px rgba(127, 119, 221, 0.45),
+        0 0 22px rgba(127, 119, 221, 0.35);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .product-tour-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+        max(16px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    }
+
+    .product-tour-tooltip {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .product-tour-modal-panel {
+      pointer-events: auto;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      max-width: 400px;
+      width: min(400px, calc(100vw - 32px));
+      padding: 18px 20px 20px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    .product-tour-modal-title,
+    .product-tour-tooltip-title {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      font-weight: 650;
+      letter-spacing: 0.01em;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .product-tour-modal-body,
+    .product-tour-tooltip-body {
+      margin: 0 0 16px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .product-tour-modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .product-tour-modal-actions--single {
+      justify-content: stretch;
+    }
+
+    .product-tour-modal-actions--single .product-tour-btn-primary {
+      flex: 1;
+    }
+
+    .product-tour-skip-link {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: none;
+      font: inherit;
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .product-tour-skip-link:hover {
+      color: var(--text);
+    }
+
+    .product-tour-btn {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 0.5px solid var(--border);
+    }
+
+    .product-tour-btn-primary {
+      background: var(--accent);
+      color: #0f0f12;
+      border-color: rgba(127, 119, 221, 0.55);
+    }
+
+    .product-tour-btn-primary:hover {
+      filter: brightness(1.06);
+    }
+
+    .product-tour-btn-secondary {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .product-tour-btn-secondary:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .product-tour-btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .product-tour-tooltip-box {
+      position: fixed;
+      pointer-events: auto;
+      z-index: 5;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px 14px;
+      max-width: min(380px, calc(100vw - 24px));
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .product-tour-tooltip-arrow {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      z-index: 1;
+    }
+
+    .product-tour-tooltip-box--arrow-left .product-tour-tooltip-arrow {
+      left: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 7px 8px 7px 0;
+      border-color: transparent var(--panel) transparent transparent;
+      filter: drop-shadow(-1px 0 0 rgba(255, 255, 255, 0.06));
+    }
+
+    .product-tour-tooltip-box--arrow-right .product-tour-tooltip-arrow {
+      right: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 7px 0 7px 8px;
+      border-color: transparent transparent transparent var(--panel);
+      filter: drop-shadow(1px 0 0 rgba(255, 255, 255, 0.06));
+    }
+
+    .product-tour-tooltip-box--arrow-top .product-tour-tooltip-arrow {
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 0 7px 8px 7px;
+      border-color: transparent transparent var(--panel) transparent;
+      filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.06));
+    }
+
+    .product-tour-tooltip-box--arrow-bottom .product-tour-tooltip-arrow {
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px 7px 0 7px;
+      border-color: var(--panel) transparent transparent transparent;
+      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.06));
+    }
+
+    .product-tour-tooltip-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .product-tour-step-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+
+    .product-tour-tooltip-meta .product-tour-skip-link {
+      width: auto;
+      text-align: right;
+    }
+
+    .product-tour-tooltip-nav {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 767px) {
+      .product-tour-modal-panel {
+        width: calc(100vw - 24px);
+        max-width: none;
+        padding: 20px 18px 22px;
+      }
+
+      .product-tour-tooltip-box {
+        max-width: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2605,6 +2890,19 @@
         <input id="master-volume" type="range" min="0" max="100" value="70" aria-label="Master volume" />
       </div>
       <div class="topbar-actions">
+        <button
+          type="button"
+          id="tour-help-btn"
+          class="tour-help-btn"
+          aria-label="Help: start tour"
+          title="Tour"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M9.8 9.2a2.3 2.3 0 0 1 4.5.8c0 1.6-2.3 1.4-2.3 3.4" stroke-linecap="round" />
+            <path d="M12 17.2h.01" stroke-linecap="round" />
+          </svg>
+        </button>
         <div class="topbar-account" id="topbar-account">
           <button type="button" id="account-sign-in" class="account-sign-in">Sign in</button>
           <div class="account-signed-in" id="account-signed-in" hidden>
@@ -2618,7 +2916,7 @@
 
     <div class="cockpit-body">
       <div class="cockpit-left">
-        <aside class="rail" aria-label="Scene selector">
+        <aside class="rail" id="tour-target-scenes" aria-label="Scene selector">
         <div class="rail-header">Scenes</div>
         <div class="rail-scroll">
           <div id="session-selector-wrap" class="session-selector-wrap" hidden aria-label="Session"></div>
@@ -2632,7 +2930,7 @@
       </aside>
 
       <div class="center-stack">
-        <section class="panel panel-music" aria-labelledby="music-title">
+        <section class="panel panel-music" id="tour-target-music" aria-labelledby="music-title">
           <div class="panel-header">
             <h2 id="music-title">Music</h2>
             <div class="panel-header-vol">
@@ -2718,7 +3016,7 @@
           </div>
         </section>
 
-        <section class="panel panel-ambient" aria-labelledby="ambient-title">
+        <section class="panel panel-ambient" id="tour-target-ambient" aria-labelledby="ambient-title">
           <div class="panel-header">
             <h2 id="ambient-title">Ambient BGM</h2>
             <div class="ambient-panel-actions" id="ambient-panel-actions" hidden>
@@ -2733,7 +3031,7 @@
       </div>
       </div>
 
-      <aside class="sfx-rail" aria-labelledby="sfx-title">
+      <aside class="sfx-rail" id="tour-target-sfx" aria-labelledby="sfx-title">
         <div class="panel-header">
           <h2 id="sfx-title">Sound FX</h2>
           <div class="panel-header-vol">
