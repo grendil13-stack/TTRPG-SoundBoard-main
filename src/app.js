@@ -1731,12 +1731,22 @@ const AudioLibrary = (() => {
       selectFirstCustomSceneOrNone();
     }
 
-    function populateEditorSessionSelect(selectedId) {
+    async function populateEditorSessionSelect(selectedId) {
       if (!editorSceneSessionSelect || !editorSessionField) {
         return;
       }
       editorSceneSessionSelect.innerHTML = "";
       if (!lastAuthSession?.user) {
+        editorSessionField.hidden = true;
+        return;
+      }
+      if (!sessionsList.length) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await ensureSessionsForUser(session.user.id);
+        }
+      }
+      if (!sessionsList.length) {
         editorSessionField.hidden = true;
         return;
       }
@@ -3233,9 +3243,9 @@ const AudioLibrary = (() => {
       if (editSceneTopButton) {
         editSceneTopButton.addEventListener("click", () => {
           if (currentScene && isCustomSceneKey(currentScene)) {
-            openSceneEditorForEdit(currentScene);
+            void openSceneEditorForEdit(currentScene);
           } else {
-            openSceneEditorNew();
+            void openSceneEditorNew();
           }
         });
       }
@@ -4463,7 +4473,11 @@ const AudioLibrary = (() => {
       });
     }
 
-    function resetEditorDraftFromSceneObject(scene) {
+    async function resetEditorDraftFromSceneObject(scene) {
+      const { data: { session: editorSession } } = await supabase.auth.getSession();
+      if (editorSession?.user) {
+        await ensureSessionsForUser(editorSession.user.id);
+      }
       sceneEditorEditingId = scene ? scene.id : null;
       editorSceneName.value = scene ? scene.name : "";
       editorSceneTags.value = scene ? (scene.tags || "") : "";
@@ -4481,22 +4495,22 @@ const AudioLibrary = (() => {
       renderEditorPlaylist();
       renderEditorAmbient();
       const sessPick = scene ? (scene.sessionId || activeSessionId) : activeSessionId;
-      populateEditorSessionSelect(sessPick || null);
+      await populateEditorSessionSelect(sessPick || null);
     }
 
-    function openSceneEditorNew() {
+    async function openSceneEditorNew() {
       const ae = document.activeElement;
       sceneEditorReturnFocus = ae instanceof HTMLElement ? ae : null;
       sceneEditorBackdrop.removeAttribute("inert");
       document.getElementById("scene-editor-title").textContent = "Create new scene";
-      resetEditorDraftFromSceneObject(null);
+      await resetEditorDraftFromSceneObject(null);
       sceneEditorBackdrop.classList.add("open");
       void Promise.resolve().then(() => {
         editorSceneName.focus();
       });
     }
 
-    function openSceneEditorForEdit(sceneKey) {
+    async function openSceneEditorForEdit(sceneKey) {
       if (!isCustomSceneKey(sceneKey)) {
         return;
       }
@@ -4508,7 +4522,7 @@ const AudioLibrary = (() => {
       sceneEditorReturnFocus = ae instanceof HTMLElement ? ae : null;
       sceneEditorBackdrop.removeAttribute("inert");
       document.getElementById("scene-editor-title").textContent = "Edit scene";
-      resetEditorDraftFromSceneObject(scene);
+      await resetEditorDraftFromSceneObject(scene);
       sceneEditorBackdrop.classList.add("open");
       void Promise.resolve().then(() => {
         editorSceneName.focus();
@@ -4614,7 +4628,7 @@ const AudioLibrary = (() => {
       const editBtn = e.target.closest("[data-edit-scene]");
       if (editBtn) {
         e.preventDefault();
-        openSceneEditorForEdit(editBtn.getAttribute("data-edit-scene"));
+        void openSceneEditorForEdit(editBtn.getAttribute("data-edit-scene"));
         return;
       }
 
@@ -4646,7 +4660,7 @@ const AudioLibrary = (() => {
           return;
         }
       }
-      openSceneEditorNew();
+      void openSceneEditorNew();
     });
 
     editorCancelScene.addEventListener("click", () => {
@@ -4913,6 +4927,7 @@ const AudioLibrary = (() => {
     async function handleSupabaseAuthChange(event, nextSession) {
       updateAccountUI(nextSession);
       if (event === "SIGNED_IN" && nextSession?.user) {
+        await ensureSessionsForUser(nextSession.user.id);
         closeAuthModal();
         await migrateLocalScenesToCloudIfNeeded(nextSession.user.id);
         await Favorites.migrateLocalToCloud(nextSession.user.id);
@@ -4957,6 +4972,7 @@ const AudioLibrary = (() => {
       const { data: { session } } = await supabase.auth.getSession();
       updateAccountUI(session);
       if (session?.user) {
+        await ensureSessionsForUser(session.user.id);
         await migrateLocalScenesToCloudIfNeeded(session.user.id);
         await Favorites.migrateLocalToCloud(session.user.id);
         await Favorites.syncFromSupabase(session.user.id);
