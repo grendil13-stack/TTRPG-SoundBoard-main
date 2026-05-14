@@ -809,6 +809,10 @@ const AudioLibrary = (() => {
           document.removeEventListener("mousedown", userTagPopoverDocMousedown, true);
           userTagPopoverDocMousedown = null;
         }
+        wrap.remove();
+        if (userTagPopoverWrap === wrap) {
+          userTagPopoverWrap = null;
+        }
       };
 
       const ensurePopoverOnBody = () => {
@@ -1077,13 +1081,16 @@ const AudioLibrary = (() => {
     }
 
     async function openUserTagPopover(anchorEl, audioId) {
+      if (!anchorEl || !(anchorEl instanceof Element) || !anchorEl.isConnected) {
+        return;
+      }
       await loadSuggestedTagsOnce();
+      if (userTagPopoverWrap && userTagPopoverWrap._close && userTagPopoverAnchor && userTagPopoverAnchor !== anchorEl) {
+        userTagPopoverWrap._close();
+      }
       const wrap = ensureUserTagPopover();
       if (typeof wrap._ensureOnBody === "function") {
         wrap._ensureOnBody();
-      }
-      if (wrap._close && userTagPopoverAnchor && userTagPopoverAnchor !== anchorEl) {
-        wrap._close();
       }
       userTagPopoverAnchor = anchorEl;
       userTagPopoverAudioId = audioId != null ? String(audioId) : null;

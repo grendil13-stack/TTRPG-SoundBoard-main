@@ -442,29 +442,37 @@ export function initProductTour(opts) {
     }
   }
 
-  ui.modalPrimary.addEventListener("click", () => {
-    const step = STEPS[stepIndex];
-    if (step.kind === "welcome") {
-      stepIndex = 1;
-      render();
-      scheduleLayout();
-      ui.nextBtn.focus();
+  root.addEventListener("click", (e) => {
+    const el = e.target;
+    if (!(el instanceof Element)) {
       return;
     }
-    if (step.kind === "complete") {
+    if (el.closest("#product-tour-modal-skip")) {
       finishTour();
+      return;
     }
-  });
-
-  ui.modalSecondary.addEventListener("click", () => {
-    const step = STEPS[stepIndex];
-    if (step.kind === "welcome") {
-      finishTour();
+    if (el.closest("#product-tour-modal-primary")) {
+      const step = STEPS[stepIndex];
+      console.log("[tour] modal primary click", step.kind);
+      if (step.kind === "welcome") {
+        stepIndex = 1;
+        render();
+        scheduleLayout();
+        ui.nextBtn.focus();
+        return;
+      }
+      if (step.kind === "complete") {
+        finishTour();
+      }
+      return;
     }
-  });
-
-  ui.modalSkip.addEventListener("click", () => {
-    finishTour();
+    if (el.closest("#product-tour-modal-secondary")) {
+      const step = STEPS[stepIndex];
+      console.log("[tour] modal secondary (Skip) click", step.kind);
+      if (step.kind === "welcome") {
+        finishTour();
+      }
+    }
   });
 
   ui.nextBtn.addEventListener("click", () => {
