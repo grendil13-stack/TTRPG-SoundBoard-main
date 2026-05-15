@@ -1,6 +1,6 @@
 {
   "_readme": {
-    "description": "Skald — master audio manifest v2. Setting + Mood two-step filter system. SFX filtered by section only.",
+    "description": "Skald Sound Board — master audio manifest v2. Setting + Mood two-step filter system. SFX filtered by section only.",
     "version": "2.0",
     "filter_system": {
       "music_and_ambient": "Two-step: select setting_tag first, then mood_tag. Both fields support multi-value comma-separated tags.",
