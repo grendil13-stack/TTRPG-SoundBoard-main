@@ -6,9 +6,9 @@ const HIGHLIGHT_PAD = 6;
 const STEPS = [
   {
     kind: "welcome",
-    title: "Welcome to DnD Mood Builder",
+    title: "Welcome to Skald",
     body:
-      "Your complete audio soundboard for tabletop RPG sessions. This quick tour shows you the key features — takes about 30 seconds.",
+      "Your complete audio soundboard for tabletop RPG sessions. This quick tour shows you the key features, it only takes about 30 seconds.",
   },
   {
     kind: "spotlight",
