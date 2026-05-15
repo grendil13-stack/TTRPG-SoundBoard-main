@@ -15,7 +15,7 @@ const STEPS = [
     targetId: "tour-target-scenes",
     title: "Sessions and Scenes",
     body:
-      "Scenes are your mood presets. Each one loads a complete atmosphere — music playlist and ambient layers in one tap. Build your own scenes with the + New Scene. Sessions are a collection of your scenes. Sign in to save scenes across devices. Free accounts get one session and 5 scenes",
+      "Scenes are your mood presets. Each one loads a complete atmosphere, music playlist and ambient layers in one tap. Build your own scenes with the + New Scene. Sessions are a collection of your scenes. Sign in to save scenes across devices. Free accounts get one session and 5 scenes",
   },
   {
     kind: "spotlight",
@@ -36,7 +36,7 @@ const STEPS = [
     targetId: "tour-target-sfx",
     title: "Sound Effects",
     body:
-      "Fire one-shot sound effects at any moment — sword clashes, spell blasts, dramatic stings. Filter by type and search by name. They play on top of your music and ambience.",
+      "Fire one-shot sound effects at any moment, sword clashes, spell blasts, dramatic stings. Filter by type and search by name. You can pin your favorite effects to the scene for quick access. They play on top of your music and ambience.",
   },
   {
     kind: "spotlight",
