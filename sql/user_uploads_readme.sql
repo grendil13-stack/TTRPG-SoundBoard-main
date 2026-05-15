@@ -15,7 +15,10 @@
 
 -- View user_storage_summary
 -- The app reads one row per user and uses the first numeric field found among:
---   used_bytes, used_bytes_total, total_bytes, bytes_used, sum_file_size
+--   used_bytes, used_bytes_total, total_bytes, bytes_used, sum_file_size,
+--   storage_used_bytes, storage_used, used, total_used
+-- If the view is missing, empty, or blocked by RLS, the app falls back to summing
+-- file_size_bytes (or file_size / size_bytes / size) from user_audio.
 -- Example:
 --   create or replace view user_storage_summary as
 --   select user_id, coalesce(sum(file_size_bytes),0)::bigint as used_bytes
@@ -24,3 +27,4 @@
 
 -- Storage bucket: user-uploads (private)
 -- Path pattern: {user_id}/{audio_type}/{unique_filename}
+-- Upload formats in app: .mp3, .ogg, .wav (50 MB max each)

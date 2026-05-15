@@ -4356,6 +4356,64 @@ const AudioLibrary = (() => {
       return `${x} B`;
     }
 
+    function userAudioRowStoragePath(row) {
+      if (!row || typeof row !== "object") {
+        return "";
+      }
+      const p =
+        row.storage_path ??
+        row.storagePath ??
+        row.path ??
+        row.object_path ??
+        row.objectPath;
+      return p != null ? String(p).trim() : "";
+    }
+
+    function userAudioRowFileSizeBytes(row) {
+      if (!row || typeof row !== "object") {
+        return 0;
+      }
+      const n = Number(
+        row.file_size_bytes ?? row.file_size ?? row.size_bytes ?? row.size ?? 0,
+      );
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function userAudioRowPk(row) {
+      if (!row || typeof row !== "object") {
+        return null;
+      }
+      const v = row.id ?? row.uuid ?? row.audio_id;
+      return v != null ? v : null;
+    }
+
+    function userAudioRowAudioTypeKey(row) {
+      if (!row || typeof row !== "object") {
+        return "";
+      }
+      const t = row.audio_type ?? row.audioType ?? row.type;
+      return String(t || "").toLowerCase();
+    }
+
+    async function sumUserAudioBytesFromTable(userId) {
+      const { data, error } = await supabase
+        .from("user_audio")
+        .select("*")
+        .eq("user_id", userId);
+      if (error) {
+        console.error("user_audio storage sum", error);
+        return null;
+      }
+      if (!Array.isArray(data)) {
+        return null;
+      }
+      let sum = 0;
+      for (const row of data) {
+        sum += userAudioRowFileSizeBytes(row);
+      }
+      return sum;
+    }
+
     function syncFilePickerLibraryChrome() {
       const chrome = document.getElementById("file-picker-library-chrome");
       const isLib = filePickerActiveType === "library";
@@ -4379,22 +4437,29 @@ const AudioLibrary = (() => {
         .from("user_storage_summary")
         .select("*")
         .eq("user_id", userId)
-        .maybeSingle();
+        .limit(1);
       if (error) {
         console.error("user_storage_summary", error);
-        return 0;
       }
-      if (!data || typeof data !== "object") {
-        return 0;
+      const row = Array.isArray(data) && data.length ? data[0] : null;
+      if (row && typeof row === "object") {
+        const raw =
+          row.used_bytes ??
+          row.used_bytes_total ??
+          row.total_bytes ??
+          row.bytes_used ??
+          row.sum_file_size ??
+          row.storage_used_bytes ??
+          row.storage_used ??
+          row.used ??
+          row.total_used;
+        const n = Number(raw);
+        if (Number.isFinite(n) && n >= 0) {
+          return n;
+        }
       }
-      const raw =
-        data.used_bytes ??
-        data.used_bytes_total ??
-        data.total_bytes ??
-        data.bytes_used ??
-        data.sum_file_size;
-      const n = Number(raw);
-      return Number.isFinite(n) && n > 0 ? n : 0;
+      const summed = await sumUserAudioBytesFromTable(userId);
+      return summed !== null ? summed : 0;
     }
 
     async function fetchUserAudioRowsForLibrary(userId) {
@@ -4403,7 +4468,7 @@ const AudioLibrary = (() => {
       }
       const { data, error } = await supabase
         .from("user_audio")
-        .select("id,title,filename,storage_path,file_size_bytes,audio_type,mood_tags,created_at")
+        .select("*")
         .eq("user_id", userId)
         .order("title");
       if (error) {
@@ -4440,7 +4505,8 @@ const AudioLibrary = (() => {
         fillEl.style.width = `${pct}%`;
       }
       if (textEl) {
-        textEl.textContent = `${formatBytesShort(used)} / ${formatBytesShort(USER_LIBRARY_QUOTA_BYTES)}`;
+        const left = Math.max(0, USER_LIBRARY_QUOTA_BYTES - used);
+        textEl.textContent = `${formatBytesShort(used)} used · ${formatBytesShort(left)} free · ${formatBytesShort(USER_LIBRARY_QUOTA_BYTES)} max`;
       }
       const atLimit = used >= USER_LIBRARY_QUOTA_BYTES;
       if (limitMsg) {
@@ -4452,12 +4518,12 @@ const AudioLibrary = (() => {
     }
 
     function userUploadRefFromRow(row) {
-      const p = row && row.storage_path != null ? String(row.storage_path).trim() : "";
+      const p = userAudioRowStoragePath(row);
       return p ? `${USER_UPLOAD_PREFIX}${p}` : "";
     }
 
     function parseMoodTagsFromRow(row) {
-      const raw = row && row.mood_tags;
+      const raw = row && (row.mood_tags ?? row.moods ?? row.tags);
       if (Array.isArray(raw)) {
         return raw.map(String);
       }
@@ -4479,6 +4545,67 @@ const AudioLibrary = (() => {
         }
       }
       return [];
+    }
+
+    function appendMyLibraryFilePickerRow(row) {
+      const ref = userUploadRefFromRow(row);
+      const li = document.createElement("li");
+      const title = String(row.title || row.filename || "Untitled").trim() || "Untitled";
+      const info = document.createElement("div");
+      info.className = "file-picker-file-info";
+      const titleRow = document.createElement("div");
+      titleRow.className = "file-picker-file-title";
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "file-name";
+      nameSpan.textContent = title;
+      titleRow.appendChild(nameSpan);
+      info.appendChild(titleRow);
+      const meta = document.createElement("div");
+      meta.className = "file-picker-row-meta";
+      meta.textContent = `${String(userAudioRowAudioTypeKey(row) || row.audio_type || "")} · ${formatBytesShort(userAudioRowFileSizeBytes(row))}`;
+      const moods = parseMoodTagsFromRow(row);
+      if (moods.length) {
+        meta.textContent += ` · ${moods.join(", ")}`;
+      }
+      info.appendChild(meta);
+      li.appendChild(info);
+
+      const rowActions = document.createElement("div");
+      rowActions.className = "file-picker-row-actions";
+
+      const playButton = document.createElement("button");
+      playButton.type = "button";
+      playButton.className = "file-picker-preview-btn";
+      playButton.textContent = "▶";
+      playButton.setAttribute("aria-label", `Preview ${title}`);
+      buildPreviewMyLib(playButton, ref);
+      rowActions.appendChild(playButton);
+
+      const useMultiRow = filePickerMultiSelect && filePickerLockedToType === "music";
+      if (!useMultiRow) {
+        const selectButton = document.createElement("button");
+        selectButton.type = "button";
+        selectButton.textContent = "Select";
+        selectButton.addEventListener("click", () => {
+          if (typeof filePickerOnSelect === "function") {
+            filePickerOnSelect(ref);
+          }
+          closeFilePicker();
+        });
+        rowActions.appendChild(selectButton);
+      }
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "my-library-delete-btn";
+      delBtn.textContent = "Delete";
+      delBtn.addEventListener("click", () => {
+        void deleteUserAudioRow(row);
+      });
+      rowActions.appendChild(delBtn);
+
+      li.appendChild(rowActions);
+      filePickerList.appendChild(li);
     }
 
     async function renderMyLibraryFilePickerList() {
@@ -4505,10 +4632,9 @@ const AudioLibrary = (() => {
         syncFilePickerMultiFooter();
         return;
       }
+      const rendered = new WeakSet();
       for (const audioType of order) {
-        const group = filtered.filter(
-          (r) => String(r.audio_type || "").toLowerCase() === audioType,
-        );
+        const group = filtered.filter((r) => userAudioRowAudioTypeKey(r) === audioType);
         if (!group.length) {
           continue;
         }
@@ -4519,65 +4645,18 @@ const AudioLibrary = (() => {
         filePickerList.appendChild(heading);
 
         group.forEach((row) => {
-          const ref = userUploadRefFromRow(row);
-          const li = document.createElement("li");
-          const title = String(row.title || row.filename || "Untitled").trim() || "Untitled";
-          const info = document.createElement("div");
-          info.className = "file-picker-file-info";
-          const titleRow = document.createElement("div");
-          titleRow.className = "file-picker-file-title";
-          const nameSpan = document.createElement("span");
-          nameSpan.className = "file-name";
-          nameSpan.textContent = title;
-          titleRow.appendChild(nameSpan);
-          info.appendChild(titleRow);
-          const meta = document.createElement("div");
-          meta.className = "file-picker-row-meta";
-          meta.textContent = `${String(row.audio_type || "")} · ${formatBytesShort(row.file_size_bytes || 0)}`;
-          const moods = parseMoodTagsFromRow(row);
-          if (moods.length) {
-            meta.textContent += ` · ${moods.join(", ")}`;
-          }
-          info.appendChild(meta);
-          li.appendChild(info);
-
-          const rowActions = document.createElement("div");
-          rowActions.className = "file-picker-row-actions";
-
-          const playButton = document.createElement("button");
-          playButton.type = "button";
-          playButton.className = "file-picker-preview-btn";
-          playButton.textContent = "▶";
-          playButton.setAttribute("aria-label", `Preview ${title}`);
-          buildPreviewMyLib(playButton, ref);
-          rowActions.appendChild(playButton);
-
-          const useMultiRow =
-            filePickerMultiSelect && filePickerLockedToType === "music";
-          if (!useMultiRow) {
-            const selectButton = document.createElement("button");
-            selectButton.type = "button";
-            selectButton.textContent = "Select";
-            selectButton.addEventListener("click", () => {
-              if (typeof filePickerOnSelect === "function") {
-                filePickerOnSelect(ref);
-              }
-              closeFilePicker();
-            });
-            rowActions.appendChild(selectButton);
-          }
-
-          const delBtn = document.createElement("button");
-          delBtn.type = "button";
-          delBtn.className = "my-library-delete-btn";
-          delBtn.textContent = "Delete";
-          delBtn.addEventListener("click", () => {
-            void deleteUserAudioRow(row);
-          });
-          rowActions.appendChild(delBtn);
-
-          li.appendChild(rowActions);
-          filePickerList.appendChild(li);
+          rendered.add(row);
+          appendMyLibraryFilePickerRow(row);
+        });
+      }
+      const orphans = filtered.filter((r) => !rendered.has(r));
+      if (orphans.length) {
+        const heading = document.createElement("h4");
+        heading.className = "file-picker-library-section";
+        heading.textContent = "Other";
+        filePickerList.appendChild(heading);
+        orphans.forEach((row) => {
+          appendMyLibraryFilePickerRow(row);
         });
       }
       syncFilePickerMultiFooter();
@@ -4604,10 +4683,11 @@ const AudioLibrary = (() => {
 
     async function deleteUserAudioRow(row) {
       const uid = lastAuthSession?.user?.id;
-      if (!uid || !row.id) {
+      const rowId = userAudioRowPk(row);
+      if (!uid || rowId == null) {
         return;
       }
-      const path = row.storage_path != null ? String(row.storage_path).trim() : "";
+      const path = userAudioRowStoragePath(row);
       if (
         !window.confirm(
           `Delete "${String(row.title || row.filename || "this file")}"? This cannot be undone.`,
@@ -4627,7 +4707,7 @@ const AudioLibrary = (() => {
       const { error: delErr } = await supabase
         .from("user_audio")
         .delete()
-        .eq("id", row.id)
+        .eq("id", rowId)
         .eq("user_id", uid);
       if (delErr) {
         window.alert(`Could not delete record: ${delErr.message}`);
@@ -4736,15 +4816,10 @@ const AudioLibrary = (() => {
         return "Each file must be 50 MB or smaller.";
       }
       const name = file.name.toLowerCase();
-      const extOk = name.endsWith(".mp3") || name.endsWith(".ogg");
-      const mime = (file.type || "").toLowerCase();
-      const mimeOk =
-        !mime ||
-        mime === "audio/mpeg" ||
-        mime === "audio/mp3" ||
-        mime === "audio/ogg";
-      if (!extOk || !mimeOk) {
-        return "Only MP3 and OGG files are supported.";
+      const extOk =
+        name.endsWith(".mp3") || name.endsWith(".ogg") || name.endsWith(".wav");
+      if (!extOk) {
+        return "Only MP3, OGG, and WAV files are supported.";
       }
       return "";
     }
@@ -4807,12 +4882,15 @@ const AudioLibrary = (() => {
       if (submitBtn) {
         submitBtn.disabled = true;
       }
+      const lower = file.name.toLowerCase();
       const contentType =
         file.type && String(file.type).trim()
           ? file.type
-          : file.name.toLowerCase().endsWith(".ogg")
+          : lower.endsWith(".ogg")
             ? "audio/ogg"
-            : "audio/mpeg";
+            : lower.endsWith(".wav")
+              ? "audio/wav"
+              : "audio/mpeg";
       const { error: upErr } = await supabase.storage
         .from(USER_UPLOAD_BUCKET)
         .upload(objectPath, file, {
