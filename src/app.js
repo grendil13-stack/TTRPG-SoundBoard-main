@@ -4023,7 +4023,6 @@ const AudioLibrary = (() => {
         }
 
         primaryRow.appendChild(sceneBtn);
-        primaryRow.appendChild(playBtn);
 
         const tagRow = document.createElement("div");
         tagRow.className = "scene-card-tags";
@@ -4055,9 +4054,14 @@ const AudioLibrary = (() => {
         actions.appendChild(editBtn);
         actions.appendChild(delBtn);
 
+        const controlsRow = document.createElement("div");
+        controlsRow.className = "scene-card-controls";
+        controlsRow.appendChild(playBtn);
+        controlsRow.appendChild(actions);
+
         wrap.appendChild(primaryRow);
         wrap.appendChild(tagRow);
-        wrap.appendChild(actions);
+        wrap.appendChild(controlsRow);
         sceneButtonsBar.appendChild(wrap);
       });
 

@@ -471,11 +471,28 @@
     }
 
     .scene-card-primary {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
+      display: block;
       width: 100%;
+    }
+
+    .scene-card-controls {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .scene-card-controls .scene-card-actions {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      justify-content: flex-end;
     }
 
     .scene-play-btn {
@@ -540,7 +557,12 @@
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+    }
+
+    .scene-card-tags:empty {
+      display: none;
+      margin-bottom: 0;
     }
 
     .tag-pill {
@@ -555,12 +577,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-
-    .scene-card-actions {
-      display: flex;
-      gap: 4px;
-      justify-content: flex-end;
     }
 
     .scene-card-actions .scene-edit-btn,
@@ -1779,9 +1795,20 @@
       .scene-card-primary {
         flex: 1;
         min-width: 0;
-        flex-direction: column;
-        align-items: flex-start;
+      }
+
+      .scene-card-controls {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: center;
         gap: 4px;
+        width: auto;
+        margin-top: 0;
+        min-width: 0;
+      }
+
+      .scene-card-controls .scene-card-actions {
+        margin-left: 0;
       }
 
       .scene-play-btn {
@@ -1797,7 +1824,7 @@
       }
 
       .scene-card-tags,
-      .scene-card-actions {
+      .scene-card .scene-card-controls .scene-card-actions {
         display: none !important;
       }
 
@@ -1809,10 +1836,6 @@
         font-size: 13px;
         font-weight: 600;
         border-radius: 0;
-      }
-
-      .scene-card-primary .scene-play-btn {
-        margin: 0 0 6px 8px;
       }
 
       .scene-selector-empty {
