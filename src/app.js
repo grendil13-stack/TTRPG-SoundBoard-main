@@ -1316,6 +1316,8 @@ const AudioLibrary = (() => {
     let filePickerFavoritesOnly = false;
     /** @type {string | null} */
     let filePickerMyTagFilter = null;
+    let myLibraryUploadSelectedFile = null;
+    const myLibraryUploadMoodTags = new Set();
     const nowPlayingTitle = document.querySelector(".track-title");
     const musicProgressRange = document.getElementById("music-progress");
     const musicProgressCurrentEl = document.getElementById("music-progress-current");
@@ -1335,6 +1337,60 @@ const AudioLibrary = (() => {
     const musicRepeatToggleButton = document.getElementById("music-repeat-toggle");
     const MUSIC_SCENE_HANDOFF_MS = 2000;
     const musicPlayer = new Audio();
+    const USER_UPLOAD_PREFIX = "user-upload:";
+    const USER_UPLOAD_BUCKET = "user-uploads";
+    const USER_LIBRARY_QUOTA_BYTES = 500 * 1024 * 1024;
+    const USER_UPLOAD_MAX_FILE_BYTES = 50 * 1024 * 1024;
+    /** storage path within bucket → { url, expiresAt: unix seconds } */
+    const userUploadSignedUrlCache = new Map();
+
+    async function getSignedUserUploadUrl(storagePath) {
+      const path = String(storagePath || "").replace(/^\/+/, "");
+      if (!path) {
+        return "";
+      }
+      const now = Date.now() / 1000;
+      const cached = userUploadSignedUrlCache.get(path);
+      if (cached && cached.expiresAt > now + 120) {
+        return cached.url;
+      }
+      const { data, error } = await supabase.storage
+        .from(USER_UPLOAD_BUCKET)
+        .createSignedUrl(path, 3600);
+      if (error || !data?.signedUrl) {
+        console.error("user-upload signed URL", error);
+        return "";
+      }
+      userUploadSignedUrlCache.set(path, {
+        url: data.signedUrl,
+        expiresAt: now + 3600,
+      });
+      return data.signedUrl;
+    }
+
+    async function resolveAudioPlaybackUrl(rawPath) {
+      const s = String(rawPath || "").trim();
+      if (!s) {
+        return "";
+      }
+      if (/^https?:\/\//i.test(s)) {
+        return s;
+      }
+      if (s.startsWith(USER_UPLOAD_PREFIX)) {
+        const rel = s.slice(USER_UPLOAD_PREFIX.length).replace(/^\/+/, "");
+        return getSignedUserUploadUrl(rel);
+      }
+      return AudioLibrary.resolvePlaybackUrl(s);
+    }
+
+    function stripUserUploadRef(rawPath) {
+      const s = String(rawPath || "");
+      if (s.startsWith(USER_UPLOAD_PREFIX)) {
+        return s.slice(USER_UPLOAD_PREFIX.length);
+      }
+      return s;
+    }
+
     let musicVolumeAnimFrameId = null;
     let musicVolumeAnimGeneration = 0;
 
@@ -1380,12 +1436,16 @@ const AudioLibrary = (() => {
         }
         musicQueuedNextTrackIndex = null;
         currentTrackIndex = index;
-        loadCurrentTrack();
-        musicPlayer.volume = effectiveMusicVolume();
-        musicPlayer.play().then(() => {
-          updateNowPlayingDisplay();
-          renderMusicPlaylist();
-        }).catch(() => renderMusicPlaylist());
+        void loadCurrentTrack().then((ok) => {
+          if (!ok) {
+            return;
+          }
+          musicPlayer.volume = effectiveMusicVolume();
+          musicPlayer.play().then(() => {
+            updateNowPlayingDisplay();
+            renderMusicPlaylist();
+          }).catch(() => renderMusicPlaylist());
+        });
         return;
       }
 
@@ -1393,7 +1453,7 @@ const AudioLibrary = (() => {
         // When paused, selecting a track sets what will play next.
         musicQueuedNextTrackIndex = null;
         currentTrackIndex = index;
-        loadCurrentTrack();
+        void loadCurrentTrack();
         updateNowPlayingDisplay();
         renderMusicPlaylist();
         return;
@@ -2753,9 +2813,9 @@ const AudioLibrary = (() => {
       } else if (musicPlayer.paused) {
         musicPlaybackScene = sceneKey;
         pendingPlayTrackIndex = currentTrackIndex;
-        loadCurrentTrack();
+        void loadCurrentTrack();
       }
-      playMusic();
+      void playMusic();
       playAllAmbientLayers();
     }
 
@@ -2839,8 +2899,11 @@ const AudioLibrary = (() => {
         currentTrackIndex = musicQueuedNextTrackIndex;
         musicQueuedNextTrackIndex = null;
         musicPlayer.volume = effectiveMusicVolume();
-        loadCurrentTrack();
-        musicPlayer.play().then(() => renderMusicPlaylist()).catch(() => renderMusicPlaylist());
+        void loadCurrentTrack().then((ok) => {
+          if (ok) {
+            musicPlayer.play().then(() => renderMusicPlaylist()).catch(() => renderMusicPlaylist());
+          }
+        });
         return;
       }
 
@@ -2906,8 +2969,9 @@ const AudioLibrary = (() => {
     }
 
     function getTrackLabel(filePath) {
-      const parts = filePath.split("/");
-      const fileName = parts[parts.length - 1] || filePath;
+      const rest = stripUserUploadRef(String(filePath || ""));
+      const parts = rest.split("/");
+      const fileName = parts[parts.length - 1] || rest;
       return fileName.replace(/\.[^.]+$/, "");
     }
 
@@ -3021,7 +3085,7 @@ const AudioLibrary = (() => {
       });
     }
 
-    function loadCurrentTrack() {
+    async function loadCurrentTrack() {
       const tracks = getSceneTracks(musicPlaybackScene);
       if (!tracks.length) {
         musicPlayer.removeAttribute("src");
@@ -3035,7 +3099,12 @@ const AudioLibrary = (() => {
         currentTrackIndex = 0;
       }
 
-      const nextSrc = AudioLibrary.resolvePlaybackUrl(tracks[currentTrackIndex]);
+      const nextSrc = await resolveAudioPlaybackUrl(tracks[currentTrackIndex]);
+      if (!nextSrc) {
+        updateNowPlayingDisplay();
+        renderMusicPlaylist();
+        return false;
+      }
       if (musicPlayer.getAttribute("src") !== nextSrc) {
         musicPlayer.src = nextSrc;
       }
@@ -3045,7 +3114,7 @@ const AudioLibrary = (() => {
       return true;
     }
 
-    function playMusic() {
+    async function playMusic() {
       const destTracks = getSceneTracks(currentScene);
       if (!destTracks.length) {
         return;
@@ -3057,29 +3126,31 @@ const AudioLibrary = (() => {
         if (!musicPlayer.paused) {
           detachMusicEnded(musicPlayer);
           runMusicFadeOut(musicPlayer, () => {
-            currentTrackIndex = pendingPlayTrackIndex;
-            musicPlaybackScene = currentScene;
-            if (!loadCurrentTrack()) {
-              updateNowPlayingDisplay();
-              renderMusicPlaylist();
-              return;
-            }
-            attachMusicEnded(musicPlayer);
-            musicPlayer.volume = effectiveMusicVolume();
-            musicPlayer.play()
-              .then(() => {
+            void (async () => {
+              currentTrackIndex = pendingPlayTrackIndex;
+              musicPlaybackScene = currentScene;
+              if (!(await loadCurrentTrack())) {
+                updateNowPlayingDisplay();
                 renderMusicPlaylist();
-              })
-              .catch(() => {
-                renderMusicPlaylist();
-              });
+                return;
+              }
+              attachMusicEnded(musicPlayer);
+              musicPlayer.volume = effectiveMusicVolume();
+              musicPlayer.play()
+                .then(() => {
+                  renderMusicPlaylist();
+                })
+                .catch(() => {
+                  renderMusicPlaylist();
+                });
+            })();
           });
           return;
         }
 
         currentTrackIndex = pendingPlayTrackIndex;
         musicPlaybackScene = currentScene;
-        if (!loadCurrentTrack()) {
+        if (!(await loadCurrentTrack())) {
           return;
         }
         attachMusicEnded(musicPlayer);
@@ -3094,7 +3165,7 @@ const AudioLibrary = (() => {
         return;
       }
 
-      if (!loadCurrentTrack()) {
+      if (!(await loadCurrentTrack())) {
         return;
       }
 
@@ -3129,17 +3200,21 @@ const AudioLibrary = (() => {
           }
           cancelMusicVolumeAnim();
           currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-          loadCurrentTrack();
-          detachMusicEnded(musicPlayer);
-          attachMusicEnded(musicPlayer);
-          musicPlayer.volume = effectiveMusicVolume();
-          musicPlayer.play()
-            .then(() => {
-              renderMusicPlaylist();
-            })
-            .catch(() => {
-              renderMusicPlaylist();
-            });
+          void loadCurrentTrack().then((ok) => {
+            if (!ok) {
+              return;
+            }
+            detachMusicEnded(musicPlayer);
+            attachMusicEnded(musicPlayer);
+            musicPlayer.volume = effectiveMusicVolume();
+            musicPlayer.play()
+              .then(() => {
+                renderMusicPlaylist();
+              })
+              .catch(() => {
+                renderMusicPlaylist();
+              });
+          });
           return;
         }
         const uiTracks = getSceneTracks(currentScene);
@@ -3168,21 +3243,26 @@ const AudioLibrary = (() => {
       } else {
         currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
       }
-      loadCurrentTrack();
-      if (shouldPlay) {
-        detachMusicEnded(musicPlayer);
-        attachMusicEnded(musicPlayer);
-        musicPlayer.volume = effectiveMusicVolume();
-        musicPlayer.play()
-          .then(() => {
-            renderMusicPlaylist();
-          })
-          .catch(() => {
-            renderMusicPlaylist();
-          });
-      } else {
-        renderMusicPlaylist();
-      }
+      void loadCurrentTrack().then((ok) => {
+        if (!ok) {
+          renderMusicPlaylist();
+          return;
+        }
+        if (shouldPlay) {
+          detachMusicEnded(musicPlayer);
+          attachMusicEnded(musicPlayer);
+          musicPlayer.volume = effectiveMusicVolume();
+          musicPlayer.play()
+            .then(() => {
+              renderMusicPlaylist();
+            })
+            .catch(() => {
+              renderMusicPlaylist();
+            });
+        } else {
+          renderMusicPlaylist();
+        }
+      });
     }
 
     function goToPreviousTrack(shouldPlay) {
@@ -3195,17 +3275,21 @@ const AudioLibrary = (() => {
           }
           cancelMusicVolumeAnim();
           currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-          loadCurrentTrack();
-          detachMusicEnded(musicPlayer);
-          attachMusicEnded(musicPlayer);
-          musicPlayer.volume = effectiveMusicVolume();
-          musicPlayer.play()
-            .then(() => {
-              renderMusicPlaylist();
-            })
-            .catch(() => {
-              renderMusicPlaylist();
-            });
+          void loadCurrentTrack().then((ok) => {
+            if (!ok) {
+              return;
+            }
+            detachMusicEnded(musicPlayer);
+            attachMusicEnded(musicPlayer);
+            musicPlayer.volume = effectiveMusicVolume();
+            musicPlayer.play()
+              .then(() => {
+                renderMusicPlaylist();
+              })
+              .catch(() => {
+                renderMusicPlaylist();
+              });
+          });
           return;
         }
         const uiTracks = getSceneTracks(currentScene);
@@ -3224,21 +3308,26 @@ const AudioLibrary = (() => {
 
       cancelMusicVolumeAnim();
       currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-      loadCurrentTrack();
-      if (shouldPlay) {
-        detachMusicEnded(musicPlayer);
-        attachMusicEnded(musicPlayer);
-        musicPlayer.volume = effectiveMusicVolume();
-        musicPlayer.play()
-          .then(() => {
-            renderMusicPlaylist();
-          })
-          .catch(() => {
-            renderMusicPlaylist();
-          });
-      } else {
-        renderMusicPlaylist();
-      }
+      void loadCurrentTrack().then((ok) => {
+        if (!ok) {
+          renderMusicPlaylist();
+          return;
+        }
+        if (shouldPlay) {
+          detachMusicEnded(musicPlayer);
+          attachMusicEnded(musicPlayer);
+          musicPlayer.volume = effectiveMusicVolume();
+          musicPlayer.play()
+            .then(() => {
+              renderMusicPlaylist();
+            })
+            .catch(() => {
+              renderMusicPlaylist();
+            });
+        } else {
+          renderMusicPlaylist();
+        }
+      });
     }
 
     function setSceneMusic(sceneName) {
@@ -3252,7 +3341,7 @@ const AudioLibrary = (() => {
         pendingPlayTrackIndex = 0;
         musicPlaybackScene = currentScene;
         detachMusicEnded(musicPlayer);
-        loadCurrentTrack();
+        void loadCurrentTrack();
         return;
       }
 
@@ -3284,7 +3373,7 @@ const AudioLibrary = (() => {
       musicPlayer.volume = effectiveMusicVolume();
 
       musicPlayButton.addEventListener("click", () => {
-        playMusic();
+        void playMusic();
       });
       musicPauseButton.addEventListener("click", () => {
         pauseMusic();
@@ -3397,7 +3486,7 @@ const AudioLibrary = (() => {
         updateNowPlayingDisplay();
       });
 
-      loadCurrentTrack();
+      void loadCurrentTrack();
     }
 
     function renderAmbientLayersForScene(sceneKey, ambientPreviousSceneKey) {
@@ -3486,9 +3575,14 @@ const AudioLibrary = (() => {
         layerElement.appendChild(rowMain);
         customBgmContainer.appendChild(layerElement);
 
-        const layerAudio = new Audio(AudioLibrary.resolvePlaybackUrl(file));
+        const layerAudio = new Audio();
         layerAudio.loop = true;
         layerAudio.volume = effectiveBgmVolume(volumeSlider.value);
+        void resolveAudioPlaybackUrl(file).then((url) => {
+          if (url) {
+            layerAudio.src = url;
+          }
+        });
 
         const setLayerActiveState = (isActive) => {
           layerElement.classList.toggle("active", isActive);
@@ -3546,6 +3640,9 @@ const AudioLibrary = (() => {
       if (!raw) {
         return [];
       }
+      if (raw.startsWith(USER_UPLOAD_PREFIX)) {
+        return [raw];
+      }
       if (/^https?:\/\//i.test(raw)) {
         return [raw];
       }
@@ -3576,13 +3673,21 @@ const AudioLibrary = (() => {
         buttonElement.classList.remove("fx-flash");
       }, 140);
       buttonElement.classList.add("fx-playing");
-      const tryPlayCandidate = (candidateIndex) => {
+      const tryPlayCandidate = async (candidateIndex) => {
         if (candidateIndex >= candidates.length) {
           activeFxAudio.delete(buttonElement);
           buttonElement.classList.remove("fx-playing");
           return;
         }
-        const audio = new Audio(candidates[candidateIndex]);
+        let src = candidates[candidateIndex];
+        if (String(src).startsWith(USER_UPLOAD_PREFIX)) {
+          src = await resolveAudioPlaybackUrl(src);
+          if (!src) {
+            tryPlayCandidate(candidateIndex + 1);
+            return;
+          }
+        }
+        const audio = new Audio(src);
         audio.volume = effectiveSfxVolume();
         activeFxAudio.set(buttonElement, audio);
 
@@ -3599,7 +3704,7 @@ const AudioLibrary = (() => {
           }
           audio.pause();
           audio.currentTime = 0;
-          tryPlayCandidate(candidateIndex + 1);
+          void tryPlayCandidate(candidateIndex + 1);
         };
 
         audio.addEventListener("ended", clearPlayingState, { once: true });
@@ -3607,7 +3712,7 @@ const AudioLibrary = (() => {
         audio.play().catch(tryNext);
       };
 
-      tryPlayCandidate(0);
+      void tryPlayCandidate(0);
     }
 
     function scenePinUIRenderActive() {
@@ -4053,21 +4158,37 @@ const AudioLibrary = (() => {
         music: "Choose music file",
         ambient: "Choose ambient file",
         sfx: "Choose SFX file",
+        library: "My Library",
       };
       filePickerTabs.hidden = false;
       const tabButtons = filePickerTabs.querySelectorAll(".file-picker-tab");
+      const showLibraryTab = Boolean(lastAuthSession?.user);
+      const hideLibraryForMulti =
+        Boolean(filePickerMultiSelect) && filePickerLockedToType === "music";
+
+      const applyTabVisibility = () => {
+        tabButtons.forEach((btn) => {
+          const t = btn.dataset.audioType;
+          if (t === "library") {
+            btn.hidden = !showLibraryTab || hideLibraryForMulti;
+            return;
+          }
+          if (filePickerLockedToType) {
+            btn.hidden = t !== filePickerLockedToType;
+          } else {
+            btn.hidden = false;
+          }
+        });
+      };
+
       if (filePickerLockedToType) {
         filePickerTitleEl.textContent =
           titles[filePickerLockedToType] || "Choose audio file";
-        tabButtons.forEach((btn) => {
-          btn.hidden = btn.dataset.audioType !== filePickerLockedToType;
-        });
+        applyTabVisibility();
         return;
       }
       filePickerTitleEl.textContent = "Choose audio file";
-      tabButtons.forEach((btn) => {
-        btn.hidden = false;
-      });
+      applyTabVisibility();
     }
 
     function appendFilePickerMetaLine(container, label, values) {
@@ -4224,8 +4345,639 @@ const AudioLibrary = (() => {
       container.appendChild(wrap);
     }
 
+    function formatBytesShort(n) {
+      const x = Number(n) || 0;
+      if (x >= 1048576) {
+        return `${(x / 1048576).toFixed(2)} MB`;
+      }
+      if (x >= 1024) {
+        return `${(x / 1024).toFixed(1)} KB`;
+      }
+      return `${x} B`;
+    }
+
+    function syncFilePickerLibraryChrome() {
+      const chrome = document.getElementById("file-picker-library-chrome");
+      const isLib = filePickerActiveType === "library";
+      if (chrome) {
+        chrome.hidden = !isLib;
+      }
+      if (filePickerTagFiltersWrap && filePickerSearch) {
+        filePickerTagFiltersWrap.hidden = isLib;
+        filePickerSearch.placeholder = isLib ? "Search My Library…" : "Search title…";
+      }
+      if (isLib) {
+        void refreshMyLibraryStorageBar();
+      }
+    }
+
+    async function fetchUserStorageUsedBytes(userId) {
+      if (!userId) {
+        return 0;
+      }
+      const { data, error } = await supabase
+        .from("user_storage_summary")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) {
+        console.error("user_storage_summary", error);
+        return 0;
+      }
+      if (!data || typeof data !== "object") {
+        return 0;
+      }
+      const raw =
+        data.used_bytes ??
+        data.used_bytes_total ??
+        data.total_bytes ??
+        data.bytes_used ??
+        data.sum_file_size;
+      const n = Number(raw);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+
+    async function fetchUserAudioRowsForLibrary(userId) {
+      if (!userId) {
+        return [];
+      }
+      const { data, error } = await supabase
+        .from("user_audio")
+        .select("id,title,filename,storage_path,file_size_bytes,audio_type,mood_tags,created_at")
+        .eq("user_id", userId)
+        .order("title");
+      if (error) {
+        console.error("user_audio", error);
+        return [];
+      }
+      return Array.isArray(data) ? data : [];
+    }
+
+    async function refreshMyLibraryStorageBar() {
+      const fillEl = document.getElementById("file-picker-storage-bar-fill");
+      const textEl = document.getElementById("file-picker-storage-text");
+      const limitMsg = document.getElementById("file-picker-storage-limit-msg");
+      const uploadBtn = document.getElementById("file-picker-my-library-upload-btn");
+      const uid = lastAuthSession?.user?.id;
+      if (!uid) {
+        if (fillEl) {
+          fillEl.style.width = "0%";
+        }
+        if (textEl) {
+          textEl.textContent = "—";
+        }
+        if (limitMsg) {
+          limitMsg.hidden = true;
+        }
+        if (uploadBtn) {
+          uploadBtn.disabled = true;
+        }
+        return;
+      }
+      const used = await fetchUserStorageUsedBytes(uid);
+      const pct = Math.min(100, (used / USER_LIBRARY_QUOTA_BYTES) * 100);
+      if (fillEl) {
+        fillEl.style.width = `${pct}%`;
+      }
+      if (textEl) {
+        textEl.textContent = `${formatBytesShort(used)} / ${formatBytesShort(USER_LIBRARY_QUOTA_BYTES)}`;
+      }
+      const atLimit = used >= USER_LIBRARY_QUOTA_BYTES;
+      if (limitMsg) {
+        limitMsg.hidden = !atLimit;
+      }
+      if (uploadBtn) {
+        uploadBtn.disabled = atLimit;
+      }
+    }
+
+    function userUploadRefFromRow(row) {
+      const p = row && row.storage_path != null ? String(row.storage_path).trim() : "";
+      return p ? `${USER_UPLOAD_PREFIX}${p}` : "";
+    }
+
+    function parseMoodTagsFromRow(row) {
+      const raw = row && row.mood_tags;
+      if (Array.isArray(raw)) {
+        return raw.map(String);
+      }
+      if (raw && typeof raw === "object" && raw !== null) {
+        try {
+          return Object.values(raw).map(String);
+        } catch {
+          return [];
+        }
+      }
+      if (typeof raw === "string" && raw.trim()) {
+        try {
+          const j = JSON.parse(raw);
+          if (Array.isArray(j)) {
+            return j.map(String);
+          }
+        } catch {
+          return raw.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+      }
+      return [];
+    }
+
+    async function renderMyLibraryFilePickerList() {
+      const query = filePickerSearch.value.trim().toLowerCase();
+      filePickerList.innerHTML = "";
+      const uid = lastAuthSession?.user?.id;
+      if (!uid) {
+        const li = document.createElement("li");
+        li.textContent = "Sign in to view My Library.";
+        filePickerList.appendChild(li);
+        syncFilePickerMultiFooter();
+        return;
+      }
+      const rows = await fetchUserAudioRowsForLibrary(uid);
+      const filtered = rows.filter((r) => {
+        const title = String(r.title || "").toLowerCase();
+        return !query || title.includes(query);
+      });
+      const order = ["music", "ambient", "sfx"];
+      if (!filtered.length) {
+        const emptyItem = document.createElement("li");
+        emptyItem.textContent = "No uploaded files yet. Use Upload to add audio.";
+        filePickerList.appendChild(emptyItem);
+        syncFilePickerMultiFooter();
+        return;
+      }
+      for (const audioType of order) {
+        const group = filtered.filter(
+          (r) => String(r.audio_type || "").toLowerCase() === audioType,
+        );
+        if (!group.length) {
+          continue;
+        }
+        const heading = document.createElement("h4");
+        heading.className = "file-picker-library-section";
+        heading.textContent =
+          audioType === "music" ? "Music" : audioType === "ambient" ? "Ambient" : "SFX";
+        filePickerList.appendChild(heading);
+
+        group.forEach((row) => {
+          const ref = userUploadRefFromRow(row);
+          const li = document.createElement("li");
+          const title = String(row.title || row.filename || "Untitled").trim() || "Untitled";
+          const info = document.createElement("div");
+          info.className = "file-picker-file-info";
+          const titleRow = document.createElement("div");
+          titleRow.className = "file-picker-file-title";
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "file-name";
+          nameSpan.textContent = title;
+          titleRow.appendChild(nameSpan);
+          info.appendChild(titleRow);
+          const meta = document.createElement("div");
+          meta.className = "file-picker-row-meta";
+          meta.textContent = `${String(row.audio_type || "")} · ${formatBytesShort(row.file_size_bytes || 0)}`;
+          const moods = parseMoodTagsFromRow(row);
+          if (moods.length) {
+            meta.textContent += ` · ${moods.join(", ")}`;
+          }
+          info.appendChild(meta);
+          li.appendChild(info);
+
+          const rowActions = document.createElement("div");
+          rowActions.className = "file-picker-row-actions";
+
+          const playButton = document.createElement("button");
+          playButton.type = "button";
+          playButton.className = "file-picker-preview-btn";
+          playButton.textContent = "▶";
+          playButton.setAttribute("aria-label", `Preview ${title}`);
+          buildPreviewMyLib(playButton, ref);
+          rowActions.appendChild(playButton);
+
+          const useMultiRow =
+            filePickerMultiSelect && filePickerLockedToType === "music";
+          if (!useMultiRow) {
+            const selectButton = document.createElement("button");
+            selectButton.type = "button";
+            selectButton.textContent = "Select";
+            selectButton.addEventListener("click", () => {
+              if (typeof filePickerOnSelect === "function") {
+                filePickerOnSelect(ref);
+              }
+              closeFilePicker();
+            });
+            rowActions.appendChild(selectButton);
+          }
+
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "my-library-delete-btn";
+          delBtn.textContent = "Delete";
+          delBtn.addEventListener("click", () => {
+            void deleteUserAudioRow(row);
+          });
+          rowActions.appendChild(delBtn);
+
+          li.appendChild(rowActions);
+          filePickerList.appendChild(li);
+        });
+      }
+      syncFilePickerMultiFooter();
+    }
+
+    function buildPreviewMyLib(playButton, ref) {
+      playButton.addEventListener("click", () => {
+        if (filePickerPreviewAudio && !filePickerPreviewAudio.paused) {
+          stopFilePreviewAudio();
+        }
+        void resolveAudioPlaybackUrl(ref).then((url) => {
+          if (!url) {
+            return;
+          }
+          const preview = new Audio(url);
+          preview.volume = 0.7;
+          preview.play().catch(() => {
+            stopFilePreviewAudio();
+          });
+          filePickerPreviewAudio = preview;
+        });
+      });
+    }
+
+    async function deleteUserAudioRow(row) {
+      const uid = lastAuthSession?.user?.id;
+      if (!uid || !row.id) {
+        return;
+      }
+      const path = row.storage_path != null ? String(row.storage_path).trim() : "";
+      if (
+        !window.confirm(
+          `Delete "${String(row.title || row.filename || "this file")}"? This cannot be undone.`,
+        )
+      ) {
+        return;
+      }
+      if (path) {
+        const { error: rmErr } = await supabase.storage.from(USER_UPLOAD_BUCKET).remove([path]);
+        if (rmErr) {
+          console.error("storage remove", rmErr);
+          window.alert(`Could not delete file from storage: ${rmErr.message}`);
+          return;
+        }
+        userUploadSignedUrlCache.delete(path);
+      }
+      const { error: delErr } = await supabase
+        .from("user_audio")
+        .delete()
+        .eq("id", row.id)
+        .eq("user_id", uid);
+      if (delErr) {
+        window.alert(`Could not delete record: ${delErr.message}`);
+        return;
+      }
+      if (filePickerActiveType === "library") {
+        void renderFilePickerList();
+        void refreshMyLibraryStorageBar();
+      }
+    }
+
+    function clearMyLibraryUploadForm() {
+      myLibraryUploadSelectedFile = null;
+      const errEl = document.getElementById("my-library-upload-error");
+      const okEl = document.getElementById("my-library-upload-success");
+      const titleIn = document.getElementById("my-library-title-input");
+      const fileIn = document.getElementById("my-library-file-input");
+      const nameLbl = document.getElementById("my-library-selected-filename");
+      const prog = document.getElementById("my-library-upload-progress-wrap");
+      if (errEl) {
+        errEl.textContent = "";
+      }
+      if (okEl) {
+        okEl.hidden = true;
+      }
+      if (titleIn) {
+        titleIn.value = "";
+      }
+      if (fileIn) {
+        fileIn.value = "";
+      }
+      if (nameLbl) {
+        nameLbl.textContent = "";
+      }
+      if (prog) {
+        prog.hidden = true;
+      }
+      myLibraryUploadMoodTags.clear();
+      renderMyLibraryUploadMoodPills();
+    }
+
+    function renderMyLibraryUploadMoodPills() {
+      const wrap = document.getElementById("my-library-mood-pills");
+      if (!wrap) {
+        return;
+      }
+      wrap.innerHTML = "";
+      void AudioLibrary.getReadmeFilterLists().then((readme) => {
+        const moods = Array.isArray(readme.all_mood_tags) ? readme.all_mood_tags : [];
+        moods.forEach((tag) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "file-picker-tag";
+          const on = myLibraryUploadMoodTags.has(tag);
+          btn.classList.toggle("active", on);
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+          btn.textContent = tag;
+          btn.addEventListener("click", () => {
+            if (myLibraryUploadMoodTags.has(tag)) {
+              myLibraryUploadMoodTags.delete(tag);
+            } else {
+              myLibraryUploadMoodTags.add(tag);
+            }
+            renderMyLibraryUploadMoodPills();
+          });
+          wrap.appendChild(btn);
+        });
+      });
+    }
+
+    function openMyLibraryUploadPanel() {
+      const panel = document.getElementById("my-library-upload-panel");
+      if (!panel) {
+        return;
+      }
+      const uid = lastAuthSession?.user?.id;
+      if (!uid) {
+        openAuthModal();
+        return;
+      }
+      void fetchUserStorageUsedBytes(uid).then((used) => {
+        if (used >= USER_LIBRARY_QUOTA_BYTES) {
+          window.alert("Storage limit reached (500 MB). Delete files to upload more.");
+          return;
+        }
+        clearMyLibraryUploadForm();
+        panel.hidden = false;
+        renderMyLibraryUploadMoodPills();
+        document.getElementById("my-library-title-input")?.focus();
+      });
+    }
+
+    function closeMyLibraryUploadPanel() {
+      const panel = document.getElementById("my-library-upload-panel");
+      if (panel) {
+        panel.hidden = true;
+      }
+      clearMyLibraryUploadForm();
+    }
+
+    function validateMyLibraryFileForUpload(file) {
+      if (!file) {
+        return "Choose an audio file.";
+      }
+      if (file.size > USER_UPLOAD_MAX_FILE_BYTES) {
+        return "Each file must be 50 MB or smaller.";
+      }
+      const name = file.name.toLowerCase();
+      const extOk = name.endsWith(".mp3") || name.endsWith(".ogg");
+      const mime = (file.type || "").toLowerCase();
+      const mimeOk =
+        !mime ||
+        mime === "audio/mpeg" ||
+        mime === "audio/mp3" ||
+        mime === "audio/ogg";
+      if (!extOk || !mimeOk) {
+        return "Only MP3 and OGG files are supported.";
+      }
+      return "";
+    }
+
+    function sanitizeUploadStorageFilename(originalName) {
+      const base = originalName.replace(/\\/g, "/").split("/").pop() || "audio";
+      const cleaned = base.replace(/[^a-zA-Z0-9._-]/g, "_");
+      return cleaned || "audio";
+    }
+
+    async function submitMyLibraryUpload() {
+      const errEl = document.getElementById("my-library-upload-error");
+      const titleIn = document.getElementById("my-library-title-input");
+      const typeSel = document.getElementById("my-library-type-select");
+      const prog = document.getElementById("my-library-upload-progress-wrap");
+      const submitBtn = document.getElementById("my-library-upload-submit");
+      const uid = lastAuthSession?.user?.id;
+      if (!uid) {
+        openAuthModal();
+        return;
+      }
+      const used = await fetchUserStorageUsedBytes(uid);
+      if (used >= USER_LIBRARY_QUOTA_BYTES) {
+        if (errEl) {
+          errEl.textContent = "Storage limit reached (500 MB).";
+        }
+        return;
+      }
+      const file = myLibraryUploadSelectedFile;
+      const v = validateMyLibraryFileForUpload(file);
+      if (v) {
+        if (errEl) {
+          errEl.textContent = v;
+        }
+        return;
+      }
+      if (errEl) {
+        errEl.textContent = "";
+      }
+      const audioType = normalizeFilePickerAudioType(
+        typeSel && typeSel.value ? typeSel.value : "music",
+      );
+      let title = titleIn && titleIn.value.trim() ? titleIn.value.trim() : "";
+      if (!title) {
+        title =
+          formatAutoLabelFromPath(file.name.replace(/\.[^.]+$/, "")) ||
+          file.name;
+      }
+      const unique = `${Date.now()}_${sanitizeUploadStorageFilename(file.name)}`;
+      const objectPath = `${uid}/${audioType}/${unique}`;
+      if (used + file.size > USER_LIBRARY_QUOTA_BYTES) {
+        if (errEl) {
+          errEl.textContent = "Not enough storage space remaining (500 MB quota).";
+        }
+        return;
+      }
+      if (prog) {
+        prog.hidden = false;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+      const contentType =
+        file.type && String(file.type).trim()
+          ? file.type
+          : file.name.toLowerCase().endsWith(".ogg")
+            ? "audio/ogg"
+            : "audio/mpeg";
+      const { error: upErr } = await supabase.storage
+        .from(USER_UPLOAD_BUCKET)
+        .upload(objectPath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType,
+        });
+      if (upErr) {
+        if (prog) {
+          prog.hidden = true;
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+        if (errEl) {
+          errEl.textContent = upErr.message || "Upload failed.";
+        }
+        return;
+      }
+      const moodTagsArr = [...myLibraryUploadMoodTags];
+      const { error: insErr } = await supabase.from("user_audio").insert({
+        user_id: uid,
+        title,
+        filename: file.name,
+        storage_path: objectPath,
+        file_size_bytes: file.size,
+        audio_type: audioType,
+        mood_tags: moodTagsArr,
+      });
+      if (insErr) {
+        await supabase.storage.from(USER_UPLOAD_BUCKET).remove([objectPath]);
+        if (prog) {
+          prog.hidden = true;
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+        if (errEl) {
+          errEl.textContent = insErr.message || "Could not save upload metadata.";
+        }
+        return;
+      }
+      if (prog) {
+        prog.hidden = true;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+      }
+      closeMyLibraryUploadPanel();
+      void renderFilePickerList();
+      void refreshMyLibraryStorageBar();
+    }
+
+    function wireMyLibraryUploadUi() {
+      const panel = document.getElementById("my-library-upload-panel");
+      const drop = document.getElementById("my-library-drop-zone");
+      const fileIn = document.getElementById("my-library-file-input");
+      const browse = document.getElementById("my-library-browse-btn");
+      const cancel = document.getElementById("my-library-upload-cancel");
+      const submit = document.getElementById("my-library-upload-submit");
+      const uploadOpen = document.getElementById("file-picker-my-library-upload-btn");
+      const titleIn = document.getElementById("my-library-title-input");
+
+      const assignFile = (f) => {
+        myLibraryUploadSelectedFile = f;
+        const errEl = document.getElementById("my-library-upload-error");
+        if (errEl) {
+          errEl.textContent = "";
+        }
+        const nameLbl = document.getElementById("my-library-selected-filename");
+        if (nameLbl) {
+          nameLbl.textContent = f ? `${f.name} (${formatBytesShort(f.size)})` : "";
+        }
+        if (f && titleIn && !titleIn.value.trim()) {
+          titleIn.value = formatAutoLabelFromPath(f.name.replace(/\.[^.]+$/, "")) || f.name;
+        }
+      };
+
+      if (browse && fileIn) {
+        browse.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          fileIn.click();
+        });
+      }
+      if (fileIn) {
+        fileIn.addEventListener("change", () => {
+          const f = fileIn.files && fileIn.files[0] ? fileIn.files[0] : null;
+          assignFile(f);
+        });
+      }
+      if (drop && fileIn) {
+        drop.addEventListener("click", (e) => {
+          if (e.target === browse || e.target.closest("#my-library-browse-btn")) {
+            return;
+          }
+          fileIn.click();
+        });
+        drop.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            fileIn.click();
+          }
+        });
+        ["dragenter", "dragover"].forEach((ev) => {
+          drop.addEventListener(ev, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            drop.classList.add("my-library-drop-zone--active");
+          });
+        });
+        drop.addEventListener("dragleave", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          drop.classList.remove("my-library-drop-zone--active");
+        });
+        drop.addEventListener("drop", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          drop.classList.remove("my-library-drop-zone--active");
+          const f =
+            e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]
+              ? e.dataTransfer.files[0]
+              : null;
+          assignFile(f || null);
+        });
+      }
+      if (cancel) {
+        cancel.addEventListener("click", () => {
+          closeMyLibraryUploadPanel();
+        });
+      }
+      if (submit) {
+        submit.addEventListener("click", () => {
+          void submitMyLibraryUpload();
+        });
+      }
+      if (uploadOpen) {
+        uploadOpen.addEventListener("click", () => {
+          const uid = lastAuthSession?.user?.id;
+          if (!uid) {
+            openAuthModal();
+            return;
+          }
+          openMyLibraryUploadPanel();
+        });
+      }
+      if (panel) {
+        panel.addEventListener("click", (e) => {
+          const t = e.target;
+          if (t === panel || (t instanceof Element && t.classList.contains("my-library-upload-panel-backdrop"))) {
+            closeMyLibraryUploadPanel();
+          }
+        });
+      }
+    }
+
     async function renderFilePickerFilters() {
       filePickerTagFiltersWrap.innerHTML = "";
+      syncFilePickerLibraryChrome();
+
+      if (filePickerActiveType === "library") {
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       const readme = await AudioLibrary.getReadmeFilterLists();
 
@@ -4356,6 +5108,10 @@ const AudioLibrary = (() => {
     let filePickerMultiOrderPaths = [];
 
     async function renderFilePickerList() {
+      if (filePickerActiveType === "library") {
+        await renderMyLibraryFilePickerList();
+        return;
+      }
       const files = await AudioLibrary.listFiles(filePickerActiveType);
       const query = filePickerSearch.value.trim().toLowerCase();
       const filtered = files.filter((f) => {
@@ -4494,15 +5250,20 @@ const AudioLibrary = (() => {
     }
 
     async function setFilePickerTab(audioType) {
-      filePickerActiveType = audioType;
-      filePickerSelectedSetting = null;
-      filePickerSelectedMood = null;
-      filePickerSelectedSfxSection = null;
-      filePickerFavoritesOnly = false;
-      filePickerMyTagFilter = null;
+      const next = audioType === "library" ? "library" : normalizeFilePickerAudioType(audioType);
+      filePickerActiveType = next;
+      if (next !== "library") {
+        filePickerSelectedSetting = null;
+        filePickerSelectedMood = null;
+        filePickerSelectedSfxSection = null;
+        filePickerFavoritesOnly = false;
+        filePickerMyTagFilter = null;
+      }
       filePickerTabs.querySelectorAll(".file-picker-tab").forEach((button) => {
-        button.classList.toggle("active", button.dataset.audioType === audioType);
+        button.classList.toggle("active", button.dataset.audioType === next);
       });
+      syncFilePickerChromeForLockState();
+      syncFilePickerLibraryChrome();
       await renderFilePickerFilters();
       await renderFilePickerList();
     }
@@ -4530,6 +5291,7 @@ const AudioLibrary = (() => {
       const returnEl = filePickerReturnFocus;
       filePickerReturnFocus = null;
       stopFilePreviewAudio();
+      closeMyLibraryUploadPanel();
       filePickerBackdrop.classList.remove("open");
       filePickerBackdrop.setAttribute("inert", "");
       if (returnEl && typeof returnEl.focus === "function" && document.body.contains(returnEl)) {
@@ -4854,7 +5616,7 @@ const AudioLibrary = (() => {
         if (musicPlayer.paused) {
           musicPlaybackScene = key;
           detachMusicEnded(musicPlayer);
-          loadCurrentTrack();
+          void loadCurrentTrack();
         }
         renderMusicPlaylist();
       } else {
@@ -4927,9 +5689,6 @@ const AudioLibrary = (() => {
     });
 
     filePickerTabs.addEventListener("click", (e) => {
-      if (filePickerLockedToType) {
-        return;
-      }
       const tab = e.target.closest(".file-picker-tab");
       if (!tab) {
         return;
@@ -4937,6 +5696,11 @@ const AudioLibrary = (() => {
       const audioType = tab.dataset.audioType;
       if (!audioType) {
         return;
+      }
+      if (filePickerLockedToType) {
+        if (audioType !== "library" && audioType !== filePickerLockedToType) {
+          return;
+        }
       }
       void setFilePickerTab(audioType);
     });
@@ -5064,6 +5828,7 @@ const AudioLibrary = (() => {
         void userTagPopoverWrap._refresh();
       }
       if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
+        syncFilePickerChromeForLockState();
         void renderFilePickerFilters();
         void renderFilePickerList();
       }
@@ -5197,6 +5962,7 @@ const AudioLibrary = (() => {
         void renderFxButtons();
         renderMusicPlaylist();
         if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
+          syncFilePickerChromeForLockState();
           void renderFilePickerFilters();
           void renderFilePickerList();
         }
@@ -5207,6 +5973,9 @@ const AudioLibrary = (() => {
         Favorites.loadFromLocalStorage();
         UserTags.clear();
         sfxMyTagFilter = null;
+        if (filePickerActiveType === "library") {
+          filePickerActiveType = "music";
+        }
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
         restorePersistedActiveSceneOrDefault();
@@ -5214,6 +5983,7 @@ const AudioLibrary = (() => {
         void renderFxButtons();
         renderMusicPlaylist();
         if (filePickerBackdrop && filePickerBackdrop.classList.contains("open")) {
+          syncFilePickerChromeForLockState();
           void renderFilePickerFilters();
           void renderFilePickerList();
         }
@@ -5245,6 +6015,7 @@ const AudioLibrary = (() => {
       void buildSfxSectionFilterPills();
       void renderFxButtons();
       initializeMusicPlayer();
+      wireMyLibraryUploadUi();
     })();
 
     initProductTour({
