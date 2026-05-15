@@ -2740,6 +2740,27 @@ const AudioLibrary = (() => {
       fadeOutAmbientEntries(entries, then);
     }
 
+    /** Wait until layer audio has enough data to play (after src is set). */
+    function waitForAmbientLayerDecode(audio) {
+      return new Promise((resolve) => {
+        if (!audio || !audio.src) {
+          resolve();
+          return;
+        }
+        if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+          resolve();
+          return;
+        }
+        const onDone = () => {
+          audio.removeEventListener("canplay", onDone);
+          audio.removeEventListener("error", onDone);
+          resolve();
+        };
+        audio.addEventListener("canplay", onDone, { once: true });
+        audio.addEventListener("error", onDone, { once: true });
+      });
+    }
+
     function fadeOutAllAmbientPlaying() {
       const fromRegistry = customBgmLayerRegistry
         .filter(({ audio }) => !audio.paused)
@@ -2808,15 +2829,18 @@ const AudioLibrary = (() => {
         return;
       }
       setActiveSceneButton(sceneKey);
+      let ambientHydration = Promise.resolve();
       if (currentScene !== sceneKey) {
-        activateSceneKey(sceneKey);
+        ambientHydration = activateSceneKey(sceneKey);
       } else if (musicPlayer.paused) {
         musicPlaybackScene = sceneKey;
         pendingPlayTrackIndex = currentTrackIndex;
         void loadCurrentTrack();
       }
       void playMusic();
-      playAllAmbientLayers();
+      void ambientHydration.then(() => {
+        playAllAmbientLayers();
+      });
     }
 
     function stopAllAmbientLayers() {
@@ -3509,7 +3533,7 @@ const AudioLibrary = (() => {
           ambientPanelActions.hidden = true;
         }
         fadeOutAllAmbientPlaying();
-        return;
+        return Promise.resolve();
       }
 
       customBgmContainer.hidden = false;
@@ -3520,6 +3544,7 @@ const AudioLibrary = (() => {
 
       const cs = getCustomSceneByKey(sceneKey);
       const layers = (cs && Array.isArray(cs.ambientLayers) ? cs.ambientLayers : []).slice(0, 6);
+      const layerReadyPromises = [];
       layers.forEach((layerDef, index) => {
         const file = (layerDef.file || "").trim();
         if (!file) {
@@ -3578,11 +3603,16 @@ const AudioLibrary = (() => {
         const layerAudio = new Audio();
         layerAudio.loop = true;
         layerAudio.volume = effectiveBgmVolume(volumeSlider.value);
-        void resolveAudioPlaybackUrl(file).then((url) => {
-          if (url) {
-            layerAudio.src = url;
-          }
-        });
+        layerReadyPromises.push(
+          resolveAudioPlaybackUrl(file)
+            .then((url) => {
+              if (url) {
+                layerAudio.src = url;
+              }
+              return waitForAmbientLayerDecode(layerAudio);
+            })
+            .catch(() => {}),
+        );
 
         const setLayerActiveState = (isActive) => {
           layerElement.classList.toggle("active", isActive);
@@ -3621,6 +3651,7 @@ const AudioLibrary = (() => {
 
         customBgmLayerRegistry.push({ audio: layerAudio, volumeSlider, setLayerActiveState });
       });
+      return Promise.all(layerReadyPromises).then(() => {});
     }
 
     function stopFxSound(buttonElement) {
@@ -3899,7 +3930,7 @@ const AudioLibrary = (() => {
     function activateSceneKey(sceneKey) {
       const previousSceneKey = currentScene;
       setSceneMusic(sceneKey);
-      renderAmbientLayersForScene(sceneKey, previousSceneKey);
+      const ambientReady = renderAmbientLayersForScene(sceneKey, previousSceneKey);
       try {
         if (sceneKey && isCustomSceneKey(sceneKey)) {
           localStorage.setItem(ACTIVE_SCENE_STORAGE_KEY, sceneKey);
@@ -3910,6 +3941,7 @@ const AudioLibrary = (() => {
         /* ignore */
       }
       void renderFxButtons();
+      return ambientReady;
     }
 
     function setActiveSceneButton(sceneKey) {
@@ -3948,7 +3980,7 @@ const AudioLibrary = (() => {
       musicPlayer.volume = effectiveMusicVolume();
       setActiveSceneButton(null);
       setSceneMusic(null);
-      renderAmbientLayersForScene(null, ambientPrevSceneKey);
+      void renderAmbientLayersForScene(null, ambientPrevSceneKey);
       try {
         localStorage.removeItem(ACTIVE_SCENE_STORAGE_KEY);
       } catch (_) {
