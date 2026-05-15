@@ -2740,6 +2740,25 @@ const AudioLibrary = (() => {
       });
     }
 
+    const SCENE_PLAY_SVG =
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 6l12 6-12 6V6z"/></svg>';
+
+    function playSceneFromSelector(sceneKey) {
+      if (!sceneKey || !isCustomSceneKey(sceneKey)) {
+        return;
+      }
+      setActiveSceneButton(sceneKey);
+      if (currentScene !== sceneKey) {
+        activateSceneKey(sceneKey);
+      } else if (musicPlayer.paused) {
+        musicPlaybackScene = sceneKey;
+        pendingPlayTrackIndex = currentTrackIndex;
+        loadCurrentTrack();
+      }
+      playMusic();
+      playAllAmbientLayers();
+    }
+
     function stopAllAmbientLayers() {
       fadeOutAllAmbientPlaying();
     }
@@ -3876,6 +3895,18 @@ const AudioLibrary = (() => {
         wrap.className = "scene-card";
         wrap.dataset.customSceneArea = "1";
 
+        const primaryRow = document.createElement("div");
+        primaryRow.className = "scene-card-primary";
+
+        const playBtn = document.createElement("button");
+        playBtn.type = "button";
+        playBtn.className = "scene-play-btn";
+        playBtn.dataset.scenePlay = key;
+        const playLabel = `Play ${scene.name}`;
+        playBtn.setAttribute("aria-label", playLabel);
+        playBtn.title = playLabel;
+        playBtn.innerHTML = SCENE_PLAY_SVG;
+
         const sceneBtn = document.createElement("button");
         sceneBtn.type = "button";
         sceneBtn.className = "scene-btn";
@@ -3885,6 +3916,9 @@ const AudioLibrary = (() => {
         if (scene.tags) {
           sceneBtn.title = scene.tags;
         }
+
+        primaryRow.appendChild(playBtn);
+        primaryRow.appendChild(sceneBtn);
 
         const tagRow = document.createElement("div");
         tagRow.className = "scene-card-tags";
@@ -3916,7 +3950,7 @@ const AudioLibrary = (() => {
         actions.appendChild(editBtn);
         actions.appendChild(delBtn);
 
-        wrap.appendChild(sceneBtn);
+        wrap.appendChild(primaryRow);
         wrap.appendChild(tagRow);
         wrap.appendChild(actions);
         sceneButtonsBar.appendChild(wrap);
@@ -3927,6 +3961,9 @@ const AudioLibrary = (() => {
         emptyHint.hidden = visibleScenes.length > 0;
       }
       updateSessionSelectorTriggerLabel();
+      if (currentScene) {
+        setActiveSceneButton(currentScene);
+      }
     }
 
     function closeDeleteSceneConfirm() {
@@ -4837,6 +4874,14 @@ const AudioLibrary = (() => {
       if (editBtn) {
         e.preventDefault();
         void openSceneEditorForEdit(editBtn.getAttribute("data-edit-scene"));
+        return;
+      }
+
+      const scenePlayBtn = e.target.closest("[data-scene-play]");
+      if (scenePlayBtn && sceneButtonsBar.contains(scenePlayBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        playSceneFromSelector(scenePlayBtn.getAttribute("data-scene-play"));
         return;
       }
 
