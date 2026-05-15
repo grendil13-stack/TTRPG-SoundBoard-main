@@ -584,7 +584,12 @@
       margin-bottom: 8px;
     }
 
-    .session-selector-wrap.session-transition + .scene-buttons {
+    .session-selector-rail {
+      flex-shrink: 0;
+      padding: 8px 8px 0;
+    }
+
+    .session-selector-wrap.session-transition ~ .rail-scroll .scene-buttons {
       opacity: 0.55;
       transition: opacity 0.09s ease;
     }
@@ -1704,6 +1709,7 @@
 
       .rail {
         flex-direction: row;
+        flex-wrap: wrap;
         align-items: stretch;
         flex: 0 0 auto;
         width: 100%;
@@ -1712,11 +1718,19 @@
         border-bottom: 0.5px solid var(--border);
       }
 
+      .session-selector-rail {
+        flex: 1 1 100%;
+        width: 100%;
+        padding: 8px 8px 0;
+        order: 0;
+      }
+
       .rail-header {
         display: none;
       }
 
       .rail-scroll {
+        order: 1;
         flex: 1 1 auto;
         min-width: 0;
         overflow-x: auto;
@@ -1726,6 +1740,7 @@
       }
 
       .rail-footer {
+        order: 2;
         flex: 0 0 auto;
         border-top: none;
         border-left: 0.5px solid var(--border);
@@ -3079,9 +3094,9 @@
     <div class="cockpit-body">
       <div class="cockpit-left">
         <aside class="rail" id="tour-target-scenes" aria-label="Scene selector">
+        <div id="session-selector-wrap" class="session-selector-wrap session-selector-rail" hidden aria-label="Session"></div>
         <div class="rail-header">Scenes</div>
         <div class="rail-scroll">
-          <div id="session-selector-wrap" class="session-selector-wrap" hidden aria-label="Session"></div>
           <div class="scene-buttons" id="scene-buttons-bar" role="group" aria-label="Choose scene">
             <p class="scene-selector-empty" id="scene-selector-empty" hidden>No scenes yet. Use &quot;+ New Scene&quot; below.</p>
           </div>

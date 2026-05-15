@@ -1644,14 +1644,14 @@ const AudioLibrary = (() => {
     }
 
     /**
-     * Scene editor: if the in-memory sessions list is empty, insert "My Scenes" and
+     * Scene editor: if the in-memory sessions list is empty, insert "New Session" and
      * populate `sessionsList` before any UI so the session dropdown can save immediately.
      */
     async function ensureDefaultSessionRowIfEmptyForSignedInEditor(userId) {
       if (!userId || sessionsList.length > 0) {
         return;
       }
-      const { data: created, error } = await insertSessionRow(userId, "My Scenes", 0);
+      const { data: created, error } = await insertSessionRow(userId, "New Session", 0);
       if (error || !created) {
         if (error) {
           console.error("editor default session insert error", error);
@@ -1681,7 +1681,7 @@ const AudioLibrary = (() => {
     async function ensureSessionsForUser(userId) {
       let sessions = await fetchSessionsFromDb(userId);
       if (!sessions.length) {
-        const { data: created, error: createErr } = await insertSessionRow(userId, "My Scenes", 0);
+        const { data: created, error: createErr } = await insertSessionRow(userId, "New Session", 0);
         if (createErr || !created) {
           if (createErr) {
             console.error("default session insert error (full)", createErr);
@@ -1818,7 +1818,7 @@ const AudioLibrary = (() => {
         }
         const opt = document.createElement("option");
         opt.value = id;
-        opt.textContent = name || "My Scenes";
+        opt.textContent = name || "New Session";
         editorSceneSessionSelect.appendChild(opt);
       });
       const optionIds = new Set(
@@ -2237,7 +2237,7 @@ const AudioLibrary = (() => {
         const nm = document.createElement("span");
         nm.className = "session-selector-locked-name";
         const s = sessionsList.find((x) => x.id === activeSessionId) || sessionsList[0];
-        nm.textContent = s?.name || "My Scenes";
+        nm.textContent = s?.name || "New Session";
         const lock = document.createElement("span");
         lock.className = "session-selector-lock";
         lock.textContent = "🔒";
