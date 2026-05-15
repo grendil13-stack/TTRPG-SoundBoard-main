@@ -1215,15 +1215,13 @@
     .sfx-pinned-scroll {
       display: flex;
       flex-direction: row;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      -webkit-overflow-scrolling: touch;
+      align-items: stretch;
     }
 
     .sfx-pinned-scroll > button {
-      flex: 0 0 auto;
+      flex: 0 1 auto;
       min-width: 132px;
       max-width: 200px;
       min-height: 44px;
