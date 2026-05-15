@@ -3917,8 +3917,8 @@ const AudioLibrary = (() => {
           sceneBtn.title = scene.tags;
         }
 
-        primaryRow.appendChild(playBtn);
         primaryRow.appendChild(sceneBtn);
+        primaryRow.appendChild(playBtn);
 
         const tagRow = document.createElement("div");
         tagRow.className = "scene-card-tags";
