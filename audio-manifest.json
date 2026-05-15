@@ -1552,8 +1552,8 @@
     {
       "id": "desert-alley-battle",
       "title": "Desert Alley Battle",
-      "filename": "desert-ally-battle.ogg",
-      "path": "sounds/music/battle-bgm/desert-ally-battle.ogg",
+      "filename": "desert-alley-battle.ogg",
+      "path": "sounds/music/battle-bgm/desert-alley-battle.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -3462,8 +3462,8 @@
     {
       "id": "happy-jinks",
       "title": "Happy Jinks",
-      "filename": "happy-jinx.ogg",
-      "path": "sounds/music/funny-bgm/happy-jinx.ogg",
+      "filename": "happy-jinks.ogg",
+      "path": "sounds/music/funny-bgm/happy-jinks.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -7671,8 +7671,8 @@
     {
       "id": "throneroom-of-earth",
       "title": "Throneroom of Earth",
-      "filename": "thromeroom-of-earth.ogg",
-      "path": "sounds/music/exciting-bgm/thromeroom-of-earth.ogg",
+      "filename": "throneroom-of-earth.ogg",
+      "path": "sounds/music/exciting-bgm/throneroom-of-earth.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -8389,10 +8389,10 @@
       "mastered": true
     },
     {
-      "id": "unknow-below",
-      "title": "Unknow Below",
-      "filename": "unknow-below.ogg",
-      "path": "sounds/music/suspense-bgm/unknow-below.ogg",
+      "id": "unknown-below",
+      "title": "Unknown Below",
+      "filename": "unknown-below.ogg",
+      "path": "sounds/music/suspense-bgm/unknown-below.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -8819,8 +8819,8 @@
     {
       "id": "which-way-to-go",
       "title": "Which Way to Go",
-      "filename": "which-to-go.ogg",
-      "path": "sounds/music/suspense-bgm/which-to-go.ogg",
+      "filename": "which-way-to-go.ogg",
+      "path": "sounds/music/suspense-bgm/which-way-to-go.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",

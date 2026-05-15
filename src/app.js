@@ -1178,6 +1178,8 @@ const AudioLibrary = (() => {
     const sfxSectionFiltersEl = document.getElementById("sfx-section-filters");
     const sfxSearchInput = document.getElementById("sfx-search");
     const fxGrid = document.getElementById("fx-grid");
+    const sfxPinnedSection = document.getElementById("sfx-pinned-section");
+    const sfxPinnedRow = document.getElementById("sfx-pinned-row");
     const activeFxAudio = new Map();
     let sfxFavoritesOnlyFilter = false;
     const customBgmContainer = document.getElementById("custom-bgm-layers");
@@ -1506,6 +1508,15 @@ const AudioLibrary = (() => {
       return typeof sceneKey === "string" && sceneKey.startsWith("custom:");
     }
 
+    function normalizeCustomScene(raw) {
+      if (!raw || typeof raw !== "object") {
+        return raw;
+      }
+      const pins = raw.pinnedSfx ?? raw.pinned_sfx;
+      const pinnedSfx = Array.isArray(pins) ? pins.map(String) : [];
+      return { ...raw, pinnedSfx };
+    }
+
     function loadCustomScenesFromStorage() {
       try {
         const raw = localStorage.getItem(CUSTOM_SCENES_STORAGE_KEY);
@@ -1513,7 +1524,8 @@ const AudioLibrary = (() => {
           return [];
         }
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        const arr = Array.isArray(parsed) ? parsed : [];
+        return arr.map(normalizeCustomScene);
       } catch {
         return [];
       }
@@ -2275,6 +2287,7 @@ const AudioLibrary = (() => {
     }
 
     function sceneRowToApp(row) {
+      const pins = row.pinned_sfx;
       return {
         id: row.id,
         name: row.name,
@@ -2282,6 +2295,7 @@ const AudioLibrary = (() => {
         playlist: Array.isArray(row.playlist) ? row.playlist : [],
         ambientLayers: Array.isArray(row.ambient_layers) ? row.ambient_layers : [],
         sessionId: row.session_id != null ? row.session_id : null,
+        pinnedSfx: Array.isArray(pins) ? pins.map(String) : [],
       };
     }
 
@@ -2293,6 +2307,7 @@ const AudioLibrary = (() => {
         tags: tagsStringToArray(scene.tags),
         playlist: scene.playlist || [],
         ambient_layers: scene.ambientLayers || [],
+        pinned_sfx: Array.isArray(scene.pinnedSfx) ? scene.pinnedSfx.map(String) : [],
       };
       const sid = scene.sessionId || activeSessionId || sessionsList[0]?.id;
       if (sid) {
@@ -2304,7 +2319,7 @@ const AudioLibrary = (() => {
     async function fetchCloudScenesForUser(userId) {
       const { data, error } = await supabase
         .from("scenes")
-        .select("id,user_id,name,tags,playlist,ambient_layers,session_id")
+        .select("id,user_id,name,tags,playlist,ambient_layers,session_id,pinned_sfx")
         .eq("user_id", userId)
         .order("name");
       if (error) {
@@ -2349,6 +2364,7 @@ const AudioLibrary = (() => {
         customScenesList = loadCustomScenesFromStorage();
       }
       renderSessionSelectorUI();
+      void renderFxButtons();
     }
 
     function updateAccountUI(session) {
@@ -3575,12 +3591,159 @@ const AudioLibrary = (() => {
       tryPlayCandidate(0);
     }
 
+    function scenePinUIRenderActive() {
+      return Boolean(currentScene && isCustomSceneKey(currentScene));
+    }
+
+    function getActiveCustomSceneForPins() {
+      if (!scenePinUIRenderActive()) {
+        return null;
+      }
+      return getCustomSceneByKey(currentScene);
+    }
+
+    function isEntryPinnedToActiveScene(entryId) {
+      const sc = getActiveCustomSceneForPins();
+      if (!sc || !Array.isArray(sc.pinnedSfx)) {
+        return false;
+      }
+      return sc.pinnedSfx.map(String).includes(String(entryId));
+    }
+
+    function createScenePinButton(entry) {
+      if (!scenePinUIRenderActive()) {
+        return null;
+      }
+      const pinned = isEntryPinnedToActiveScene(entry.id);
+      const pinBtn = document.createElement("button");
+      pinBtn.type = "button";
+      pinBtn.className = `scene-pin-btn${pinned ? " scene-pin-btn--active" : ""}`;
+      pinBtn.dataset.scenePin = "1";
+      const label = pinned ? "Unpin from this scene" : "Pin to this scene";
+      pinBtn.title = label;
+      pinBtn.setAttribute("aria-label", label);
+      pinBtn.innerHTML =
+        '<svg class="scene-pin-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" fill-opacity=".92" d="M8 1.25a4.25 4.25 0 0 0-4.25 4.25c0 2.1 2.35 5.35 3.9 7.05.2.22.52.22.72 0 1.55-1.7 3.9-4.95 3.9-7.05A4.25 4.25 0 0 0 8 1.25zm0 2a2.25 2.25 0 1 1 0 4.5 2.25 2.25 0 0 1 0-4.5z"/></svg>';
+      pinBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void toggleScenePinForActiveScene(entry.id);
+      });
+      return pinBtn;
+    }
+
+    async function toggleScenePinForActiveScene(audioId) {
+      const key = currentScene;
+      if (!key || !isCustomSceneKey(key)) {
+        return;
+      }
+      const sceneId = key.slice("custom:".length);
+      const scene = customScenesList.find((s) => s.id === sceneId);
+      if (!scene) {
+        return;
+      }
+      const aid = String(audioId);
+      const prev = Array.isArray(scene.pinnedSfx) ? scene.pinnedSfx.map(String) : [];
+      const next = prev.includes(aid) ? prev.filter((x) => x !== aid) : [...prev, aid];
+      scene.pinnedSfx = next;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { error } = await supabase
+          .from("scenes")
+          .update({ pinned_sfx: next })
+          .eq("id", scene.id)
+          .eq("user_id", session.user.id);
+        if (error) {
+          scene.pinnedSfx = prev;
+          window.alert(`Could not update pins: ${error.message}`);
+          return;
+        }
+      } else {
+        saveCustomScenesToStorage(customScenesList);
+      }
+      void renderFxButtons();
+    }
+
+    function appendSfxTile(entry) {
+      const title =
+        formatAutoLabelFromPath(entry.manifestPath) ||
+        entry.name ||
+        getTrackLabel(entry.manifestPath || "");
+      const soundButton = document.createElement("button");
+      soundButton.type = "button";
+      if (entry.generated === false) {
+        soundButton.classList.add("fx-unavailable");
+      }
+
+      const catEl = document.createElement("span");
+      catEl.className = "fx-cat";
+      catEl.textContent = (entry.section ? String(entry.section).trim() : "") || "SFX";
+      const nameEl = document.createElement("span");
+      nameEl.className = "fx-name";
+      nameEl.textContent = title;
+      soundButton.appendChild(catEl);
+      soundButton.appendChild(nameEl);
+
+      const ctrls = document.createElement("span");
+      ctrls.className = "fx-btn-ctrls";
+      const star = createFavoriteStarButton(
+        Favorites.has("sfx", entry.id),
+        () => {
+          void Favorites.toggle("sfx", entry.id).then(() => {
+            star.sync(Favorites.has("sfx", entry.id));
+          });
+        },
+      );
+      ctrls.appendChild(star);
+      const pinBtn = createScenePinButton(entry);
+      if (pinBtn) {
+        ctrls.appendChild(pinBtn);
+      }
+      const tagBtn = createUserTagButton(entry.id);
+      ctrls.appendChild(tagBtn);
+      soundButton.appendChild(ctrls);
+
+      soundButton.addEventListener("click", (e) => {
+        if (e.target && e.target.closest && e.target.closest("[data-fav-star]")) {
+          return;
+        }
+        if (e.target && e.target.closest && e.target.closest("[data-user-tag-btn]")) {
+          return;
+        }
+        if (e.target && e.target.closest && e.target.closest("[data-scene-pin]")) {
+          return;
+        }
+        playCustomFxSound(entry.path, soundButton);
+      });
+      return soundButton;
+    }
+
     async function renderFxButtons() {
       activeFxAudio.forEach((_, buttonElement) => {
         stopFxSound(buttonElement);
       });
+      if (sfxPinnedRow) {
+        sfxPinnedRow.innerHTML = "";
+      }
       fxGrid.innerHTML = "";
       const allSfx = await AudioLibrary.listFiles("sfx");
+      const byId = new Map(allSfx.map((e) => [String(e.id), e]));
+
+      if (sfxPinnedSection && sfxPinnedRow) {
+        const sc = getActiveCustomSceneForPins();
+        const pinIds = sc && Array.isArray(sc.pinnedSfx) ? sc.pinnedSfx.map(String) : [];
+        const visiblePins = pinIds.map((id) => byId.get(id)).filter(Boolean);
+        if (visiblePins.length) {
+          sfxPinnedSection.hidden = false;
+          visiblePins.forEach((entry) => {
+            sfxPinnedRow.appendChild(appendSfxTile(entry));
+          });
+        } else {
+          sfxPinnedSection.hidden = true;
+        }
+      }
+
       const search = sfxSearchTerm;
       allSfx.forEach((entry) => {
         const section = entry.section ? String(entry.section).trim() : "";
@@ -3605,46 +3768,7 @@ const AudioLibrary = (() => {
           return;
         }
 
-        const soundButton = document.createElement("button");
-        soundButton.type = "button";
-        if (entry.generated === false) {
-          soundButton.classList.add("fx-unavailable");
-        }
-
-        const catEl = document.createElement("span");
-        catEl.className = "fx-cat";
-        catEl.textContent = section || "SFX";
-        const nameEl = document.createElement("span");
-        nameEl.className = "fx-name";
-        nameEl.textContent = title;
-        soundButton.appendChild(catEl);
-        soundButton.appendChild(nameEl);
-
-        const ctrls = document.createElement("span");
-        ctrls.className = "fx-btn-ctrls";
-        const star = createFavoriteStarButton(
-          Favorites.has("sfx", entry.id),
-          () => {
-            void Favorites.toggle("sfx", entry.id).then(() => {
-              star.sync(Favorites.has("sfx", entry.id));
-            });
-          },
-        );
-        ctrls.appendChild(star);
-        const tagBtn = createUserTagButton(entry.id);
-        ctrls.appendChild(tagBtn);
-        soundButton.appendChild(ctrls);
-
-        soundButton.addEventListener("click", (e) => {
-          if (e.target && e.target.closest && e.target.closest("[data-fav-star]")) {
-            return;
-          }
-          if (e.target && e.target.closest && e.target.closest("[data-user-tag-btn]")) {
-            return;
-          }
-          playCustomFxSound(entry.path, soundButton);
-        });
-        fxGrid.appendChild(soundButton);
+        fxGrid.appendChild(appendSfxTile(entry));
       });
     }
 
@@ -3661,6 +3785,7 @@ const AudioLibrary = (() => {
       } catch (_) {
         /* ignore */
       }
+      void renderFxButtons();
     }
 
     function setActiveSceneButton(sceneKey) {
@@ -3705,6 +3830,7 @@ const AudioLibrary = (() => {
       } catch (_) {
         /* ignore */
       }
+      void renderFxButtons();
     }
 
     function selectFirstCustomSceneOrNone() {
@@ -4630,6 +4756,9 @@ const AudioLibrary = (() => {
         }
       }
 
+      const existingForPins = sceneEditorEditingId
+        ? customScenesList.find((s) => s.id === sceneEditorEditingId)
+        : null;
       const sceneObj = {
         id: sceneEditorEditingId || (typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
@@ -4638,6 +4767,10 @@ const AudioLibrary = (() => {
         tags: editorSceneTags.value.trim(),
         playlist: sceneEditorDraftPlaylist.map((p) => p.trim()).filter(Boolean),
         ambientLayers: ambientLayers.slice(0, 6),
+        pinnedSfx:
+          existingForPins && Array.isArray(existingForPins.pinnedSfx)
+            ? [...existingForPins.pinnedSfx.map(String)]
+            : [],
         ...(session?.user ? { sessionId: nextSessionId || undefined } : {}),
       };
 

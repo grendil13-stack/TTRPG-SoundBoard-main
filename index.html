@@ -1135,6 +1135,88 @@
       position: static;
     }
 
+    .sfx-pinned-section {
+      margin: 0 0 6px;
+      padding-bottom: 6px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .sfx-pinned-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 5px;
+    }
+
+    .sfx-pinned-scroll {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .sfx-pinned-scroll > button {
+      flex: 0 0 auto;
+      min-width: 132px;
+      max-width: 200px;
+      min-height: 44px;
+      text-align: left;
+      padding: 6px 46px 6px 8px;
+      border-radius: 6px;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      position: relative;
+    }
+
+    .sfx-pinned-scroll > button .fx-btn-ctrls {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .scene-pin-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      margin: 0;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .scene-pin-btn:hover {
+      color: var(--text);
+    }
+
+    .scene-pin-btn--active {
+      color: var(--accent);
+    }
+
+    .scene-pin-icon {
+      width: 13px;
+      height: 13px;
+      display: block;
+    }
+
     .user-tag-btn {
       position: relative;
       display: inline-flex;
@@ -3047,6 +3129,10 @@
           </div>
         </div>
         <div class="sfx-rail-body">
+          <div id="sfx-pinned-section" class="sfx-pinned-section" hidden>
+            <div class="sfx-pinned-label">Pinned to this scene</div>
+            <div id="sfx-pinned-row" class="sfx-pinned-scroll" role="group" aria-label="SFX pinned to this scene"></div>
+          </div>
           <div class="sfx-filters" id="sfx-section-filters" role="group" aria-label="SFX sections"></div>
           <input id="sfx-search" class="file-picker-search" type="text" placeholder="Search SFX..." autocomplete="off" />
           <div class="fx-grid-wrap">
