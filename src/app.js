@@ -4163,14 +4163,12 @@ const AudioLibrary = (() => {
       filePickerTabs.hidden = false;
       const tabButtons = filePickerTabs.querySelectorAll(".file-picker-tab");
       const showLibraryTab = Boolean(lastAuthSession?.user);
-      const hideLibraryForMulti =
-        Boolean(filePickerMultiSelect) && filePickerLockedToType === "music";
 
       const applyTabVisibility = () => {
         tabButtons.forEach((btn) => {
           const t = btn.dataset.audioType;
           if (t === "library") {
-            btn.hidden = !showLibraryTab || hideLibraryForMulti;
+            btn.hidden = !showLibraryTab;
             return;
           }
           if (filePickerLockedToType) {
@@ -4549,6 +4547,7 @@ const AudioLibrary = (() => {
 
     function appendMyLibraryFilePickerRow(row) {
       const ref = userUploadRefFromRow(row);
+      const useMultiRow = filePickerMultiSelect && filePickerLockedToType === "music";
       const li = document.createElement("li");
       const title = String(row.title || row.filename || "Untitled").trim() || "Untitled";
       const info = document.createElement("div");
@@ -4568,6 +4567,24 @@ const AudioLibrary = (() => {
         meta.textContent += ` · ${moods.join(", ")}`;
       }
       info.appendChild(meta);
+
+      if (useMultiRow && ref) {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "file-picker-multi-check";
+        checkbox.checked = filePickerMultiSelectedPaths.has(ref);
+        checkbox.setAttribute("aria-label", `Select ${title}`);
+        checkbox.addEventListener("change", () => {
+          if (checkbox.checked) {
+            filePickerMultiSelectedPaths.add(ref);
+          } else {
+            filePickerMultiSelectedPaths.delete(ref);
+          }
+          syncFilePickerMultiFooter();
+        });
+        li.appendChild(checkbox);
+      }
+
       li.appendChild(info);
 
       const rowActions = document.createElement("div");
@@ -4581,7 +4598,6 @@ const AudioLibrary = (() => {
       buildPreviewMyLib(playButton, ref);
       rowActions.appendChild(playButton);
 
-      const useMultiRow = filePickerMultiSelect && filePickerLockedToType === "music";
       if (!useMultiRow) {
         const selectButton = document.createElement("button");
         selectButton.type = "button";
@@ -4624,6 +4640,19 @@ const AudioLibrary = (() => {
         const title = String(r.title || "").toLowerCase();
         return !query || title.includes(query);
       });
+      const useMultiRow = filePickerMultiSelect && filePickerLockedToType === "music";
+      if (useMultiRow) {
+        const refs = filtered.map((r) => userUploadRefFromRow(r)).filter(Boolean);
+        filePickerMultiOrderPathsLibrary = refs;
+        const allowedLib = new Set(refs);
+        for (const p of [...filePickerMultiSelectedPaths]) {
+          if (String(p).startsWith(USER_UPLOAD_PREFIX) && !allowedLib.has(p)) {
+            filePickerMultiSelectedPaths.delete(p);
+          }
+        }
+      } else if (!filePickerMultiSelect) {
+        filePickerMultiOrderPathsLibrary = [];
+      }
       const order = ["music", "ambient", "sfx"];
       if (!filtered.length) {
         const emptyItem = document.createElement("li");
@@ -5182,8 +5211,9 @@ const AudioLibrary = (() => {
         n === 0 ? "Add selected tracks" : `Add selected tracks (${n})`;
     }
 
-    /** Paths in current filtered list order (for multi-add). */
-    let filePickerMultiOrderPaths = [];
+    /** Paths in current filtered list order (for multi-add), per tab. */
+    let filePickerMultiOrderPathsMusic = [];
+    let filePickerMultiOrderPathsLibrary = [];
 
     async function renderFilePickerList() {
       if (filePickerActiveType === "library") {
@@ -5203,13 +5233,16 @@ const AudioLibrary = (() => {
       if (filePickerMultiSelect && filePickerActiveType === "music") {
         const allowed = new Set(filtered.map((f) => f.manifestPath));
         for (const p of [...filePickerMultiSelectedPaths]) {
+          if (String(p).startsWith(USER_UPLOAD_PREFIX)) {
+            continue;
+          }
           if (!allowed.has(p)) {
             filePickerMultiSelectedPaths.delete(p);
           }
         }
-        filePickerMultiOrderPaths = filtered.map((f) => f.manifestPath);
-      } else {
-        filePickerMultiOrderPaths = [];
+        filePickerMultiOrderPathsMusic = filtered.map((f) => f.manifestPath);
+      } else if (!filePickerMultiSelect) {
+        filePickerMultiOrderPathsMusic = [];
       }
 
       if (!filtered.length) {
@@ -5354,7 +5387,8 @@ const AudioLibrary = (() => {
       filePickerMultiSelect =
         Boolean(options && options.multi) && filePickerLockedToType === "music";
       filePickerMultiSelectedPaths.clear();
-      filePickerMultiOrderPaths = [];
+      filePickerMultiOrderPathsMusic = [];
+      filePickerMultiOrderPathsLibrary = [];
       filePickerSearch.value = "";
       syncFilePickerChromeForLockState();
       syncFilePickerMultiFooter();
@@ -5383,7 +5417,8 @@ const AudioLibrary = (() => {
       filePickerLockedToType = null;
       filePickerMultiSelect = false;
       filePickerMultiSelectedPaths.clear();
-      filePickerMultiOrderPaths = [];
+      filePickerMultiOrderPathsMusic = [];
+      filePickerMultiOrderPathsLibrary = [];
       syncFilePickerChromeForLockState();
       syncFilePickerMultiFooter();
     }
@@ -5795,9 +5830,11 @@ const AudioLibrary = (() => {
       if (!filePickerMultiSelect || filePickerMultiSelectedPaths.size === 0) {
         return;
       }
-      const paths = filePickerMultiOrderPaths.filter((p) =>
-        filePickerMultiSelectedPaths.has(p),
-      );
+      const set = filePickerMultiSelectedPaths;
+      const paths = [
+        ...filePickerMultiOrderPathsMusic.filter((p) => set.has(p)),
+        ...filePickerMultiOrderPathsLibrary.filter((p) => set.has(p)),
+      ];
       if (!paths.length || typeof filePickerOnSelect !== "function") {
         return;
       }

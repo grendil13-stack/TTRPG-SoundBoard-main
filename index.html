@@ -2592,6 +2592,11 @@
       padding: 4px 0 2px;
     }
 
+    /* display:flex above defeats the HTML hidden attribute in some browsers */
+    .file-picker-library-chrome[hidden] {
+      display: none !important;
+    }
+
     .library-storage-row {
       display: flex;
       flex-wrap: wrap;
