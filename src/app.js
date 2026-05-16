@@ -1421,7 +1421,7 @@ const AudioLibrary = (() => {
     }
 
     function queueNextMusicTrack(index) {
-      // If we’re not synced (scene switched while old music plays), "next" maps to pendingPlayTrackIndex.
+      // If we’re not synced (scene switched while old music plays), selection maps to pendingPlayTrackIndex.
       if (musicPlaybackScene !== currentScene) {
         musicQueuedNextTrackIndex = null;
         pendingPlayTrackIndex = index;
@@ -1429,42 +1429,19 @@ const AudioLibrary = (() => {
         return;
       }
 
-      if (musicRepeatMode === "one" && !musicPlayer.paused) {
-        // In repeat-one mode, switching makes the new track play immediately.
-        if (index === currentTrackIndex) {
-          return;
-        }
-        musicQueuedNextTrackIndex = null;
-        currentTrackIndex = index;
-        void loadCurrentTrack().then((ok) => {
-          if (!ok) {
-            return;
-          }
-          musicPlayer.volume = effectiveMusicVolume();
-          musicPlayer.play().then(() => {
-            updateNowPlayingDisplay();
-            renderMusicPlaylist();
-          }).catch(() => renderMusicPlaylist());
-        });
-        return;
-      }
-
       if (musicPlayer.paused) {
-        // When paused, selecting a track sets what will play next.
+        // When paused, selecting a track is what Play will start.
         musicQueuedNextTrackIndex = null;
         currentTrackIndex = index;
+        pendingPlayTrackIndex = index;
         void loadCurrentTrack();
         updateNowPlayingDisplay();
         renderMusicPlaylist();
         return;
       }
 
-      // Playing: only repeat:list supports queuing.
-      if (musicRepeatMode === "list") {
-        musicQueuedNextTrackIndex = index === currentTrackIndex ? null : index;
-      } else {
-        musicQueuedNextTrackIndex = null;
-      }
+      // While playing, click queues that track after the current one ends.
+      musicQueuedNextTrackIndex = index === currentTrackIndex ? null : index;
       renderMusicPlaylist();
     }
 
@@ -2901,21 +2878,6 @@ const AudioLibrary = (() => {
     }
 
     function onMusicTrackEnded() {
-      if (musicRepeatMode === "one") {
-        // Restart the same track when it ends.
-        musicPlayer.currentTime = 0;
-        musicPlayer.play().then(() => {
-          updateNowPlayingDisplay();
-          renderMusicPlaylist();
-          updateMusicProgressUi();
-        }).catch(() => {
-          // Fallback to old behavior if replay fails.
-          goToNextTrack(true);
-        });
-        return;
-      }
-
-      // Repeat "list" mode: if a track was queued, jump to it next.
       if (
         musicQueuedNextTrackIndex != null &&
         musicPlaybackScene === currentScene
@@ -2927,6 +2889,20 @@ const AudioLibrary = (() => {
           if (ok) {
             musicPlayer.play().then(() => renderMusicPlaylist()).catch(() => renderMusicPlaylist());
           }
+        });
+        return;
+      }
+
+      if (musicRepeatMode === "one") {
+        // Restart the same track when it ends.
+        musicPlayer.currentTime = 0;
+        musicPlayer.play().then(() => {
+          updateNowPlayingDisplay();
+          renderMusicPlaylist();
+          updateMusicProgressUi();
+        }).catch(() => {
+          // Fallback to old behavior if replay fails.
+          goToNextTrack(true);
         });
         return;
       }
@@ -3073,13 +3049,17 @@ const AudioLibrary = (() => {
 
         const isNowPlaying =
           synced && !musicPlayer.paused && index === currentTrackIndex;
+        const isPausedSelection =
+          synced && musicPlayer.paused && index === currentTrackIndex;
         const isNextUp =
           synced &&
           !musicPlayer.paused &&
-          musicRepeatMode === "list" &&
+          musicQueuedNextTrackIndex != null &&
           musicQueuedNextTrackIndex === index;
 
         if (isNowPlaying) {
+          trackItem.classList.add("active");
+        } else if (isPausedSelection) {
           trackItem.classList.add("active");
         } else if (!synced && index === pendingPlayTrackIndex) {
           trackItem.classList.add("active");
@@ -3874,7 +3854,10 @@ const AudioLibrary = (() => {
       return soundButton;
     }
 
+    let renderFxButtonsGeneration = 0;
+
     async function renderFxButtons() {
+      const gen = ++renderFxButtonsGeneration;
       activeFxAudio.forEach((_, buttonElement) => {
         stopFxSound(buttonElement);
       });
@@ -3883,11 +3866,17 @@ const AudioLibrary = (() => {
       }
       fxGrid.innerHTML = "";
       const allSfx = await AudioLibrary.listFiles("sfx");
+      if (gen !== renderFxButtonsGeneration) {
+        return;
+      }
       const byId = new Map(allSfx.map((e) => [String(e.id), e]));
 
       if (sfxPinnedSection && sfxPinnedRow) {
         const sc = getActiveCustomSceneForPins();
-        const pinIds = sc && Array.isArray(sc.pinnedSfx) ? sc.pinnedSfx.map(String) : [];
+        const pinIds =
+          sc && Array.isArray(sc.pinnedSfx)
+            ? [...new Set(sc.pinnedSfx.map(String))]
+            : [];
         const visiblePins = pinIds.map((id) => byId.get(id)).filter(Boolean);
         if (visiblePins.length) {
           sfxPinnedSection.hidden = false;
