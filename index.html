@@ -2875,26 +2875,21 @@
       gap: 4px;
     }
 
-    .my-library-upload-progress-bar {
+    .my-library-upload-progress-track {
       height: 8px;
       border-radius: 4px;
-      background: linear-gradient(
-        90deg,
-        var(--accent),
-        rgba(127, 119, 221, 0.45),
-        var(--accent)
-      );
-      background-size: 200% 100%;
-      animation: my-library-progress-indeterminate 1.1s ease infinite;
+      background: var(--panel-2);
+      border: 0.5px solid var(--border);
+      overflow: hidden;
     }
 
-    @keyframes my-library-progress-indeterminate {
-      0% {
-        background-position: 100% 0;
-      }
-      100% {
-        background-position: -100% 0;
-      }
+    .my-library-upload-progress-bar {
+      height: 100%;
+      width: 0%;
+      max-width: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+      transition: width 0.15s ease;
     }
 
     .my-library-upload-progress-label {
@@ -3680,8 +3675,10 @@
             <div id="my-library-mood-pills" class="my-library-mood-pills"></div>
           </div>
           <div id="my-library-upload-progress-wrap" class="my-library-upload-progress-wrap" hidden>
-            <div id="my-library-upload-progress-bar" class="my-library-upload-progress-bar"></div>
-            <span class="my-library-upload-progress-label">Uploading…</span>
+            <div class="my-library-upload-progress-track">
+              <div id="my-library-upload-progress-bar" class="my-library-upload-progress-bar"></div>
+            </div>
+            <span id="my-library-upload-progress-label" class="my-library-upload-progress-label">Uploading…</span>
           </div>
           <p id="my-library-upload-success" class="feedback-thanks-msg" hidden></p>
           <div class="my-library-upload-actions">

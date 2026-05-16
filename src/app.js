@@ -4945,6 +4945,7 @@ const AudioLibrary = (() => {
       if (prog) {
         prog.hidden = true;
       }
+      setMyLibraryUploadProgress(0);
       myLibraryUploadMoodTags.clear();
       renderMyLibraryUploadMoodPills();
     }
@@ -5030,6 +5031,75 @@ const AudioLibrary = (() => {
       return cleaned || "audio";
     }
 
+    function setMyLibraryUploadProgress(pct) {
+      const bar = document.getElementById("my-library-upload-progress-bar");
+      const label = document.getElementById("my-library-upload-progress-label");
+      const n = Math.max(0, Math.min(100, Number(pct) || 0));
+      if (bar) {
+        bar.style.width = `${n}%`;
+      }
+      if (label) {
+        label.textContent =
+          n >= 100 ? "Finishing…" : n > 0 ? `Uploading… ${n}%` : "Uploading…";
+      }
+    }
+
+    function uploadUserAudioToStorage(objectPath, file, contentType, onProgress) {
+      const baseUrl = String(import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
+      const apiKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || "");
+      if (!baseUrl || !apiKey) {
+        return Promise.resolve({ error: { message: "Storage is not configured." } });
+      }
+      return supabase.auth.getSession().then(({ data: { session } }) => {
+        const token = session?.access_token;
+        if (!token) {
+          return { error: { message: "Sign in required." } };
+        }
+        const pathEncoded = objectPath
+          .split("/")
+          .map((seg) => encodeURIComponent(seg))
+          .join("/");
+        const url = `${baseUrl}/storage/v1/object/${USER_UPLOAD_BUCKET}/${pathEncoded}`;
+        return new Promise((resolve) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", url);
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+          xhr.setRequestHeader("apikey", apiKey);
+          xhr.setRequestHeader("Content-Type", contentType);
+          xhr.setRequestHeader("Cache-Control", "3600");
+          xhr.setRequestHeader("x-upsert", "false");
+          xhr.upload.addEventListener("progress", (ev) => {
+            if (ev.lengthComputable && onProgress) {
+              onProgress(Math.round((ev.loaded / ev.total) * 100));
+            }
+          });
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              if (onProgress) {
+                onProgress(100);
+              }
+              resolve({ error: null });
+              return;
+            }
+            let message = "Upload failed.";
+            try {
+              const parsed = JSON.parse(xhr.responseText);
+              if (parsed && (parsed.message || parsed.error)) {
+                message = String(parsed.message || parsed.error);
+              }
+            } catch (_) {
+              /* ignore */
+            }
+            resolve({ error: { message } });
+          });
+          xhr.addEventListener("error", () => {
+            resolve({ error: { message: "Upload failed (network error)." } });
+          });
+          xhr.send(file);
+        });
+      });
+    }
+
     async function submitMyLibraryUpload() {
       const errEl = document.getElementById("my-library-upload-error");
       const titleIn = document.getElementById("my-library-title-input");
@@ -5079,6 +5149,7 @@ const AudioLibrary = (() => {
       if (prog) {
         prog.hidden = false;
       }
+      setMyLibraryUploadProgress(0);
       if (submitBtn) {
         submitBtn.disabled = true;
       }
@@ -5091,13 +5162,12 @@ const AudioLibrary = (() => {
             : lower.endsWith(".wav")
               ? "audio/wav"
               : "audio/mpeg";
-      const { error: upErr } = await supabase.storage
-        .from(USER_UPLOAD_BUCKET)
-        .upload(objectPath, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType,
-        });
+      const { error: upErr } = await uploadUserAudioToStorage(
+        objectPath,
+        file,
+        contentType,
+        setMyLibraryUploadProgress,
+      );
       if (upErr) {
         if (prog) {
           prog.hidden = true;
