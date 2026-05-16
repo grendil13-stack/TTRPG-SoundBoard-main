@@ -471,8 +471,70 @@
     }
 
     .scene-card-primary {
-      display: block;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       width: 100%;
+    }
+
+    .scene-audio-indicator-wrap {
+      flex: 0 0 auto;
+      display: none;
+      align-items: center;
+    }
+
+    .scene-card--audio-active .scene-audio-indicator-wrap {
+      display: inline-flex;
+    }
+
+    .scene-audio-indicator {
+      display: inline-flex;
+      align-items: flex-end;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      color: var(--accent);
+    }
+
+    .scene-audio-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 12px;
+    }
+
+    .scene-audio-bars span {
+      display: block;
+      width: 2px;
+      height: 4px;
+      border-radius: 1px;
+      background: currentColor;
+      animation: scene-audio-bar 0.85s ease-in-out infinite;
+    }
+
+    .scene-audio-bars span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .scene-audio-bars span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes scene-audio-bar {
+      0%,
+      100% {
+        height: 4px;
+        opacity: 0.55;
+      }
+      50% {
+        height: 11px;
+        opacity: 1;
+      }
+    }
+
+    .scene-card-primary .scene-btn {
+      flex: 1;
+      min-width: 0;
     }
 
     .scene-card-controls {
@@ -520,11 +582,6 @@
       height: 14px;
       display: block;
       fill: currentColor;
-    }
-
-    .scene-card-primary .scene-btn {
-      width: 100%;
-      min-width: 0;
     }
 
     .scene-btn {
@@ -1002,6 +1059,16 @@
     .playlist li.next-up {
       border-color: rgba(127, 119, 221, 0.45);
       background: rgba(127, 119, 221, 0.08);
+    }
+
+    .playlist li.selected {
+      border-color: rgba(127, 119, 221, 0.35);
+      background: rgba(127, 119, 221, 0.06);
+    }
+
+    .playlist li.selected.next-up {
+      border-color: rgba(127, 119, 221, 0.55);
+      background: rgba(127, 119, 221, 0.12);
     }
 
     .layer-grid {

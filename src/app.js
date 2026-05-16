@@ -1402,8 +1402,75 @@ const AudioLibrary = (() => {
     let pendingPlayTrackIndex = 0;
 
     let musicRepeatMode = "list"; // "list" | "one"
-    let musicQueuedNextTrackIndex = null; // synced + repeat:list only
+    let musicQueuedNextTrackIndex = null;
     let musicShuffleEnabled = false;
+    const MUSIC_SELECTION_STORAGE_KEY = "ttrpg_music_selection_v1";
+
+    function clampPlaylistIndex(index, tracks) {
+      if (!tracks.length) {
+        return 0;
+      }
+      const n = Number(index);
+      if (!Number.isFinite(n) || n < 0) {
+        return 0;
+      }
+      if (n >= tracks.length) {
+        return tracks.length - 1;
+      }
+      return n;
+    }
+
+    function loadMusicSelectionForScene(sceneKey) {
+      if (!sceneKey || !isCustomSceneKey(sceneKey)) {
+        return 0;
+      }
+      try {
+        const raw = JSON.parse(localStorage.getItem(MUSIC_SELECTION_STORAGE_KEY) || "{}");
+        const n = Number(raw[sceneKey]);
+        return Number.isFinite(n) ? n : 0;
+      } catch {
+        return 0;
+      }
+    }
+
+    function saveMusicSelectionForScene(sceneKey, index) {
+      if (!sceneKey || !isCustomSceneKey(sceneKey)) {
+        return;
+      }
+      try {
+        const raw = JSON.parse(localStorage.getItem(MUSIC_SELECTION_STORAGE_KEY) || "{}");
+        raw[sceneKey] = index;
+        localStorage.setItem(MUSIC_SELECTION_STORAGE_KEY, JSON.stringify(raw));
+      } catch {
+        /* ignore */
+      }
+    }
+
+    function isSceneAudiblyActive(sceneKey) {
+      if (!sceneKey) {
+        return false;
+      }
+      const musicActive = musicPlaybackScene === sceneKey && !musicPlayer.paused;
+      const ambientActive =
+        currentScene === sceneKey &&
+        customBgmLayerRegistry.some(({ audio }) => !audio.paused);
+      return musicActive || ambientActive;
+    }
+
+    function syncSceneAudioIndicators() {
+      if (!sceneButtonsBar) {
+        return;
+      }
+      sceneButtonsBar.querySelectorAll("[data-custom-scene-area]").forEach((card) => {
+        const btn = card.querySelector(".scene-btn");
+        const key = btn && btn.dataset.sceneKey;
+        const active = Boolean(key && isSceneAudiblyActive(key));
+        card.classList.toggle("scene-card--audio-active", active);
+        if (btn) {
+          btn.setAttribute("aria-description", active ? "Scene audio is playing" : "");
+        }
+      });
+    }
     let sfxSectionFilter = null;
     let sfxSearchTerm = "";
     /** @type {string | null} */
@@ -1421,22 +1488,30 @@ const AudioLibrary = (() => {
     }
 
     function queueNextMusicTrack(index) {
-      // If we’re not synced (scene switched while old music plays), selection maps to pendingPlayTrackIndex.
+      const uiTracks = getSceneTracks(currentScene);
+      if (!uiTracks.length) {
+        return;
+      }
+      index = clampPlaylistIndex(index, uiTracks);
+      pendingPlayTrackIndex = index;
+      if (currentScene) {
+        saveMusicSelectionForScene(currentScene, index);
+      }
+
+      // Scene switched while old music still plays — selection applies when Play is used.
       if (musicPlaybackScene !== currentScene) {
         musicQueuedNextTrackIndex = null;
-        pendingPlayTrackIndex = index;
         renderMusicPlaylist();
         return;
       }
 
       if (musicPlayer.paused) {
-        // When paused, selecting a track is what Play will start.
         musicQueuedNextTrackIndex = null;
         currentTrackIndex = index;
-        pendingPlayTrackIndex = index;
         void loadCurrentTrack();
         updateNowPlayingDisplay();
         renderMusicPlaylist();
+        syncSceneAudioIndicators();
         return;
       }
 
@@ -2801,6 +2876,12 @@ const AudioLibrary = (() => {
     const SCENE_PLAY_SVG =
       '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 6l12 6-12 6V6z"/></svg>';
 
+    const SCENE_AUDIO_INDICATOR_HTML =
+      '<span class="scene-audio-indicator" title="Audio playing">' +
+      '<span class="scene-audio-bars" aria-hidden="true">' +
+      "<span></span><span></span><span></span>" +
+      "</span></span>";
+
     function playSceneFromSelector(sceneKey) {
       if (!sceneKey || !isCustomSceneKey(sceneKey)) {
         return;
@@ -2883,11 +2964,21 @@ const AudioLibrary = (() => {
         musicPlaybackScene === currentScene
       ) {
         currentTrackIndex = musicQueuedNextTrackIndex;
+        pendingPlayTrackIndex = currentTrackIndex;
+        if (currentScene) {
+          saveMusicSelectionForScene(currentScene, pendingPlayTrackIndex);
+        }
         musicQueuedNextTrackIndex = null;
         musicPlayer.volume = effectiveMusicVolume();
         void loadCurrentTrack().then((ok) => {
           if (ok) {
-            musicPlayer.play().then(() => renderMusicPlaylist()).catch(() => renderMusicPlaylist());
+            musicPlayer.play().then(() => {
+              renderMusicPlaylist();
+              syncSceneAudioIndicators();
+            }).catch(() => {
+              renderMusicPlaylist();
+              syncSceneAudioIndicators();
+            });
           }
         });
         return;
@@ -2900,6 +2991,7 @@ const AudioLibrary = (() => {
           updateNowPlayingDisplay();
           renderMusicPlaylist();
           updateMusicProgressUi();
+          syncSceneAudioIndicators();
         }).catch(() => {
           // Fallback to old behavior if replay fails.
           goToNextTrack(true);
@@ -3049,8 +3141,7 @@ const AudioLibrary = (() => {
 
         const isNowPlaying =
           synced && !musicPlayer.paused && index === currentTrackIndex;
-        const isPausedSelection =
-          synced && musicPlayer.paused && index === currentTrackIndex;
+        const isSelected = index === pendingPlayTrackIndex;
         const isNextUp =
           synced &&
           !musicPlayer.paused &&
@@ -3059,11 +3150,12 @@ const AudioLibrary = (() => {
 
         if (isNowPlaying) {
           trackItem.classList.add("active");
-        } else if (isPausedSelection) {
-          trackItem.classList.add("active");
-        } else if (!synced && index === pendingPlayTrackIndex) {
-          trackItem.classList.add("active");
-        } else if (isNextUp) {
+        } else if (isSelected && (!isNowPlaying || musicPlayer.paused)) {
+          trackItem.classList.add("selected");
+        } else if (!synced && isSelected) {
+          trackItem.classList.add("selected");
+        }
+        if (isNextUp) {
           trackItem.classList.add("next-up");
         }
 
@@ -3087,6 +3179,7 @@ const AudioLibrary = (() => {
         });
         musicPlaylistElement.appendChild(trackItem);
       });
+      syncSceneAudioIndicators();
     }
 
     async function loadCurrentTrack() {
@@ -3118,56 +3211,21 @@ const AudioLibrary = (() => {
       return true;
     }
 
-    async function playMusic() {
-      const destTracks = getSceneTracks(currentScene);
-      if (!destTracks.length) {
+    async function startMusicPlaybackAtIndex(targetIndex, options) {
+      const opts = options || {};
+      const sceneKey = opts.sceneKey != null ? opts.sceneKey : currentScene;
+      const tracks = getSceneTracks(sceneKey);
+      if (!tracks.length) {
         return;
       }
-
-      cancelMusicVolumeAnim();
-
-      if (musicPlaybackScene !== currentScene) {
-        if (!musicPlayer.paused) {
-          detachMusicEnded(musicPlayer);
-          runMusicFadeOut(musicPlayer, () => {
-            void (async () => {
-              currentTrackIndex = pendingPlayTrackIndex;
-              musicPlaybackScene = currentScene;
-              if (!(await loadCurrentTrack())) {
-                updateNowPlayingDisplay();
-                renderMusicPlaylist();
-                return;
-              }
-              attachMusicEnded(musicPlayer);
-              musicPlayer.volume = effectiveMusicVolume();
-              musicPlayer.play()
-                .then(() => {
-                  renderMusicPlaylist();
-                })
-                .catch(() => {
-                  renderMusicPlaylist();
-                });
-            })();
-          });
-          return;
-        }
-
-        currentTrackIndex = pendingPlayTrackIndex;
-        musicPlaybackScene = currentScene;
-        if (!(await loadCurrentTrack())) {
-          return;
-        }
-        attachMusicEnded(musicPlayer);
-        musicPlayer.volume = effectiveMusicVolume();
-        musicPlayer.play()
-          .then(() => {
-            renderMusicPlaylist();
-          })
-          .catch(() => {
-            renderMusicPlaylist();
-          });
-        return;
+      const index = clampPlaylistIndex(targetIndex, tracks);
+      musicQueuedNextTrackIndex = null;
+      currentTrackIndex = index;
+      pendingPlayTrackIndex = index;
+      if (sceneKey) {
+        saveMusicSelectionForScene(sceneKey, index);
       }
+      musicPlaybackScene = sceneKey;
 
       if (!(await loadCurrentTrack())) {
         return;
@@ -3176,13 +3234,74 @@ const AudioLibrary = (() => {
       detachMusicEnded(musicPlayer);
       attachMusicEnded(musicPlayer);
       musicPlayer.volume = effectiveMusicVolume();
-      musicPlayer.play()
-        .then(() => {
-          renderMusicPlaylist();
-        })
-        .catch(() => {
-          renderMusicPlaylist();
+      try {
+        await musicPlayer.play();
+      } catch {
+        /* ignore */
+      }
+      renderMusicPlaylist();
+      syncSceneAudioIndicators();
+    }
+
+    async function playMusic() {
+      const destTracks = getSceneTracks(currentScene);
+      if (!destTracks.length) {
+        return;
+      }
+
+      const targetIndex = clampPlaylistIndex(pendingPlayTrackIndex, destTracks);
+      pendingPlayTrackIndex = targetIndex;
+      saveMusicSelectionForScene(currentScene, targetIndex);
+
+      cancelMusicVolumeAnim();
+
+      if (musicPlaybackScene !== currentScene) {
+        if (!musicPlayer.paused) {
+          detachMusicEnded(musicPlayer);
+          runMusicFadeOut(musicPlayer, () => {
+            void startMusicPlaybackAtIndex(targetIndex, { sceneKey: currentScene });
+          });
+          return;
+        }
+        await startMusicPlaybackAtIndex(targetIndex, { sceneKey: currentScene });
+        return;
+      }
+
+      if (
+        musicPlaybackScene === currentScene &&
+        targetIndex === currentTrackIndex
+      ) {
+        if (!musicPlayer.paused) {
+          return;
+        }
+        if (!(await loadCurrentTrack())) {
+          return;
+        }
+        detachMusicEnded(musicPlayer);
+        attachMusicEnded(musicPlayer);
+        musicPlayer.volume = effectiveMusicVolume();
+        try {
+          await musicPlayer.play();
+        } catch {
+          /* ignore */
+        }
+        renderMusicPlaylist();
+        syncSceneAudioIndicators();
+        return;
+      }
+
+      const playingOtherTrack =
+        !musicPlayer.paused && targetIndex !== currentTrackIndex;
+
+      if (playingOtherTrack) {
+        detachMusicEnded(musicPlayer);
+        runMusicFadeOut(musicPlayer, () => {
+          void startMusicPlaybackAtIndex(targetIndex, { sceneKey: currentScene });
         });
+        return;
+      }
+
+      await startMusicPlaybackAtIndex(targetIndex, { sceneKey: currentScene });
     }
 
     function pauseMusic() {
@@ -3192,6 +3311,7 @@ const AudioLibrary = (() => {
       applyIdleMusicVolume();
       renderMusicPlaylist();
       updateMusicProgressUi();
+      syncSceneAudioIndicators();
     }
 
     function goToNextTrack(shouldPlay) {
@@ -3335,21 +3455,32 @@ const AudioLibrary = (() => {
     }
 
     function setSceneMusic(sceneName) {
+      const previousScene = currentScene;
       currentScene = sceneName;
-      musicQueuedNextTrackIndex = null;
+      const sameScene = previousScene === sceneName;
 
+      if (sameScene) {
+        updateNowPlayingDisplay();
+        renderMusicPlaylist();
+        syncSceneAudioIndicators();
+        return;
+      }
+
+      musicQueuedNextTrackIndex = null;
       cancelMusicVolumeAnim();
 
+      const newTracks = getSceneTracks(currentScene);
+      const savedSelection = loadMusicSelectionForScene(sceneName);
+      pendingPlayTrackIndex = clampPlaylistIndex(savedSelection, newTracks);
+
       if (musicPlayer.paused) {
-        currentTrackIndex = 0;
-        pendingPlayTrackIndex = 0;
+        currentTrackIndex = pendingPlayTrackIndex;
         musicPlaybackScene = currentScene;
         detachMusicEnded(musicPlayer);
         void loadCurrentTrack();
         return;
       }
 
-      const newTracks = getSceneTracks(currentScene);
       if (!newTracks.length) {
         currentTrackIndex = 0;
         pendingPlayTrackIndex = 0;
@@ -3362,19 +3493,27 @@ const AudioLibrary = (() => {
           updateNowPlayingDisplay();
           renderMusicPlaylist();
           updateMusicProgressUi();
+          syncSceneAudioIndicators();
         });
         return;
       }
 
-      pendingPlayTrackIndex = 0;
       updateNowPlayingDisplay();
       renderMusicPlaylist();
+      syncSceneAudioIndicators();
     }
 
     function initializeMusicPlayer() {
       musicPlayer.preload = "auto";
       musicPlaybackScene = currentScene;
       musicPlayer.volume = effectiveMusicVolume();
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          renderMusicPlaylist();
+          syncSceneAudioIndicators();
+        }
+      });
 
       musicPlayButton.addEventListener("click", () => {
         void playMusic();
@@ -3603,6 +3742,7 @@ const AudioLibrary = (() => {
           toggleButton.setAttribute("aria-label", `${isActive ? "Stop" : "Start"} ${name}`);
           toggleButton.title = `${isActive ? "Stop" : "Start"} ${name}`;
           toggleButton.setAttribute("aria-pressed", String(isActive));
+          syncSceneAudioIndicators();
         };
 
         toggleButton.addEventListener("click", () => {
@@ -4043,6 +4183,11 @@ const AudioLibrary = (() => {
           sceneBtn.title = scene.tags;
         }
 
+        const audioIndicator = document.createElement("span");
+        audioIndicator.className = "scene-audio-indicator-wrap";
+        audioIndicator.innerHTML = SCENE_AUDIO_INDICATOR_HTML;
+
+        primaryRow.appendChild(audioIndicator);
         primaryRow.appendChild(sceneBtn);
 
         const tagRow = document.createElement("div");
@@ -4094,6 +4239,7 @@ const AudioLibrary = (() => {
       if (currentScene) {
         setActiveSceneButton(currentScene);
       }
+      syncSceneAudioIndicators();
     }
 
     function closeDeleteSceneConfirm() {
