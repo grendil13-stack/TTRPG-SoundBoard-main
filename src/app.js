@@ -1193,6 +1193,12 @@ const AudioLibrary = (() => {
     let ambientFadeRafId = null;
     /** When a fade is in progress; cancelled fades dispose these entries. */
     let ambientFadePendingEntries = null;
+    let ambientFadeGenAtStart = 0;
+    let ambientFadeStartTime = 0;
+    let ambientFadeStartVols = [];
+    let ambientFadeHiddenMsAccum = 0;
+    let ambientFadeHiddenAt = null;
+    let ambientFadeOnComplete = null;
     const CUSTOM_SCENES_STORAGE_KEY = "dndMoodBuilder.v1.customScenes";
     const ACTIVE_SCENE_STORAGE_KEY = "dndMoodBuilder.v1.activeSceneKey";
     const ACTIVE_SESSION_STORAGE_KEY = "dndMoodBuilder.v1.activeSessionId";
@@ -2728,6 +2734,9 @@ const AudioLibrary = (() => {
         cancelAnimationFrame(ambientFadeRafId);
         ambientFadeRafId = null;
       }
+      ambientFadeHiddenAt = null;
+      ambientFadeHiddenMsAccum = 0;
+      ambientFadeOnComplete = null;
       if (ambientFadePendingEntries && ambientFadePendingEntries.length) {
         ambientFadePendingEntries.forEach((e) => {
           disposeAmbientAudio(e.audio);
@@ -2739,6 +2748,76 @@ const AudioLibrary = (() => {
       }
     }
 
+    function getAmbientFadeElapsedMs(now) {
+      let elapsed = now - ambientFadeStartTime - ambientFadeHiddenMsAccum;
+      if (ambientFadeHiddenAt != null) {
+        elapsed -= now - ambientFadeHiddenAt;
+      }
+      return Math.max(0, elapsed);
+    }
+
+    function ambientFadeFrame(now) {
+      if (ambientFadeGenAtStart !== ambientFadeGeneration) {
+        return;
+      }
+      const entries = ambientFadePendingEntries;
+      if (!entries || !entries.length) {
+        ambientFadeRafId = null;
+        return;
+      }
+      const t = Math.min(1, getAmbientFadeElapsedMs(now) / MUSIC_SCENE_HANDOFF_MS);
+      entries.forEach((e, i) => {
+        e.audio.volume = ambientFadeStartVols[i] * (1 - t);
+      });
+      if (t < 1) {
+        ambientFadeRafId = requestAnimationFrame(ambientFadeFrame);
+        return;
+      }
+      ambientFadeRafId = null;
+      ambientFadePendingEntries = null;
+      const onComplete = ambientFadeOnComplete;
+      ambientFadeOnComplete = null;
+      entries.forEach((e) => {
+        disposeAmbientAudio(e.audio);
+        if (e.setLayerActiveState) {
+          e.setLayerActiveState(false);
+        }
+      });
+      if (ambientFadeGenAtStart === ambientFadeGeneration && onComplete) {
+        onComplete();
+      }
+    }
+
+    function scheduleAmbientFadeFrame() {
+      if (ambientFadeRafId !== null) {
+        cancelAnimationFrame(ambientFadeRafId);
+      }
+      ambientFadeRafId = requestAnimationFrame(ambientFadeFrame);
+    }
+
+    function pauseAmbientFadeForHiddenTab() {
+      if (!ambientFadePendingEntries || !ambientFadePendingEntries.length) {
+        return;
+      }
+      if (ambientFadeRafId !== null) {
+        cancelAnimationFrame(ambientFadeRafId);
+        ambientFadeRafId = null;
+      }
+      if (ambientFadeHiddenAt == null) {
+        ambientFadeHiddenAt = performance.now();
+      }
+    }
+
+    function resumeAmbientFadeAfterVisibleTab() {
+      if (ambientFadeHiddenAt != null) {
+        ambientFadeHiddenMsAccum += performance.now() - ambientFadeHiddenAt;
+        ambientFadeHiddenAt = null;
+      }
+      if (ambientFadePendingEntries && ambientFadePendingEntries.length) {
+        scheduleAmbientFadeFrame();
+      }
+    }
+
     function fadeOutAmbientEntries(entries, onComplete) {
       if (!entries.length) {
         if (onComplete) {
@@ -2747,37 +2826,14 @@ const AudioLibrary = (() => {
         return;
       }
       cancelAmbientFadeAnim();
+      ambientFadeGenAtStart = ambientFadeGeneration;
       ambientFadePendingEntries = entries;
-      const gen = ambientFadeGeneration;
-      const start = performance.now();
-      const startVols = entries.map((e) => e.audio.volume);
-
-      function frame(now) {
-        if (gen !== ambientFadeGeneration) {
-          return;
-        }
-        const t = Math.min(1, (now - start) / MUSIC_SCENE_HANDOFF_MS);
-        entries.forEach((e, i) => {
-          e.audio.volume = startVols[i] * (1 - t);
-        });
-        if (t < 1) {
-          ambientFadeRafId = requestAnimationFrame(frame);
-        } else {
-          ambientFadeRafId = null;
-          ambientFadePendingEntries = null;
-          entries.forEach((e) => {
-            disposeAmbientAudio(e.audio);
-            if (e.setLayerActiveState) {
-              e.setLayerActiveState(false);
-            }
-          });
-          if (gen === ambientFadeGeneration && onComplete) {
-            onComplete();
-          }
-        }
-      }
-
-      ambientFadeRafId = requestAnimationFrame(frame);
+      ambientFadeOnComplete = onComplete;
+      ambientFadeStartTime = performance.now();
+      ambientFadeHiddenMsAccum = 0;
+      ambientFadeHiddenAt = null;
+      ambientFadeStartVols = entries.map((e) => e.audio.volume);
+      scheduleAmbientFadeFrame();
     }
 
     function fadeOutAmbientCarryover(then) {
@@ -2873,26 +2929,60 @@ const AudioLibrary = (() => {
       });
     }
 
-    /** Browsers pause HTMLAudioElement in background tabs; resume layers the user left playing. */
+    function resumeAmbientAudioEntry(audio, volumeSliderOrValue, setLayerActiveState) {
+      if (!audio || !audio.src) {
+        return;
+      }
+      const vol =
+        volumeSliderOrValue && typeof volumeSliderOrValue === "object"
+          ? effectiveBgmVolume(volumeSliderOrValue.value)
+          : effectiveBgmVolume(volumeSliderOrValue);
+      audio.volume = vol;
+      const playPromise = audio.paused ? audio.play() : Promise.resolve();
+      playPromise
+        .then(() => {
+          if (setLayerActiveState) {
+            setLayerActiveState(true);
+          }
+        })
+        .catch(() => {
+          if (setLayerActiveState) {
+            setLayerActiveState(false);
+          }
+        });
+    }
+
+    /** Keep ambient playing after the tab was in the background (fade + browser pause). */
     function resumeAmbientPlaybackAfterTabVisible() {
       customBgmLayerRegistry.forEach(
         ({ audio, volumeSlider, setLayerActiveState, layerElement }) => {
           if (!layerElement || !layerElement.classList.contains("active")) {
             return;
           }
-          if (!audio.src || !audio.paused) {
-            return;
-          }
-          audio.volume = effectiveBgmVolume(volumeSlider.value);
-          audio.play()
-            .then(() => {
-              setLayerActiveState(true);
-            })
-            .catch(() => {
-              setLayerActiveState(false);
-            });
+          resumeAmbientAudioEntry(audio, volumeSlider, setLayerActiveState);
         },
       );
+      ambientCarryoverAudios.forEach(({ audio, sliderValue }) => {
+        resumeAmbientAudioEntry(audio, sliderValue, null);
+      });
+    }
+
+    function scheduleAmbientResumeAfterTabVisible() {
+      resumeAmbientPlaybackAfterTabVisible();
+      requestAnimationFrame(resumeAmbientPlaybackAfterTabVisible);
+      setTimeout(resumeAmbientPlaybackAfterTabVisible, 0);
+      setTimeout(resumeAmbientPlaybackAfterTabVisible, 100);
+    }
+
+    function onDocumentVisibilityForAmbient() {
+      if (document.hidden) {
+        pauseAmbientFadeForHiddenTab();
+        return;
+      }
+      resumeAmbientFadeAfterVisibleTab();
+      scheduleAmbientResumeAfterTabVisible();
+      renderMusicPlaylist();
+      syncSceneAudioIndicators();
     }
 
     const SCENE_PLAY_SVG =
@@ -3530,13 +3620,7 @@ const AudioLibrary = (() => {
       musicPlaybackScene = currentScene;
       musicPlayer.volume = effectiveMusicVolume();
 
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          resumeAmbientPlaybackAfterTabVisible();
-          renderMusicPlaylist();
-          syncSceneAudioIndicators();
-        }
-      });
+      document.addEventListener("visibilitychange", onDocumentVisibilityForAmbient);
 
       musicPlayButton.addEventListener("click", () => {
         void playMusic();
