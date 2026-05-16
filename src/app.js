@@ -2873,6 +2873,28 @@ const AudioLibrary = (() => {
       });
     }
 
+    /** Browsers pause HTMLAudioElement in background tabs; resume layers the user left playing. */
+    function resumeAmbientPlaybackAfterTabVisible() {
+      customBgmLayerRegistry.forEach(
+        ({ audio, volumeSlider, setLayerActiveState, layerElement }) => {
+          if (!layerElement || !layerElement.classList.contains("active")) {
+            return;
+          }
+          if (!audio.src || !audio.paused) {
+            return;
+          }
+          audio.volume = effectiveBgmVolume(volumeSlider.value);
+          audio.play()
+            .then(() => {
+              setLayerActiveState(true);
+            })
+            .catch(() => {
+              setLayerActiveState(false);
+            });
+        },
+      );
+    }
+
     const SCENE_PLAY_SVG =
       '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 6l12 6-12 6V6z"/></svg>';
 
@@ -3510,6 +3532,7 @@ const AudioLibrary = (() => {
 
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
+          resumeAmbientPlaybackAfterTabVisible();
           renderMusicPlaylist();
           syncSceneAudioIndicators();
         }
@@ -3769,7 +3792,12 @@ const AudioLibrary = (() => {
           pctEl.textContent = `${Math.round(Number(volumeSlider.value) || 0)}%`;
         });
 
-        customBgmLayerRegistry.push({ audio: layerAudio, volumeSlider, setLayerActiveState });
+        customBgmLayerRegistry.push({
+          audio: layerAudio,
+          volumeSlider,
+          setLayerActiveState,
+          layerElement,
+        });
       });
       return Promise.all(layerReadyPromises).then(() => {});
     }
