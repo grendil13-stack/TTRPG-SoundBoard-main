@@ -1209,6 +1209,9 @@ const AudioLibrary = (() => {
     let activeSessionId = null;
     /** Last auth session from Supabase; used for session UI without async. */
     let lastAuthSession = null;
+    /** After first scene bootstrap; avoids re-activating scene (and killing ambient) on repeat auth events. */
+    let sceneBootstrapComplete = false;
+    let bootstrappedAuthUserId = null;
     let sessionMenuOpen = false;
     let sessionMenuGlobalCloseBound = false;
 
@@ -2901,6 +2904,50 @@ const AudioLibrary = (() => {
       customBgmContainer.innerHTML = "";
     }
 
+    function captureAmbientLayerPlaybackSnapshot() {
+      const snap = [];
+      customBgmLayerRegistry.forEach(({ audio, volumeSlider, layerElement }) => {
+        const file = layerElement?.dataset?.ambientFile;
+        if (
+          file &&
+          layerElement.classList.contains("active") &&
+          !audio.paused
+        ) {
+          snap.push({
+            file,
+            volume: Number(volumeSlider.value) || 50,
+          });
+        }
+      });
+      return snap;
+    }
+
+    function restoreAmbientLayerPlaybackSnapshot(snap) {
+      if (!snap.length) {
+        return;
+      }
+      fadeOutAmbientCarryover(() => {
+        snap.forEach(({ file, volume }) => {
+          const entry = customBgmLayerRegistry.find(
+            (e) => e.layerElement?.dataset?.ambientFile === file,
+          );
+          if (!entry) {
+            return;
+          }
+          entry.volumeSlider.value = String(volume);
+          entry.audio.volume = effectiveBgmVolume(volume);
+          entry.audio
+            .play()
+            .then(() => {
+              entry.setLayerActiveState(true);
+            })
+            .catch(() => {
+              entry.setLayerActiveState(false);
+            });
+        });
+      });
+    }
+
     function clearCustomBgmLayersHard() {
       customBgmLayerRegistry.forEach(({ audio }) => {
         disposeAmbientAudio(audio);
@@ -3745,6 +3792,9 @@ const AudioLibrary = (() => {
       const explicitPrevious = arguments.length >= 2;
       const prev = explicitPrevious ? ambientPreviousSceneKey : sceneKey;
       const isSameSceneRefresh = Boolean(sceneKey && prev === sceneKey);
+      const playbackSnapshot = isSameSceneRefresh
+        ? captureAmbientLayerPlaybackSnapshot()
+        : [];
 
       if (isSameSceneRefresh) {
         clearCustomBgmLayersHard();
@@ -3782,6 +3832,7 @@ const AudioLibrary = (() => {
         const layerElement = document.createElement("div");
         layerElement.className = "layer";
         layerElement.dataset.bgmLayer = "";
+        layerElement.dataset.ambientFile = file;
 
         const rowMain = document.createElement("div");
         rowMain.className = "layer-row-main";
@@ -3883,7 +3934,11 @@ const AudioLibrary = (() => {
           layerElement,
         });
       });
-      return Promise.all(layerReadyPromises).then(() => {});
+      return Promise.all(layerReadyPromises).then(() => {
+        if (playbackSnapshot.length) {
+          restoreAmbientLayerPlaybackSnapshot(playbackSnapshot);
+        }
+      });
     }
 
     function stopFxSound(buttonElement) {
@@ -4170,6 +4225,17 @@ const AudioLibrary = (() => {
 
     function activateSceneKey(sceneKey) {
       const previousSceneKey = currentScene;
+      if (previousSceneKey === sceneKey) {
+        try {
+          if (sceneKey && isCustomSceneKey(sceneKey)) {
+            localStorage.setItem(ACTIVE_SCENE_STORAGE_KEY, sceneKey);
+          }
+        } catch (_) {
+          /* ignore */
+        }
+        void renderFxButtons();
+        return Promise.resolve();
+      }
       setSceneMusic(sceneKey);
       const ambientReady = renderAmbientLayersForScene(sceneKey, previousSceneKey);
       try {
@@ -4255,7 +4321,9 @@ const AudioLibrary = (() => {
         }
         if (getCustomSceneByKey(saved)) {
           setActiveSceneButton(saved);
-          activateSceneKey(saved);
+          if (currentScene !== saved) {
+            activateSceneKey(saved);
+          }
           return;
         }
       }
@@ -6416,16 +6484,28 @@ const AudioLibrary = (() => {
 
     async function handleSupabaseAuthChange(event, nextSession) {
       updateAccountUI(nextSession);
-      if (event === "SIGNED_IN" && nextSession?.user) {
-        await ensureSessionsForUser(nextSession.user.id);
+      if (
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+        nextSession?.user
+      ) {
+        const uid = nextSession.user.id;
+        const repeatForUser =
+          sceneBootstrapComplete && bootstrappedAuthUserId === uid;
+        await ensureSessionsForUser(uid);
         closeAuthModal();
-        await migrateLocalScenesToCloudIfNeeded(nextSession.user.id);
-        await Favorites.migrateLocalToCloud(nextSession.user.id);
-        await Favorites.syncFromSupabase(nextSession.user.id);
-        await UserTags.syncFromSupabase(nextSession.user.id);
+        if (!repeatForUser) {
+          await migrateLocalScenesToCloudIfNeeded(uid);
+          await Favorites.migrateLocalToCloud(uid);
+        }
+        await Favorites.syncFromSupabase(uid);
+        await UserTags.syncFromSupabase(uid);
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
-        restorePersistedActiveSceneOrDefault();
+        if (!repeatForUser) {
+          restorePersistedActiveSceneOrDefault();
+        }
+        bootstrappedAuthUserId = uid;
+        sceneBootstrapComplete = true;
         void buildSfxSectionFilterPills();
         void renderFxButtons();
         renderMusicPlaylist();
@@ -6437,6 +6517,8 @@ const AudioLibrary = (() => {
         return;
       }
       if (event === "SIGNED_OUT") {
+        sceneBootstrapComplete = false;
+        bootstrappedAuthUserId = null;
         closeAuthModal();
         Favorites.loadFromLocalStorage();
         UserTags.clear();
@@ -6480,6 +6562,8 @@ const AudioLibrary = (() => {
       await refreshCustomScenesList();
       refreshSceneSelectorBar();
       restorePersistedActiveSceneOrDefault();
+      sceneBootstrapComplete = true;
+      bootstrappedAuthUserId = session?.user?.id ?? null;
       void buildSfxSectionFilterPills();
       void renderFxButtons();
       initializeMusicPlayer();
