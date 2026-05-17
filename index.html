@@ -3385,9 +3385,32 @@
         max-width: none;
       }
     }
+
+    .env-badge {
+      position: fixed;
+      bottom: 8px;
+      left: 8px;
+      z-index: 10000;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      line-height: 1.4;
+      color: #1c1406;
+      background: #f59e0b;
+      border-radius: 3px;
+      opacity: 0.88;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .env-badge[hidden] {
+      display: none;
+    }
   </style>
 </head>
 <body>
+  <div id="env-badge" class="env-badge" hidden aria-hidden="true">STAGING</div>
   <div class="app-shell">
     <header class="topbar">
       <h1 class="topbar-title">Skald Sound Board</h1>

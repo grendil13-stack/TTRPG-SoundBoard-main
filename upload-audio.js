@@ -1,7 +1,7 @@
 /**
  * Uploads audio from ./Sounds to Supabase Storage (music, ambient, sfx buckets).
  * Usage: node upload-audio.js
- * Requires SUPABASE_URL and SUPABASE_ANON_KEY in .env at project root.
+ * Requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or SUPABASE_* aliases) in .env.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -140,11 +140,13 @@ function parseBucketAndObjectPath(soundsDir, absoluteFilePath) {
 async function main() {
   const envPath = path.join(__dirname, ".env");
   const env = loadEnvFile(envPath);
-  const supabaseUrl = env.SUPABASE_URL?.trim();
-  const supabaseAnonKey = env.SUPABASE_ANON_KEY?.trim();
+  const supabaseUrl =
+    env.VITE_SUPABASE_URL?.trim() || env.SUPABASE_URL?.trim();
+  const supabaseAnonKey =
+    env.VITE_SUPABASE_ANON_KEY?.trim() || env.SUPABASE_ANON_KEY?.trim();
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
-      ".env must define SUPABASE_URL and SUPABASE_ANON_KEY (see vite.config.js).",
+      ".env must define VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
     );
   }
 

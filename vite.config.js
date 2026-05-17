@@ -56,12 +56,11 @@ function repoStaticAudioPlugin() {
 }
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+  loadEnv(mode, process.cwd(), "");
+
   return {
     plugins: [repoStaticAudioPlugin()],
-    define: {
-      __SUPABASE_URL__: JSON.stringify(env.SUPABASE_URL || ""),
-      __SUPABASE_ANON_KEY__: JSON.stringify(env.SUPABASE_ANON_KEY || ""),
-    },
+    envDir: ".",
+    envPrefix: "VITE_",
   };
 });

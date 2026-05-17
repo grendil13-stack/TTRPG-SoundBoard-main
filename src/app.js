@@ -2,8 +2,13 @@ import { supabase } from "../supabase.js";
 import { initProductTour } from "./tour.js";
 
 const AudioLibrary = (() => {
-      const STORAGE_BASE_URL =
-        "https://kquiougzmjxtaneeedip.supabase.co/storage/v1/object/public";
+      const supabaseBaseUrl = String(import.meta.env.VITE_SUPABASE_URL || "").replace(
+        /\/$/,
+        "",
+      );
+      const STORAGE_BASE_URL = supabaseBaseUrl
+        ? `${supabaseBaseUrl}/storage/v1/object/public`
+        : "";
       /** Set to `true` for local `sounds/…` paths; `false` for Supabase Storage URLs. */
       const LOCAL_MODE = false;
 
@@ -6573,3 +6578,18 @@ const AudioLibrary = (() => {
     initProductTour({
       helpButton: document.getElementById("tour-help-btn"),
     });
+
+    (function initEnvironmentBadge() {
+      const badge = document.getElementById("env-badge");
+      if (!badge) {
+        return;
+      }
+      const isStaging =
+        import.meta.env.MODE === "staging" ||
+        import.meta.env.VITE_ENV === "staging";
+      if (!isStaging) {
+        return;
+      }
+      badge.hidden = false;
+      badge.removeAttribute("aria-hidden");
+    })();
