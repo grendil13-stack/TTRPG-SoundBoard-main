@@ -1290,7 +1290,13 @@ const AudioLibrary = (() => {
     const authModalSignUpBtn = document.getElementById("auth-modal-sign-up");
     const sceneLimitModalBackdrop = document.getElementById("scene-limit-modal-backdrop");
     const sceneLimitDismissBtn = document.getElementById("scene-limit-modal-dismiss");
+    const sceneLimitSignInBtn = document.getElementById("scene-limit-modal-sign-in");
     const sceneLimitSignUpBtn = document.getElementById("scene-limit-modal-sign-up");
+    const upgradeModalBackdrop = document.getElementById("upgrade-modal-backdrop");
+    const upgradeModalSubscribeBtn = document.getElementById("upgrade-modal-subscribe");
+    const upgradeModalLaterBtn = document.getElementById("upgrade-modal-later");
+    const upgradeModalRestoreSignInBtn = document.getElementById("upgrade-modal-restore-sign-in");
+    const railSceneUsageEl = document.getElementById("rail-scene-usage");
     const feedbackModalBackdrop = document.getElementById("feedback-modal-backdrop");
     const feedbackBtnDesktop = document.getElementById("feedback-btn-desktop");
     const feedbackBtnDock = document.getElementById("feedback-btn-dock");
@@ -1302,9 +1308,16 @@ const AudioLibrary = (() => {
     const feedbackCancelBtn = document.getElementById("feedback-modal-cancel");
     const feedbackSubmitErrorEl = document.getElementById("feedback-submit-error");
 
-    const ANON_CUSTOM_SCENE_LIMIT = 5;
-    /** Free signed-in accounts (when subscription is wired): max scenes in their single session. */
+    const ANON_CUSTOM_SCENE_LIMIT = 3;
     const FREE_SIGNED_IN_SCENE_LIMIT = 5;
+    const FREE_SIGNED_IN_SESSION_LIMIT = 1;
+    const PAID_TIERS = new Set(["paid", "subscriber", "subscription", "pro"]);
+
+    /** @type {null | { scene_count: number, session_count: number, scene_limit: number, session_limit: number, scene_limit_reached: boolean, session_limit_reached: boolean }} */
+    let userLimits = null;
+    let userTier = "free";
+    let limitModalCooldownUntil = 0;
+    const LIMIT_MODAL_COOLDOWN_MS = 2000;
 
     let selectedFeedbackCategory = null;
     let feedbackCloseTimerId = null;
@@ -1672,12 +1685,232 @@ const AudioLibrary = (() => {
         .filter(Boolean);
     }
 
-    /**
-     * When Stripe is integrated, return false for free-tier signed-in users.
-     * Today: any signed-in user is treated as paid for sessions and scene limits.
-     */
     function userHasPaidSessionFeatures(authSession) {
-      return Boolean(authSession?.user);
+      if (!authSession?.user) {
+        return false;
+      }
+      return PAID_TIERS.has(String(userTier || "free").toLowerCase());
+    }
+
+    function isLimitModalOnCooldown() {
+      return Date.now() < limitModalCooldownUntil;
+    }
+
+    function startLimitModalCooldown() {
+      limitModalCooldownUntil = Date.now() + LIMIT_MODAL_COOLDOWN_MS;
+    }
+
+    async function fetchUserTier(userId) {
+      if (!userId) {
+        userTier = "free";
+        return userTier;
+      }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("tier")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) {
+        console.error("profiles tier load", error);
+        userTier = "free";
+        return userTier;
+      }
+      userTier = data?.tier ? String(data.tier).toLowerCase() : "free";
+      return userTier;
+    }
+
+    async function fetchUserLimits() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        userLimits = null;
+        return null;
+      }
+      if (userHasPaidSessionFeatures(session)) {
+        userLimits = null;
+        return null;
+      }
+      const { data, error } = await supabase.from("user_limits").select("*").maybeSingle();
+      if (error) {
+        console.error("user_limits load", error);
+        userLimits = buildFallbackUserLimits();
+        return userLimits;
+      }
+      userLimits = data || buildFallbackUserLimits();
+      return userLimits;
+    }
+
+    function buildFallbackUserLimits() {
+      const sceneCount = customScenesList.length;
+      const sessionCount = sessionsList.length;
+      return {
+        scene_count: sceneCount,
+        session_count: sessionCount,
+        scene_limit: FREE_SIGNED_IN_SCENE_LIMIT,
+        session_limit: FREE_SIGNED_IN_SESSION_LIMIT,
+        scene_limit_reached: sceneCount >= FREE_SIGNED_IN_SCENE_LIMIT,
+        session_limit_reached: sessionCount >= FREE_SIGNED_IN_SESSION_LIMIT,
+      };
+    }
+
+    async function refreshUserLimits() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        userLimits = null;
+        updateTierUsageIndicators();
+        return null;
+      }
+      await fetchUserTier(session.user.id);
+      if (userHasPaidSessionFeatures(session)) {
+        userLimits = null;
+        updateTierUsageIndicators();
+        return null;
+      }
+      await fetchUserLimits();
+      updateTierUsageIndicators();
+      return userLimits;
+    }
+
+    function isAnonSceneLimitReached() {
+      return loadCustomScenesFromStorage().length >= ANON_CUSTOM_SCENE_LIMIT;
+    }
+
+    function isFreeSignedInSceneLimitReached() {
+      if (userLimits && typeof userLimits.scene_limit_reached === "boolean") {
+        return userLimits.scene_limit_reached;
+      }
+      const count =
+        userLimits && typeof userLimits.scene_count === "number"
+          ? userLimits.scene_count
+          : customScenesList.length;
+      const limit =
+        userLimits && typeof userLimits.scene_limit === "number"
+          ? userLimits.scene_limit
+          : FREE_SIGNED_IN_SCENE_LIMIT;
+      return count >= limit;
+    }
+
+    function isFreeSignedInSessionLimitReached() {
+      if (userLimits && typeof userLimits.session_limit_reached === "boolean") {
+        return userLimits.session_limit_reached;
+      }
+      const count =
+        userLimits && typeof userLimits.session_count === "number"
+          ? userLimits.session_count
+          : sessionsList.length;
+      const limit =
+        userLimits && typeof userLimits.session_limit === "number"
+          ? userLimits.session_limit
+          : FREE_SIGNED_IN_SESSION_LIMIT;
+      return count >= limit;
+    }
+
+    function handleUpgradeClick() {
+      // Placeholder — wire to Stripe checkout when billing is live.
+    }
+
+    function openUpgradeModal() {
+      if (!upgradeModalBackdrop) {
+        return;
+      }
+      const freeList = document.getElementById("upgrade-free-features");
+      if (freeList) {
+        freeList.innerHTML = [
+          "<li>5 scenes</li>",
+          "<li>1 session</li>",
+          "<li>Full curated audio library</li>",
+          "<li>SFX and ambient sounds</li>",
+          "<li>Favorites and tagging</li>",
+        ].join("");
+      }
+      upgradeModalBackdrop.classList.add("open");
+      upgradeModalBackdrop.setAttribute("aria-hidden", "false");
+      if (upgradeModalLaterBtn) {
+        upgradeModalLaterBtn.focus();
+      }
+    }
+
+    function closeUpgradeModal() {
+      if (!upgradeModalBackdrop) {
+        return;
+      }
+      upgradeModalBackdrop.classList.remove("open");
+      upgradeModalBackdrop.setAttribute("aria-hidden", "true");
+      startLimitModalCooldown();
+    }
+
+    function updateTierUsageIndicators() {
+      const { data: { session } } = { data: { session: lastAuthSession } };
+      const paid = userHasPaidSessionFeatures(session);
+      const signedIn = Boolean(session?.user);
+
+      if (createNewSceneButton) {
+        createNewSceneButton.classList.remove("limit-reached");
+        createNewSceneButton.removeAttribute("aria-disabled");
+        let blocked = false;
+        let tip = "";
+        if (!signedIn) {
+          blocked = isAnonSceneLimitReached();
+          tip = blocked
+            ? "You have used all 3 anonymous scenes. Sign in or create a free account to save more."
+            : "";
+        } else if (!paid) {
+          blocked = isFreeSignedInSceneLimitReached();
+          tip = blocked
+            ? "You have reached the free limit of 5 scenes. Upgrade to create more."
+            : "";
+        }
+        if (blocked) {
+          createNewSceneButton.classList.add("limit-reached");
+          createNewSceneButton.setAttribute("aria-disabled", "true");
+          createNewSceneButton.title = tip;
+        } else {
+          createNewSceneButton.removeAttribute("title");
+        }
+      }
+
+      if (railSceneUsageEl) {
+        if (signedIn && !paid) {
+          const count =
+            userLimits && typeof userLimits.scene_count === "number"
+              ? userLimits.scene_count
+              : customScenesList.length;
+          const limit =
+            userLimits && typeof userLimits.scene_limit === "number"
+              ? userLimits.scene_limit
+              : FREE_SIGNED_IN_SCENE_LIMIT;
+          railSceneUsageEl.hidden = false;
+          railSceneUsageEl.textContent = `${count} of ${limit} scenes used`;
+          railSceneUsageEl.classList.remove("is-warning", "is-limit");
+          if (count >= limit) {
+            railSceneUsageEl.classList.add("is-limit");
+          } else if (count >= limit - 1) {
+            railSceneUsageEl.classList.add("is-warning");
+          }
+        } else {
+          railSceneUsageEl.hidden = true;
+          railSceneUsageEl.textContent = "";
+          railSceneUsageEl.classList.remove("is-warning", "is-limit");
+        }
+      }
+
+      const sessionUsageEl = sessionSelectorWrap?.querySelector(".session-usage-indicator");
+      if (sessionUsageEl) {
+        sessionUsageEl.remove();
+      }
+      if (signedIn && !paid && sessionSelectorWrap && !sessionSelectorWrap.hidden) {
+        const sessionCount =
+          userLimits && typeof userLimits.session_count === "number"
+            ? userLimits.session_count
+            : sessionsList.length;
+        const sessionLimit =
+          userLimits && typeof userLimits.session_limit === "number"
+            ? userLimits.session_limit
+            : FREE_SIGNED_IN_SESSION_LIMIT;
+        const usage = document.createElement("p");
+        usage.className = "session-usage-indicator";
+        usage.textContent = `${sessionCount} of ${sessionLimit} sessions`;
+        sessionSelectorWrap.appendChild(usage);
+      }
     }
 
     function countScenesInSession(sessionId) {
@@ -2042,10 +2275,25 @@ const AudioLibrary = (() => {
       const newWrap = document.createElement("div");
       newWrap.className = "session-menu-new";
 
+      const sessionLimitReached = !userHasPaidSessionFeatures(lastAuthSession)
+        && isFreeSignedInSessionLimitReached();
+
       const newToggle = document.createElement("button");
       newToggle.type = "button";
       newToggle.className = "session-menu-item session-menu-new-toggle";
-      newToggle.textContent = "+ New Session";
+      if (sessionLimitReached) {
+        newToggle.classList.add("is-locked", "has-lock");
+      }
+      const newToggleLabel = document.createElement("span");
+      newToggleLabel.textContent = "+ New Session";
+      newToggle.appendChild(newToggleLabel);
+      if (sessionLimitReached) {
+        const lockIcon = document.createElement("span");
+        lockIcon.className = "session-menu-new-lock";
+        lockIcon.textContent = "🔒";
+        lockIcon.title = "Upgrade to create multiple sessions";
+        newToggle.appendChild(lockIcon);
+      }
 
       const form = document.createElement("div");
       form.className = "session-menu-new-form";
@@ -2096,6 +2344,11 @@ const AudioLibrary = (() => {
           showSessionCreateError("You must be signed in to create a session.");
           return;
         }
+        if (!userHasPaidSessionFeatures(session) && isFreeSignedInSessionLimitReached()) {
+          closeSessionMenu();
+          openUpgradeModal();
+          return;
+        }
         const maxSort = sessionsList.reduce(
           (m, s) => Math.max(m, Number(s.sort_order) || 0),
           -1,
@@ -2144,9 +2397,15 @@ const AudioLibrary = (() => {
         nameInput.value = "";
         clearSessionCreateError();
         setActiveSessionId(inserted.id);
+        await refreshUserLimits();
       };
 
       newToggle.addEventListener("click", () => {
+        if (sessionLimitReached) {
+          closeSessionMenu();
+          openUpgradeModal();
+          return;
+        }
         clearSessionCreateError();
         newToggle.hidden = true;
         form.hidden = false;
@@ -2357,23 +2616,6 @@ const AudioLibrary = (() => {
       }
       sessionSelectorWrap.hidden = false;
 
-      if (!userHasPaidSessionFeatures(auth)) {
-        const row = document.createElement("div");
-        row.className = "session-selector-locked";
-        const nm = document.createElement("span");
-        nm.className = "session-selector-locked-name";
-        const s = sessionsList.find((x) => x.id === activeSessionId) || sessionsList[0];
-        nm.textContent = s?.name || "New Session";
-        const lock = document.createElement("span");
-        lock.className = "session-selector-lock";
-        lock.textContent = "🔒";
-        lock.title = "Upgrade to organize scenes into sessions";
-        row.appendChild(nm);
-        row.appendChild(lock);
-        sessionSelectorWrap.appendChild(row);
-        return;
-      }
-
       const trigger = document.createElement("button");
       trigger.type = "button";
       trigger.className = "session-selector-trigger";
@@ -2410,6 +2652,7 @@ const AudioLibrary = (() => {
       if (sessionMenuOpen) {
         openSessionMenu(menu, trigger);
       }
+      updateTierUsageIndicators();
     }
 
     function sceneRowToApp(row) {
@@ -2491,6 +2734,11 @@ const AudioLibrary = (() => {
       }
       renderSessionSelectorUI();
       void renderFxButtons();
+      if (lastAuthSession?.user) {
+        await refreshUserLimits();
+      } else {
+        updateTierUsageIndicators();
+      }
     }
 
     function updateAccountUI(session) {
@@ -2554,6 +2802,7 @@ const AudioLibrary = (() => {
       }
       sceneLimitModalBackdrop.classList.remove("open");
       sceneLimitModalBackdrop.setAttribute("aria-hidden", "true");
+      startLimitModalCooldown();
     }
 
     function openFeedbackModal() {
@@ -4425,6 +4674,7 @@ const AudioLibrary = (() => {
         setActiveSceneButton(currentScene);
       }
       syncSceneAudioIndicators();
+      updateTierUsageIndicators();
     }
 
     function closeDeleteSceneConfirm() {
@@ -4454,10 +4704,12 @@ const AudioLibrary = (() => {
           console.error("delete scene", error);
         }
         await refreshCustomScenesList();
+        await refreshUserLimits();
       } else {
         customScenesList = customScenesList.filter((s) => s.id !== id);
         saveCustomScenesToStorage(customScenesList);
         await refreshCustomScenesList();
+        updateTierUsageIndicators();
       }
       refreshSceneSelectorBar();
 
@@ -6114,9 +6366,10 @@ const AudioLibrary = (() => {
 
       if (session?.user) {
         if (!sceneEditorEditingId && !userHasPaidSessionFeatures(session)) {
-          const n = countScenesInSession(activeSessionId || sessionsList[0]?.id);
-          if (n >= FREE_SIGNED_IN_SCENE_LIMIT) {
-            openSceneLimitModal();
+          await fetchUserTier(session.user.id);
+          const limits = await fetchUserLimits();
+          if (limits?.scene_limit_reached || isFreeSignedInSceneLimitReached()) {
+            openUpgradeModal();
             return;
           }
         }
@@ -6127,6 +6380,7 @@ const AudioLibrary = (() => {
           return;
         }
         await refreshCustomScenesList();
+        await refreshUserLimits();
       } else {
         let list = loadCustomScenesFromStorage();
         if (!sceneEditorEditingId) {
@@ -6143,6 +6397,7 @@ const AudioLibrary = (() => {
         }
         saveCustomScenesToStorage(list);
         await refreshCustomScenesList();
+        updateTierUsageIndicators();
       }
 
       refreshSceneSelectorBar();
@@ -6200,17 +6455,18 @@ const AudioLibrary = (() => {
     });
 
     createNewSceneButton.addEventListener("click", async () => {
+      if (isLimitModalOnCooldown()) {
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        const n = loadCustomScenesFromStorage().length;
-        if (n >= ANON_CUSTOM_SCENE_LIMIT) {
+        if (isAnonSceneLimitReached()) {
           openSceneLimitModal();
           return;
         }
       } else if (!userHasPaidSessionFeatures(session)) {
-        const n = countScenesInSession(activeSessionId || sessionsList[0]?.id);
-        if (n >= FREE_SIGNED_IN_SCENE_LIMIT) {
-          openSceneLimitModal();
+        if (isFreeSignedInSceneLimitReached()) {
+          openUpgradeModal();
           return;
         }
       }
@@ -6442,6 +6698,12 @@ const AudioLibrary = (() => {
     if (sceneLimitDismissBtn) {
       sceneLimitDismissBtn.addEventListener("click", () => closeSceneLimitModal());
     }
+    if (sceneLimitSignInBtn) {
+      sceneLimitSignInBtn.addEventListener("click", () => {
+        closeSceneLimitModal();
+        openAuthModal();
+      });
+    }
     if (sceneLimitSignUpBtn) {
       sceneLimitSignUpBtn.addEventListener("click", () => {
         closeSceneLimitModal();
@@ -6455,6 +6717,39 @@ const AudioLibrary = (() => {
         }
       });
     }
+    if (upgradeModalLaterBtn) {
+      upgradeModalLaterBtn.addEventListener("click", () => closeUpgradeModal());
+    }
+    if (upgradeModalSubscribeBtn) {
+      upgradeModalSubscribeBtn.addEventListener("click", () => {
+        handleUpgradeClick();
+      });
+    }
+    if (upgradeModalRestoreSignInBtn) {
+      upgradeModalRestoreSignInBtn.addEventListener("click", () => {
+        closeUpgradeModal();
+        openAuthModal();
+      });
+    }
+    if (upgradeModalBackdrop) {
+      upgradeModalBackdrop.addEventListener("click", (e) => {
+        if (e.target === upgradeModalBackdrop) {
+          closeUpgradeModal();
+        }
+      });
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") {
+        return;
+      }
+      if (upgradeModalBackdrop?.classList.contains("open")) {
+        closeUpgradeModal();
+        return;
+      }
+      if (sceneLimitModalBackdrop?.classList.contains("open")) {
+        closeSceneLimitModal();
+      }
+    });
 
     document.querySelectorAll("[data-feedback-category]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -6505,6 +6800,7 @@ const AudioLibrary = (() => {
         await Favorites.syncFromSupabase(uid);
         await UserTags.syncFromSupabase(uid);
         await refreshCustomScenesList();
+        await refreshUserLimits();
         refreshSceneSelectorBar();
         if (!repeatForUser) {
           restorePersistedActiveSceneOrDefault();
@@ -6531,9 +6827,12 @@ const AudioLibrary = (() => {
         if (filePickerActiveType === "library") {
           filePickerActiveType = "music";
         }
+        userLimits = null;
+        userTier = "free";
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
         restorePersistedActiveSceneOrDefault();
+        updateTierUsageIndicators();
         void buildSfxSectionFilterPills();
         void renderFxButtons();
         renderMusicPlaylist();
@@ -6565,6 +6864,11 @@ const AudioLibrary = (() => {
         sfxMyTagFilter = null;
       }
       await refreshCustomScenesList();
+      if (session?.user) {
+        await refreshUserLimits();
+      } else {
+        updateTierUsageIndicators();
+      }
       refreshSceneSelectorBar();
       restorePersistedActiveSceneOrDefault();
       sceneBootstrapComplete = true;

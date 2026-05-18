@@ -266,6 +266,280 @@
       line-height: 1.45;
     }
 
+    .scene-limit-modal-panel .anon-limit-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .scene-limit-modal-panel .anon-limit-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .scene-limit-modal-panel .anon-limit-maybe-later {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-top: 4px;
+      padding: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .scene-limit-modal-panel .anon-limit-maybe-later:hover {
+      color: var(--text);
+      background: none;
+    }
+
+    .upgrade-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 5, 10, 0.82);
+      z-index: 1250;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(24px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+        max(24px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    }
+
+    .upgrade-modal-backdrop.open {
+      display: flex;
+    }
+
+    .upgrade-modal-panel {
+      background: linear-gradient(165deg, #1c1c24 0%, #141418 55%, #12121a 100%);
+      border: 0.5px solid rgba(127, 119, 221, 0.35);
+      border-radius: 14px;
+      max-width: 520px;
+      width: 100%;
+      padding: 0;
+      box-shadow:
+        0 0 0 1px rgba(127, 119, 221, 0.08),
+        0 24px 64px rgba(0, 0, 0, 0.55),
+        0 0 80px rgba(127, 119, 221, 0.12);
+      overflow: hidden;
+    }
+
+    .upgrade-modal-header {
+      padding: 22px 24px 16px;
+      text-align: center;
+      border-bottom: 0.5px solid var(--border);
+      background: linear-gradient(180deg, rgba(127, 119, 221, 0.12) 0%, transparent 100%);
+    }
+
+    .upgrade-modal-header h3 {
+      margin: 0 0 6px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .upgrade-modal-header p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .upgrade-modal-body {
+      padding: 18px 22px 20px;
+    }
+
+    .upgrade-compare-table {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .upgrade-compare-col {
+      padding: 12px 14px 14px;
+    }
+
+    .upgrade-compare-col:first-child {
+      background: var(--panel-2);
+      border-right: 0.5px solid var(--border);
+    }
+
+    .upgrade-compare-col:last-child {
+      background: rgba(127, 119, 221, 0.06);
+    }
+
+    .upgrade-compare-col h4 {
+      margin: 0 0 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .upgrade-compare-col:last-child h4 {
+      color: var(--accent);
+    }
+
+    .upgrade-compare-col ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .upgrade-compare-col li {
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--text);
+      padding-left: 0;
+    }
+
+    .upgrade-compare-col:last-child li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .upgrade-check {
+      flex-shrink: 0;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .upgrade-price-block {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .upgrade-price {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .upgrade-price span {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .upgrade-modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .upgrade-modal-actions .upgrade-subscribe-btn {
+      width: 100%;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--accent);
+      border-color: rgba(127, 119, 221, 0.6);
+      color: #fff;
+    }
+
+    .upgrade-modal-actions .upgrade-subscribe-btn:hover {
+      background: #8f87e8;
+    }
+
+    .upgrade-modal-actions .upgrade-subscribe-btn:disabled {
+      opacity: 0.85;
+      cursor: not-allowed;
+    }
+
+    .upgrade-modal-footer-note {
+      margin: 14px 0 0;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .upgrade-modal-footer-note button {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-weight: 600;
+    }
+
+    .upgrade-modal-footer-note button:hover {
+      color: #9f97ee;
+      background: none;
+    }
+
+    .rail-scene-usage {
+      flex-shrink: 0;
+      padding: 6px 10px 4px;
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+      border-top: 0.5px solid var(--border-subtle);
+    }
+
+    .rail-scene-usage.is-warning {
+      color: #d4a84b;
+    }
+
+    .rail-scene-usage.is-limit {
+      color: #e87878;
+    }
+
+    .session-usage-indicator {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+      padding: 0 8px 6px;
+      margin-top: -2px;
+    }
+
+    .rail-footer #create-new-scene.limit-reached {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .rail-footer #create-new-scene.limit-reached:hover {
+      background: var(--panel-2);
+    }
+
+    .session-menu-new-toggle.has-lock {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .session-menu-new-lock {
+      flex-shrink: 0;
+      font-size: 11px;
+      opacity: 0.75;
+      cursor: help;
+    }
+
+    .session-menu-new-toggle.is-locked {
+      opacity: 0.7;
+    }
+
     .feedback-modal-panel {
       max-width: 420px;
     }
@@ -3453,6 +3727,7 @@
             <p class="scene-selector-empty" id="scene-selector-empty" hidden>No scenes yet. Use &quot;+ New Scene&quot; below.</p>
           </div>
         </div>
+        <p class="rail-scene-usage" id="rail-scene-usage" hidden aria-live="polite"></p>
         <div class="rail-footer">
           <button type="button" id="create-new-scene">+ New Scene</button>
         </div>
@@ -3751,10 +4026,56 @@
   <div class="scene-limit-modal-backdrop" id="scene-limit-modal-backdrop" aria-hidden="true">
     <div class="scene-limit-modal-panel" role="dialog" aria-labelledby="scene-limit-modal-title" aria-modal="true">
       <h3 id="scene-limit-modal-title">Save more scenes</h3>
-      <p>Anonymous sessions can keep up to 5 scenes on this device. Create a free account to save unlimited scenes and sync them when you sign in.</p>
-      <div class="auth-modal-actions">
-        <button type="button" class="secondary" id="scene-limit-modal-dismiss">Not now</button>
-        <button type="button" id="scene-limit-modal-sign-up">Create free account</button>
+      <p id="scene-limit-modal-body">You have used all 3 of your anonymous scenes. Create a free account to save up to 5 scenes and access them from any device.</p>
+      <div class="anon-limit-actions">
+        <div class="anon-limit-actions-row">
+          <button type="button" class="secondary" id="scene-limit-modal-sign-in">Sign in</button>
+          <button type="button" id="scene-limit-modal-sign-up">Create free account</button>
+        </div>
+        <button type="button" class="anon-limit-maybe-later" id="scene-limit-modal-dismiss">Maybe later</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="upgrade-modal-backdrop" id="upgrade-modal-backdrop" aria-hidden="true">
+    <div class="upgrade-modal-panel" role="dialog" aria-labelledby="upgrade-modal-title" aria-modal="true">
+      <div class="upgrade-modal-header">
+        <h3 id="upgrade-modal-title">You have reached your free limit</h3>
+        <p>Subscribe to Skald to gain unlimited Sessions and Scenes</p>
+      </div>
+      <div class="upgrade-modal-body">
+        <div class="upgrade-compare-table" role="presentation">
+          <div class="upgrade-compare-col">
+            <h4>Free</h4>
+            <ul id="upgrade-free-features">
+              <li>5 scenes</li>
+              <li>1 session</li>
+              <li>Full curated audio library</li>
+              <li>SFX and ambient sounds</li>
+              <li>Favorites and tagging</li>
+            </ul>
+          </div>
+          <div class="upgrade-compare-col">
+            <h4>Subscription</h4>
+            <ul>
+              <li><span class="upgrade-check" aria-hidden="true">✓</span> Unlimited scenes</li>
+              <li><span class="upgrade-check" aria-hidden="true">✓</span> Unlimited sessions</li>
+              <li><span class="upgrade-check" aria-hidden="true">✓</span> Upload your own music</li>
+              <li><span class="upgrade-check" aria-hidden="true">✓</span> Cross-device sync</li>
+              <li><span class="upgrade-check" aria-hidden="true">✓</span> Priority support</li>
+            </ul>
+          </div>
+        </div>
+        <div class="upgrade-price-block">
+          <div class="upgrade-price">$5 <span>per month</span></div>
+        </div>
+        <div class="upgrade-modal-actions">
+          <button type="button" class="upgrade-subscribe-btn" id="upgrade-modal-subscribe" title="Coming Soon">Subscribe</button>
+          <button type="button" class="secondary" id="upgrade-modal-later">Maybe later</button>
+        </div>
+        <p class="upgrade-modal-footer-note">
+          Already a subscriber? <button type="button" id="upgrade-modal-restore-sign-in">Sign in</button> to restore access
+        </p>
       </div>
     </div>
   </div>
