@@ -1280,6 +1280,7 @@ const AudioLibrary = (() => {
     const accountSignInBtn = document.getElementById("account-sign-in");
     const accountSignedInEl = document.getElementById("account-signed-in");
     const accountEmailEl = document.getElementById("account-email");
+    const accountSubscribeBtn = document.getElementById("account-subscribe");
     const accountSignOutBtn = document.getElementById("account-sign-out");
     const authModalBackdrop = document.getElementById("auth-modal-backdrop");
     const authModalErrorEl = document.getElementById("auth-modal-error");
@@ -1311,7 +1312,10 @@ const AudioLibrary = (() => {
     const ANON_CUSTOM_SCENE_LIMIT = 3;
     const FREE_SIGNED_IN_SCENE_LIMIT = 5;
     const FREE_SIGNED_IN_SESSION_LIMIT = 1;
+    const DEFAULT_SESSION_NAME = "My Scenes";
     const PAID_TIERS = new Set(["paid", "subscriber", "subscription", "pro"]);
+    /** @type {Map<string, Promise<boolean>>} */
+    const ensureSessionsInFlight = new Map();
 
     /** @type {null | { scene_count: number, session_count: number, scene_limit: number, session_limit: number, scene_limit_reached: boolean, session_limit_reached: boolean }} */
     let userLimits = null;
@@ -1868,16 +1872,28 @@ const AudioLibrary = (() => {
         }
       }
 
+      updateTopbarSubscribeButton();
+
       if (railSceneUsageEl) {
-        if (signedIn && !paid) {
-          const count =
+        let showSceneUsage = false;
+        let count = 0;
+        let limit = 0;
+        if (!signedIn) {
+          count = loadCustomScenesFromStorage().length;
+          limit = ANON_CUSTOM_SCENE_LIMIT;
+          showSceneUsage = true;
+        } else if (!paid) {
+          count =
             userLimits && typeof userLimits.scene_count === "number"
               ? userLimits.scene_count
               : customScenesList.length;
-          const limit =
+          limit =
             userLimits && typeof userLimits.scene_limit === "number"
               ? userLimits.scene_limit
               : FREE_SIGNED_IN_SCENE_LIMIT;
+          showSceneUsage = true;
+        }
+        if (showSceneUsage) {
           railSceneUsageEl.hidden = false;
           railSceneUsageEl.textContent = `${count} of ${limit} scenes used`;
           railSceneUsageEl.classList.remove("is-warning", "is-limit");
@@ -2002,28 +2018,9 @@ const AudioLibrary = (() => {
       return { data, error: null };
     }
 
-    /**
-     * Scene editor: if the in-memory sessions list is empty, insert "New Session" and
-     * populate `sessionsList` before any UI so the session dropdown can save immediately.
-     */
+    /** Ensures sessions exist in DB and in `sessionsList` (never inserts if any session exists). */
     async function ensureDefaultSessionRowIfEmptyForSignedInEditor(userId) {
-      if (!userId || sessionsList.length > 0) {
-        return;
-      }
-      const { data: created, error } = await insertSessionRow(userId, "New Session", 0);
-      if (error || !created) {
-        if (error) {
-          console.error("editor default session insert error", error);
-        }
-        return;
-      }
-      sessionsList = [created];
-      const sid = created.id != null ? String(created.id) : "";
-      if (sid) {
-        await attachOrphanScenesToDefaultSession(userId, sid);
-      }
-      resolveActiveSessionIdFromStorage();
-      persistActiveSessionId();
+      await ensureSessionsForUser(userId);
     }
 
     async function attachOrphanScenesToDefaultSession(userId, defaultSessionId) {
@@ -2038,25 +2035,46 @@ const AudioLibrary = (() => {
     }
 
     async function ensureSessionsForUser(userId) {
-      let sessions = await fetchSessionsFromDb(userId);
-      if (!sessions.length) {
-        const { data: created, error: createErr } = await insertSessionRow(userId, "New Session", 0);
-        if (createErr || !created) {
+      if (!userId) {
+        sessionsList = [];
+        activeSessionId = null;
+        return false;
+      }
+      const inFlight = ensureSessionsInFlight.get(userId);
+      if (inFlight) {
+        return inFlight;
+      }
+      const work = (async () => {
+        let sessions = await fetchSessionsFromDb(userId);
+        if (!sessions.length) {
+          const { error: createErr } = await insertSessionRow(
+            userId,
+            DEFAULT_SESSION_NAME,
+            0,
+          );
           if (createErr) {
             console.error("default session insert error (full)", createErr);
           }
+          sessions = await fetchSessionsFromDb(userId);
+        }
+        if (!sessions.length) {
           sessionsList = [];
           activeSessionId = null;
           return false;
         }
-        sessions = [created];
+        sessionsList = sessions;
+        const defaultId = sessions[0].id;
+        await attachOrphanScenesToDefaultSession(userId, defaultId);
+        resolveActiveSessionIdFromStorage();
+        persistActiveSessionId();
+        return true;
+      })();
+      ensureSessionsInFlight.set(userId, work);
+      try {
+        return await work;
+      } finally {
+        ensureSessionsInFlight.delete(userId);
       }
-      sessionsList = sessions;
-      const defaultId = sessions[0].id;
-      await attachOrphanScenesToDefaultSession(userId, defaultId);
-      resolveActiveSessionIdFromStorage();
-      persistActiveSessionId();
-      return true;
     }
 
     function closeSessionMenu() {
@@ -2703,8 +2721,11 @@ const AudioLibrary = (() => {
       if (!local.length) {
         return;
       }
-      await ensureSessionsForUser(userId);
       const defaultSid = activeSessionId || sessionsList[0]?.id;
+      if (!defaultSid) {
+        console.error("migrateLocalScenes: no session available after ensureSessionsForUser");
+        return;
+      }
       const rows = local.map((s) =>
         appSceneToRow(
           defaultSid ? { ...s, sessionId: defaultSid } : s,
@@ -2741,6 +2762,15 @@ const AudioLibrary = (() => {
       }
     }
 
+    function updateTopbarSubscribeButton() {
+      if (!accountSubscribeBtn) {
+        return;
+      }
+      const signedIn = Boolean(lastAuthSession?.user);
+      const paid = userHasPaidSessionFeatures(lastAuthSession);
+      accountSubscribeBtn.hidden = !signedIn || paid;
+    }
+
     function updateAccountUI(session) {
       lastAuthSession = session;
       if (!accountSignInBtn || !accountSignedInEl || !accountEmailEl) {
@@ -2755,6 +2785,7 @@ const AudioLibrary = (() => {
         accountSignedInEl.hidden = true;
         accountEmailEl.textContent = "";
       }
+      updateTopbarSubscribeButton();
     }
 
     function openAuthModal() {
@@ -6365,12 +6396,23 @@ const AudioLibrary = (() => {
       };
 
       if (session?.user) {
-        if (!sceneEditorEditingId && !userHasPaidSessionFeatures(session)) {
+        let limits = null;
+        if (!userHasPaidSessionFeatures(session)) {
           await fetchUserTier(session.user.id);
-          const limits = await fetchUserLimits();
-          if (limits?.scene_limit_reached || isFreeSignedInSceneLimitReached()) {
+          limits = await fetchUserLimits();
+          if (
+            !sceneEditorEditingId &&
+            (limits?.scene_limit_reached || isFreeSignedInSceneLimitReached())
+          ) {
             openUpgradeModal();
             return;
+          }
+          if (limits?.session_limit_reached && sessionsList.length > 1) {
+            const firstSid = sessionsList[0]?.id;
+            if (firstSid) {
+              nextSessionId = firstSid;
+              sceneObj.sessionId = firstSid;
+            }
           }
         }
         const row = appSceneToRow(sceneObj, session.user.id);
@@ -6639,6 +6681,11 @@ const AudioLibrary = (() => {
         void supabase.auth.signOut();
       });
     }
+    if (accountSubscribeBtn) {
+      accountSubscribeBtn.addEventListener("click", () => {
+        openUpgradeModal();
+      });
+    }
     if (authModalCancelBtn) {
       authModalCancelBtn.addEventListener("click", () => closeAuthModal());
     }
@@ -6791,7 +6838,6 @@ const AudioLibrary = (() => {
         const uid = nextSession.user.id;
         const repeatForUser =
           sceneBootstrapComplete && bootstrappedAuthUserId === uid;
-        await ensureSessionsForUser(uid);
         closeAuthModal();
         if (!repeatForUser) {
           await migrateLocalScenesToCloudIfNeeded(uid);
@@ -6853,7 +6899,6 @@ const AudioLibrary = (() => {
       const { data: { session } } = await supabase.auth.getSession();
       updateAccountUI(session);
       if (session?.user) {
-        await ensureSessionsForUser(session.user.id);
         await migrateLocalScenesToCloudIfNeeded(session.user.id);
         await Favorites.migrateLocalToCloud(session.user.id);
         await Favorites.syncFromSupabase(session.user.id);

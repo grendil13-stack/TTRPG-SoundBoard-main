@@ -175,6 +175,22 @@
       color: var(--muted);
     }
 
+    .account-subscribe {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 999px;
+      background: var(--accent);
+      border: 0.5px solid rgba(127, 119, 221, 0.55);
+      color: #fff;
+      flex-shrink: 0;
+      line-height: 1.2;
+    }
+
+    .account-subscribe:hover {
+      background: #8f87e8;
+    }
+
     .account-sign-out {
       font-size: 11px;
       padding: 4px 8px;
@@ -3710,6 +3726,7 @@
           <button type="button" id="account-sign-in" class="account-sign-in">Sign in</button>
           <div class="account-signed-in" id="account-signed-in" hidden>
             <span class="account-email" id="account-email"></span>
+            <button type="button" id="account-subscribe" class="account-subscribe" hidden>Subscribe</button>
             <button type="button" id="account-sign-out" class="account-sign-out">Sign out</button>
           </div>
         </div>
