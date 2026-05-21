@@ -5391,10 +5391,10 @@
       "mastered": true
     },
     {
-      "id": "roots-of-a-mountain",
-      "title": "Roots of a mountain",
-      "filename": "roots-of-a-mountain.ogg",
-      "path": "sounds/music/songs-high/roots-of-a-mountain.ogg",
+      "id": "roots-of-the-mountain",
+      "title": "Roots of the mountain",
+      "filename": "roots-of-the-mountain.ogg",
+      "path": "sounds/music/songs-high/roots-of-the-mountain.ogg",
       "type": "music",
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
@@ -5499,10 +5499,10 @@
       "mastered": true
     },
     {
-      "id": "sand-of-the-sky",
-      "title": "Sand of the Sky",
-      "filename": "sand-of-the-sky.ogg",
-      "path": "sounds/music/songs-high/sand-of-the-sky.ogg",
+      "id": "sands-of-the-sky",
+      "title": "Sands of the Sky",
+      "filename": "sands-of-the-sky.ogg",
+      "path": "sounds/music/songs-high/sands-of-the-sky.ogg",
       "type": "music",
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
@@ -6292,7 +6292,7 @@
     },
     {
       "id": "stumbling-shadows",
-      "title": "stumbling Shadows",
+      "title": "Stumbling Shadows",
       "filename": "stumbling-shadows.ogg",
       "path": "sounds/music/suspense-bgm/stumbling-shadows.ogg",
       "type": "music",
