@@ -2567,10 +2567,10 @@
       "mastered": true
     },
     {
-      "id": "exploring-unusual-forest",
-      "title": "Exploring Unusual Forest",
-      "filename": "exploring-unusual-forest.ogg",
-      "path": "sounds/music/peaceful-bgm/exploring-unusual-forest.ogg",
+      "id": "exploring-the-unusual-forest",
+      "title": "Exploring the Unusual Forest",
+      "filename": "exploring-the-unusual-forest.ogg",
+      "path": "sounds/music/peaceful-bgm/exploring-the-unusual-forest.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
