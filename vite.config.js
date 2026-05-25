@@ -67,6 +67,7 @@ export default defineConfig(({ mode }) => {
         input: {
           main: path.join(__dirname, "index.html"),
           legal: path.join(__dirname, "legal.html"),
+          landing: path.join(__dirname, "landing.html"),
         },
       },
     },
