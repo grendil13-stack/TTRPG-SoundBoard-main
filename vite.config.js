@@ -62,5 +62,13 @@ export default defineConfig(({ mode }) => {
     plugins: [repoStaticAudioPlugin()],
     envDir: ".",
     envPrefix: "VITE_",
+    build: {
+      rollupOptions: {
+        input: {
+          main: path.join(__dirname, "index.html"),
+          legal: path.join(__dirname, "legal.html"),
+        },
+      },
+    },
   };
 });

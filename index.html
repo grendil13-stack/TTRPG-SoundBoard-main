@@ -3697,6 +3697,71 @@
     .env-badge[hidden] {
       display: none;
     }
+
+    .app-legal-footer {
+      position: fixed;
+      bottom: 6px;
+      left: 0;
+      right: 0;
+      z-index: 4;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .app-legal-footer a {
+      pointer-events: auto;
+      color: var(--muted);
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    .app-legal-footer a:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    .auth-tos-field {
+      margin-top: 4px;
+    }
+
+    .auth-tos-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .auth-tos-label input {
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+    }
+
+    .auth-tos-label a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .auth-tos-label a:hover {
+      text-decoration: underline;
+    }
+
+    #auth-modal-sign-up:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 767px) {
+      .app-legal-footer {
+        bottom: calc(var(--master-dock-h) + 6px + env(safe-area-inset-bottom, 0px));
+      }
+    }
   </style>
 </head>
 <body>
@@ -4032,9 +4097,15 @@
         <label for="auth-password">Password</label>
         <input id="auth-password" type="password" autocomplete="current-password" />
       </div>
+      <div class="auth-tos-field">
+        <label class="auth-tos-label" for="auth-tos-checkbox">
+          <input type="checkbox" id="auth-tos-checkbox" />
+          <span>I agree to the <a href="/legal.html#terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/legal.html#privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a></span>
+        </label>
+      </div>
       <div class="auth-modal-actions">
         <button type="button" class="secondary" id="auth-modal-cancel">Cancel</button>
-        <button type="button" class="secondary" id="auth-modal-sign-up">Create account</button>
+        <button type="button" class="secondary" id="auth-modal-sign-up" disabled>Create account</button>
         <button type="button" id="auth-modal-submit">Sign in</button>
       </div>
     </div>
@@ -4128,6 +4199,11 @@
       </div>
     </div>
   </div>
+
+  <footer class="app-legal-footer" aria-label="Legal">
+    <a href="/legal.html#terms">Terms of Service</a>
+    <a href="/legal.html#privacy">Privacy Policy</a>
+  </footer>
 
   <script type="module" src="/src/app.js"></script>
 </body>

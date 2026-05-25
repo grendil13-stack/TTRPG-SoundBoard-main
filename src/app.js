@@ -1289,6 +1289,8 @@ const AudioLibrary = (() => {
     const authModalCancelBtn = document.getElementById("auth-modal-cancel");
     const authModalSubmitBtn = document.getElementById("auth-modal-submit");
     const authModalSignUpBtn = document.getElementById("auth-modal-sign-up");
+    const authTosCheckbox = document.getElementById("auth-tos-checkbox");
+    const PENDING_TOS_AGREEMENT_KEY = "skald_pending_tos_agreement";
     const sceneLimitModalBackdrop = document.getElementById("scene-limit-modal-backdrop");
     const sceneLimitDismissBtn = document.getElementById("scene-limit-modal-dismiss");
     const sceneLimitSignInBtn = document.getElementById("scene-limit-modal-sign-in");
@@ -2788,6 +2790,59 @@ const AudioLibrary = (() => {
       updateTopbarSubscribeButton();
     }
 
+    function updateAuthSignUpEnabled() {
+      if (!authModalSignUpBtn) {
+        return;
+      }
+      authModalSignUpBtn.disabled = !(authTosCheckbox && authTosCheckbox.checked);
+    }
+
+    async function recordTosAgreement(userId, agreedAt) {
+      if (!userId) {
+        return false;
+      }
+      const at = agreedAt || new Date().toISOString();
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ tos_agreed_at: at })
+        .eq("id", userId)
+        .select("id")
+        .maybeSingle();
+      if (!error && data) {
+        return true;
+      }
+      if (error) {
+        console.error("profiles tos_agreed_at update", error);
+      }
+      return false;
+    }
+
+    async function applyPendingTosAgreement(userId) {
+      if (!userId) {
+        return;
+      }
+      let pending = null;
+      try {
+        const raw = sessionStorage.getItem(PENDING_TOS_AGREEMENT_KEY);
+        if (raw) {
+          pending = JSON.parse(raw);
+        }
+      } catch (_) {
+        pending = null;
+      }
+      if (!pending || pending.userId !== userId) {
+        return;
+      }
+      const ok = await recordTosAgreement(userId, pending.agreedAt);
+      if (ok) {
+        try {
+          sessionStorage.removeItem(PENDING_TOS_AGREEMENT_KEY);
+        } catch (_) {
+          /* ignore */
+        }
+      }
+    }
+
     function openAuthModal() {
       if (!authModalBackdrop) {
         return;
@@ -2801,6 +2856,10 @@ const AudioLibrary = (() => {
       if (authPasswordInput) {
         authPasswordInput.value = "";
       }
+      if (authTosCheckbox) {
+        authTosCheckbox.checked = false;
+      }
+      updateAuthSignUpEnabled();
       authModalBackdrop.classList.add("open");
       authModalBackdrop.setAttribute("aria-hidden", "false");
       if (authEmailInput) {
@@ -6719,6 +6778,9 @@ const AudioLibrary = (() => {
         closeAuthModal();
       });
     }
+    if (authTosCheckbox) {
+      authTosCheckbox.addEventListener("change", updateAuthSignUpEnabled);
+    }
     if (authModalSignUpBtn) {
       authModalSignUpBtn.addEventListener("click", async () => {
         const email = (authEmailInput && authEmailInput.value.trim()) || "";
@@ -6732,12 +6794,34 @@ const AudioLibrary = (() => {
         if (authModalErrorEl) {
           authModalErrorEl.textContent = "";
         }
-        const { error } = await supabase.auth.signUp({ email, password });
+        if (!authTosCheckbox?.checked) {
+          if (authModalErrorEl) {
+            authModalErrorEl.textContent =
+              "You must agree to the Terms of Service and Privacy Policy.";
+          }
+          return;
+        }
+        const agreedAt = new Date().toISOString();
+        const { data: signUpData, error } = await supabase.auth.signUp({ email, password });
         if (error) {
           if (authModalErrorEl) {
             authModalErrorEl.textContent = error.message;
           }
           return;
+        }
+        const newUserId = signUpData?.user?.id;
+        if (newUserId) {
+          const recorded = await recordTosAgreement(newUserId, agreedAt);
+          if (!recorded) {
+            try {
+              sessionStorage.setItem(
+                PENDING_TOS_AGREEMENT_KEY,
+                JSON.stringify({ userId: newUserId, agreedAt })
+              );
+            } catch (_) {
+              /* ignore */
+            }
+          }
         }
         closeAuthModal();
       });
@@ -6836,6 +6920,7 @@ const AudioLibrary = (() => {
         nextSession?.user
       ) {
         const uid = nextSession.user.id;
+        void applyPendingTosAgreement(uid);
         const repeatForUser =
           sceneBootstrapComplete && bootstrappedAuthUserId === uid;
         closeAuthModal();
