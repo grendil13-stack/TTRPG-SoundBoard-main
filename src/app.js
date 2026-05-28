@@ -3132,6 +3132,7 @@ const AudioLibrary = (() => {
         void loadCurrentTrack().then((ok) => {
           if (ok) {
             musicPlayer.play().then(() => {
+              setupMediaSession();
               renderMusicPlaylist();
               syncSceneAudioIndicators();
             }).catch(() => {
@@ -3252,6 +3253,67 @@ const AudioLibrary = (() => {
         getTrackLabel(tracks[currentTrackIndex]);
       nowPlayingTitle.textContent = `Now Playing: ${title}`;
       updateMusicProgressUi();
+    }
+
+    function setupMediaSession() {
+      if (!("mediaSession" in navigator)) return;
+
+      const tracks = getSceneTracks(musicPlaybackScene);
+      if (!tracks.length || currentTrackIndex < 0) return;
+
+      const title = AudioLibrary.getPlaylistTrackTitle(tracks[currentTrackIndex])
+        || getTrackLabel(tracks[currentTrackIndex])
+        || "Skald";
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist: "Skald Sound Board",
+        album: currentScene ? String(currentScene) : "Session",
+      });
+
+      navigator.mediaSession.setActionHandler("play", () => {
+        void playMusic();
+      });
+
+      navigator.mediaSession.setActionHandler("pause", () => {
+        pauseMusic();
+      });
+
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        goToNextTrack(true);
+      });
+
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        goToPreviousTrack(true);
+      });
+
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime != null && Number.isFinite(details.seekTime)) {
+          try {
+            musicPlayer.currentTime = details.seekTime;
+          } catch {
+            /* ignore seek failures */
+          }
+        }
+      });
+
+      navigator.mediaSession.playbackState = "playing";
+    }
+
+    function updateMediaSessionPosition() {
+      if (!("mediaSession" in navigator)) return;
+      if (!navigator.mediaSession.setPositionState) return;
+      if (!musicPlayer.duration || !Number.isFinite(musicPlayer.duration)) return;
+
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: musicPlayer.duration,
+          playbackRate: musicPlayer.playbackRate || 1,
+          position: Math.min(musicPlayer.currentTime, musicPlayer.duration),
+        });
+      } catch {
+        /* ignore position state failures */
+      }
     }
 
     function renderMusicPlaylist() {
@@ -3395,6 +3457,7 @@ const AudioLibrary = (() => {
       musicPlayer.volume = effectiveMusicVolume();
       try {
         await musicPlayer.play();
+        setupMediaSession();
       } catch {
         /* ignore */
       }
@@ -3441,6 +3504,7 @@ const AudioLibrary = (() => {
         musicPlayer.volume = effectiveMusicVolume();
         try {
           await musicPlayer.play();
+          setupMediaSession();
         } catch {
           /* ignore */
         }
@@ -3467,6 +3531,9 @@ const AudioLibrary = (() => {
       cancelMusicVolumeAnim();
       detachMusicEnded(musicPlayer);
       musicPlayer.pause();
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+      }
       applyIdleMusicVolume();
       renderMusicPlaylist();
       updateMusicProgressUi();
@@ -3492,6 +3559,7 @@ const AudioLibrary = (() => {
             musicPlayer.volume = effectiveMusicVolume();
             musicPlayer.play()
               .then(() => {
+                setupMediaSession();
                 renderMusicPlaylist();
               })
               .catch(() => {
@@ -3537,6 +3605,7 @@ const AudioLibrary = (() => {
           musicPlayer.volume = effectiveMusicVolume();
           musicPlayer.play()
             .then(() => {
+              setupMediaSession();
               renderMusicPlaylist();
             })
             .catch(() => {
@@ -3567,6 +3636,7 @@ const AudioLibrary = (() => {
             musicPlayer.volume = effectiveMusicVolume();
             musicPlayer.play()
               .then(() => {
+                setupMediaSession();
                 renderMusicPlaylist();
               })
               .catch(() => {
@@ -3602,6 +3672,7 @@ const AudioLibrary = (() => {
           musicPlayer.volume = effectiveMusicVolume();
           musicPlayer.play()
             .then(() => {
+              setupMediaSession();
               renderMusicPlaylist();
             })
             .catch(() => {
@@ -3747,7 +3818,10 @@ const AudioLibrary = (() => {
         });
       }
 
-      musicPlayer.addEventListener("timeupdate", updateMusicProgressUi);
+      musicPlayer.addEventListener("timeupdate", () => {
+        updateMusicProgressUi();
+        updateMediaSessionPosition();
+      });
       musicPlayer.addEventListener("loadedmetadata", updateMusicProgressUi);
       musicPlayer.addEventListener("durationchange", updateMusicProgressUi);
 
