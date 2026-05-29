@@ -2782,10 +2782,10 @@ const AudioLibrary = (() => {
 
     function applyBgmVolumesFromSliders() {
       customBgmLayerRegistry.forEach(({ audio, volumeSlider }) => {
-        audio.volume = effectiveBgmVolume(volumeSlider.value);
+        setAudioVolume(audio, effectiveBgmVolume(volumeSlider.value));
       });
       ambientCarryoverAudios.forEach(({ audio, sliderValue }) => {
-        audio.volume = effectiveBgmVolume(sliderValue);
+        setAudioVolume(audio, effectiveBgmVolume(sliderValue));
       });
     }
 
@@ -2805,7 +2805,7 @@ const AudioLibrary = (() => {
       const vol =
         entry.sliderValue ??
         (entry.volumeSlider ? Number(entry.volumeSlider.value) : 50);
-      entry.audio.volume = effectiveBgmVolume(vol);
+      setAudioVolume(entry.audio, effectiveBgmVolume(vol));
     }
 
     function finalizeAmbientFadeEntry(entry, dispose) {
@@ -3070,7 +3070,7 @@ const AudioLibrary = (() => {
         volumeSliderOrValue && typeof volumeSliderOrValue === "object"
           ? effectiveBgmVolume(volumeSliderOrValue.value)
           : effectiveBgmVolume(volumeSliderOrValue);
-      audio.volume = vol;
+      setAudioVolume(audio, vol);
       const playPromise = audio.paused ? audio.play() : Promise.resolve();
       playPromise
         .then(() => {
@@ -3158,6 +3158,9 @@ const AudioLibrary = (() => {
     }
 
     function refreshMasterAndGroupVolumes() {
+      if (isIOS && iosMasterGain && iosAudioCtx) {
+        iosMasterGain.gain.setValueAtTime(getMasterLevel(), iosAudioCtx.currentTime);
+      }
       applyBgmVolumesFromSliders();
       if (!musicPlayer.paused) {
         musicPlayer.volume = effectiveMusicVolume();
@@ -4039,12 +4042,19 @@ const AudioLibrary = (() => {
 
         const layerAudio = new Audio();
         layerAudio.loop = true;
+        if (isIOS) {
+          layerAudio.crossOrigin = 'anonymous';
+        }
         layerAudio.volume = effectiveBgmVolume(volumeSlider.value);
         layerReadyPromises.push(
           resolveAudioPlaybackUrl(file)
             .then((url) => {
               if (url) {
                 layerAudio.src = url;
+                if (isIOS) {
+                  // Create GainNode now that src is set
+                  getOrCreateIosGainNode(layerAudio);
+                }
               }
               return waitForAmbientLayerDecode(layerAudio);
             })
@@ -4079,11 +4089,12 @@ const AudioLibrary = (() => {
               .catch(() => {
                 setLayerActiveState(false);
               });
+            if (isIOS) resumeIosAudioCtx();
           });
         });
 
         volumeSlider.addEventListener("input", () => {
-          layerAudio.volume = effectiveBgmVolume(volumeSlider.value);
+          setAudioVolume(layerAudio, effectiveBgmVolume(volumeSlider.value));
           pctEl.textContent = `${Math.round(Number(volumeSlider.value) || 0)}%`;
         });
 
