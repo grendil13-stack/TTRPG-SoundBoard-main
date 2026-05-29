@@ -1199,6 +1199,7 @@ const AudioLibrary = (() => {
     let ambientFadeHiddenMsAccum = 0;
     let ambientFadeHiddenAt = null;
     let ambientFadeOnComplete = null;
+    let ambientFadeDisposeOnComplete = true;
     const CUSTOM_SCENES_STORAGE_KEY = "dndMoodBuilder.v1.customScenes";
     const ACTIVE_SCENE_STORAGE_KEY = "dndMoodBuilder.v1.activeSceneKey";
     const ACTIVE_SESSION_STORAGE_KEY = "dndMoodBuilder.v1.activeSessionId";
@@ -2731,7 +2732,31 @@ const AudioLibrary = (() => {
       audio.load();
     }
 
-    function cancelAmbientFadeAnim() {
+    function pauseAmbientAudio(audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function restoreAmbientFadeEntryVolume(entry) {
+      const vol =
+        entry.sliderValue ??
+        (entry.volumeSlider ? Number(entry.volumeSlider.value) : 50);
+      entry.audio.volume = effectiveBgmVolume(vol);
+    }
+
+    function finalizeAmbientFadeEntry(entry, dispose) {
+      if (dispose) {
+        disposeAmbientAudio(entry.audio);
+      } else {
+        pauseAmbientAudio(entry.audio);
+        restoreAmbientFadeEntryVolume(entry);
+      }
+      if (entry.setLayerActiveState) {
+        entry.setLayerActiveState(false);
+      }
+    }
+
+    function cancelAmbientFadeAnim(disposePending = true) {
       ambientFadeGeneration += 1;
       if (ambientFadeRafId !== null) {
         cancelAnimationFrame(ambientFadeRafId);
@@ -2742,10 +2767,7 @@ const AudioLibrary = (() => {
       ambientFadeOnComplete = null;
       if (ambientFadePendingEntries && ambientFadePendingEntries.length) {
         ambientFadePendingEntries.forEach((e) => {
-          disposeAmbientAudio(e.audio);
-          if (e.setLayerActiveState) {
-            e.setLayerActiveState(false);
-          }
+          finalizeAmbientFadeEntry(e, disposePending);
         });
         ambientFadePendingEntries = null;
       }
@@ -2779,12 +2801,10 @@ const AudioLibrary = (() => {
       ambientFadeRafId = null;
       ambientFadePendingEntries = null;
       const onComplete = ambientFadeOnComplete;
+      const disposeOnComplete = ambientFadeDisposeOnComplete;
       ambientFadeOnComplete = null;
       entries.forEach((e) => {
-        disposeAmbientAudio(e.audio);
-        if (e.setLayerActiveState) {
-          e.setLayerActiveState(false);
-        }
+        finalizeAmbientFadeEntry(e, disposeOnComplete);
       });
       if (ambientFadeGenAtStart === ambientFadeGeneration && onComplete) {
         onComplete();
@@ -2821,16 +2841,18 @@ const AudioLibrary = (() => {
       }
     }
 
-    function fadeOutAmbientEntries(entries, onComplete) {
+    function fadeOutAmbientEntries(entries, onComplete, options = {}) {
       if (!entries.length) {
         if (onComplete) {
           onComplete();
         }
         return;
       }
-      cancelAmbientFadeAnim();
+      const disposeOnComplete = options.disposeOnComplete !== false;
+      cancelAmbientFadeAnim(disposeOnComplete);
       ambientFadeGenAtStart = ambientFadeGeneration;
       ambientFadePendingEntries = entries;
+      ambientFadeDisposeOnComplete = disposeOnComplete;
       ambientFadeOnComplete = onComplete;
       ambientFadeStartTime = performance.now();
       ambientFadeHiddenMsAccum = 0;
@@ -2872,7 +2894,7 @@ const AudioLibrary = (() => {
       });
     }
 
-    function fadeOutAllAmbientPlaying() {
+    function fadeOutAllAmbientPlaying(options = {}) {
       const fromRegistry = customBgmLayerRegistry
         .filter(({ audio }) => !audio.paused)
         .map(({ audio, volumeSlider, setLayerActiveState }) => ({
@@ -2886,7 +2908,7 @@ const AudioLibrary = (() => {
       if (!all.length) {
         return;
       }
-      fadeOutAmbientEntries(all, () => {});
+      fadeOutAmbientEntries(all, () => {}, options);
     }
 
     function promotePlayingLayersToCarryover() {
@@ -3061,7 +3083,7 @@ const AudioLibrary = (() => {
     }
 
     function stopAllAmbientLayers() {
-      fadeOutAllAmbientPlaying();
+      fadeOutAllAmbientPlaying({ disposeOnComplete: false });
     }
 
     function applyIdleMusicVolume() {
