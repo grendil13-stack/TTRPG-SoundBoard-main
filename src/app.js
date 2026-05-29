@@ -1360,6 +1360,7 @@ const AudioLibrary = (() => {
 
     let iosAudioCtx = null;
     let iosMasterGain = null;
+    let iosSfxGroupGain = null;
 
     function getOrCreateIosAudioCtx() {
       if (!isIOS) return null;
@@ -1370,6 +1371,9 @@ const AudioLibrary = (() => {
       iosMasterGain = iosAudioCtx.createGain();
       iosMasterGain.gain.setValueAtTime(getMasterLevel(), iosAudioCtx.currentTime);
       iosMasterGain.connect(iosAudioCtx.destination);
+      iosSfxGroupGain = iosAudioCtx.createGain();
+      iosSfxGroupGain.gain.setValueAtTime(getSfxLevel(), iosAudioCtx.currentTime);
+      iosSfxGroupGain.connect(iosMasterGain);
       return iosAudioCtx;
     }
 
@@ -1406,6 +1410,23 @@ const AudioLibrary = (() => {
 
     function setAudioVolume(audioEl, effectiveVolume) {
       audioEl.volume = Math.max(0, Math.min(1, effectiveVolume));
+    }
+
+    function routeSfxThroughIosGain(audioEl) {
+      if (!isIOS) return;
+      const ctx = getOrCreateIosAudioCtx();
+      if (!ctx || !iosSfxGroupGain) return;
+      if (iosGainNodes.has(audioEl)) return;
+      try {
+        const source = ctx.createMediaElementSource(audioEl);
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(1, ctx.currentTime);
+        source.connect(gainNode);
+        gainNode.connect(iosSfxGroupGain);
+        iosGainNodes.set(audioEl, gainNode);
+      } catch (e) {
+        console.warn('[Skald iOS SFX] GainNode failed:', e.message);
+      }
     }
 
     function attachIosDeviceVolumeHintBelow(sliderEl, wrapStyle) {
@@ -3171,6 +3192,9 @@ const AudioLibrary = (() => {
       if (isIOS && iosMasterGain && iosAudioCtx) {
         iosMasterGain.gain.setValueAtTime(getMasterLevel(), iosAudioCtx.currentTime);
       }
+      if (isIOS && iosSfxGroupGain && iosAudioCtx) {
+        iosSfxGroupGain.gain.setValueAtTime(getSfxLevel(), iosAudioCtx.currentTime);
+      }
       applyBgmVolumesFromSliders();
       if (!musicPlayer.paused) {
         musicPlayer.volume = effectiveMusicVolume();
@@ -3873,9 +3897,16 @@ const AudioLibrary = (() => {
         refreshMasterAndGroupVolumes();
       });
       sfxVolumeSlider.addEventListener("input", () => {
-        activeFxAudio.forEach((audio) => {
-          audio.volume = effectiveSfxVolume();
-        });
+        if (isIOS && iosSfxGroupGain && iosAudioCtx) {
+          iosSfxGroupGain.gain.setValueAtTime(
+            getSfxLevel(),
+            iosAudioCtx.currentTime
+          );
+        } else {
+          activeFxAudio.forEach((audio) => {
+            audio.volume = effectiveSfxVolume();
+          });
+        }
       });
 
       if (musicRepeatToggleButton) {
@@ -4188,8 +4219,20 @@ const AudioLibrary = (() => {
             return;
           }
         }
-        const audio = new Audio(src);
-        audio.volume = effectiveSfxVolume();
+        const audio = new Audio();
+        if (isIOS) {
+          audio.crossOrigin = 'anonymous';
+        }
+        audio.src = src;
+        if (isIOS) {
+          // Resume context in case it suspended
+          if (iosAudioCtx && iosAudioCtx.state === 'suspended') {
+            void iosAudioCtx.resume();
+          }
+          routeSfxThroughIosGain(audio);
+        } else {
+          audio.volume = effectiveSfxVolume();
+        }
         activeFxAudio.set(buttonElement, audio);
 
         const clearPlayingState = () => {
