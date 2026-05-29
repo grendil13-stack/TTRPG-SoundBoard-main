@@ -1408,6 +1408,26 @@ const AudioLibrary = (() => {
       audioEl.volume = Math.max(0, Math.min(1, effectiveVolume));
     }
 
+    function attachIosDeviceVolumeHintBelow(sliderEl, wrapStyle) {
+      if (!isIOS || !sliderEl?.parentElement) {
+        return;
+      }
+      const parent = sliderEl.parentElement;
+      const wrap = document.createElement("div");
+      wrap.className = "ios-vol-hint-stack";
+      wrap.style.cssText =
+        wrapStyle ||
+        "display:flex;flex-direction:column;align-items:stretch;min-width:0;";
+      parent.insertBefore(wrap, sliderEl);
+      wrap.appendChild(sliderEl);
+      const hint = document.createElement("p");
+      hint.className = "ios-device-vol-hint";
+      hint.textContent = "Use device volume on iPhone";
+      hint.style.cssText =
+        "font-size:11px;color:var(--muted);font-weight:normal;margin:2px 0 0;line-height:1.3;";
+      wrap.appendChild(hint);
+    }
+
     async function getSignedUserUploadUrl(storagePath) {
       const path = String(storagePath || "").replace(/^\/+/, "");
       if (!path) {
@@ -3817,6 +3837,10 @@ const AudioLibrary = (() => {
       musicPlaybackScene = currentScene;
       musicPlayer.volume = effectiveMusicVolume();
 
+      if (isIOS && musicVolumeSlider) {
+        attachIosDeviceVolumeHintBelow(musicVolumeSlider);
+      }
+
       document.addEventListener("visibilitychange", onDocumentVisibilityForAmbient);
 
       musicPlayButton.addEventListener("click", () => {
@@ -4022,6 +4046,12 @@ const AudioLibrary = (() => {
         pctEl.textContent = `${Math.round(defaultVol)}%`;
 
         volRow.appendChild(volumeSlider);
+        if (isIOS) {
+          attachIosDeviceVolumeHintBelow(
+            volumeSlider,
+            "display:flex;flex-direction:column;align-items:stretch;min-width:0;flex:1;",
+          );
+        }
         nameCol.appendChild(nameEl);
         rowMain.appendChild(toggleButton);
         rowMain.appendChild(nameCol);
