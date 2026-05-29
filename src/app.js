@@ -1354,6 +1354,70 @@ const AudioLibrary = (() => {
     /** storage path within bucket → { url, expiresAt: unix seconds } */
     const userUploadSignedUrlCache = new Map();
 
+    // iOS volume control via Web Audio API
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    let iosAudioCtx = null;
+    let iosMasterGain = null;
+
+    function getOrCreateIosAudioCtx() {
+      if (!isIOS) return null;
+      if (iosAudioCtx) return iosAudioCtx;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      iosAudioCtx = new AC();
+      iosMasterGain = iosAudioCtx.createGain();
+      iosMasterGain.gain.setValueAtTime(getMasterLevel(), iosAudioCtx.currentTime);
+      iosMasterGain.connect(iosAudioCtx.destination);
+      return iosAudioCtx;
+    }
+
+    function resumeIosAudioCtx() {
+      if (!iosAudioCtx) return;
+      if (iosAudioCtx.state === 'suspended') {
+        void iosAudioCtx.resume();
+      }
+    }
+
+    const iosGainNodes = new WeakMap();
+
+    function getOrCreateIosGainNode(audioEl) {
+      if (!isIOS || !audioEl) return null;
+      const ctx = getOrCreateIosAudioCtx();
+      if (!ctx) return null;
+      if (iosGainNodes.has(audioEl)) return iosGainNodes.get(audioEl);
+      // crossOrigin must be set before src for CORS to work
+      // Only wrap if element has a src already set
+      if (!audioEl.src && !audioEl.currentSrc) return null;
+      try {
+        const source = ctx.createMediaElementSource(audioEl);
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(1, ctx.currentTime);
+        source.connect(gainNode);
+        gainNode.connect(iosMasterGain);
+        iosGainNodes.set(audioEl, gainNode);
+        return gainNode;
+      } catch (e) {
+        console.warn('[Skald iOS] GainNode creation failed:', e.message);
+        return null;
+      }
+    }
+
+    function setAudioVolume(audioEl, effectiveVolume) {
+      if (isIOS) {
+        const gain = iosGainNodes.get(audioEl);
+        if (gain && iosAudioCtx) {
+          gain.gain.setValueAtTime(
+            Math.max(0, Math.min(1, effectiveVolume)),
+            iosAudioCtx.currentTime
+          );
+          return;
+        }
+      }
+      audioEl.volume = Math.max(0, Math.min(1, effectiveVolume));
+    }
+
     async function getSignedUserUploadUrl(storagePath) {
       const path = String(storagePath || "").replace(/^\/+/, "");
       if (!path) {
