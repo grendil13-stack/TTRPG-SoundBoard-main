@@ -1405,16 +1405,6 @@ const AudioLibrary = (() => {
     }
 
     function setAudioVolume(audioEl, effectiveVolume) {
-      if (isIOS) {
-        const gain = iosGainNodes.get(audioEl);
-        if (gain && iosAudioCtx) {
-          gain.gain.setValueAtTime(
-            Math.max(0, Math.min(1, effectiveVolume)),
-            iosAudioCtx.currentTime
-          );
-          return;
-        }
-      }
       audioEl.volume = Math.max(0, Math.min(1, effectiveVolume));
     }
 
@@ -4042,19 +4032,12 @@ const AudioLibrary = (() => {
 
         const layerAudio = new Audio();
         layerAudio.loop = true;
-        if (isIOS) {
-          layerAudio.crossOrigin = 'anonymous';
-        }
         layerAudio.volume = effectiveBgmVolume(volumeSlider.value);
         layerReadyPromises.push(
           resolveAudioPlaybackUrl(file)
             .then((url) => {
               if (url) {
                 layerAudio.src = url;
-                if (isIOS) {
-                  // Create GainNode now that src is set
-                  getOrCreateIosGainNode(layerAudio);
-                }
               }
               return waitForAmbientLayerDecode(layerAudio);
             })
@@ -4089,7 +4072,6 @@ const AudioLibrary = (() => {
               .catch(() => {
                 setLayerActiveState(false);
               });
-            if (isIOS) resumeIosAudioCtx();
           });
         });
 
