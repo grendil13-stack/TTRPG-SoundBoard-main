@@ -10011,6 +10011,25 @@
       "priority": "Med",
       "generated": true,
       "mastered": true
+    },
+    {
+      "id": "bird-day",
+      "title": "bird-day",
+      "filename": "bird-day.ogg",
+      "path": "sounds/ambient/base/bird-day.ogg",
+      "type": "ambient",
+      "section": "base",
+      "mood_tags": [
+        "suspense"
+      ],
+      "setting_tags": [
+        "forest"
+      ],
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
     }
   ],
   "sfx": [
