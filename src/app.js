@@ -97,6 +97,9 @@ const AudioLibrary = (() => {
         const settingTags = Array.isArray(entry.setting_tags) ? entry.setting_tags.map((x) => String(x)) : [];
         const section =
           entry.section != null && String(entry.section).trim() !== "" ? String(entry.section).trim() : "";
+        const layer = type === "ambient" && entry.layer ? String(entry.layer).toLowerCase().trim() : "";
+        const environment =
+          type === "ambient" && entry.environment ? String(entry.environment).toLowerCase().trim() : "";
         let generated = true;
         if (type === "ambient" || type === "sfx") {
           generated = entry.generated === false ? false : true;
@@ -114,6 +117,8 @@ const AudioLibrary = (() => {
           mood_tags: moodTags,
           setting_tags: settingTags,
           section,
+          layer,
+          environment,
           generated,
         };
       };
@@ -1323,6 +1328,7 @@ const AudioLibrary = (() => {
     let filePickerSelectedSetting = null;
     let filePickerSelectedMood = null;
     let filePickerSelectedSfxSection = null;
+    let filePickerSelectedAmbientLayer = null;
     let filePickerFavoritesOnly = false;
     /** @type {string | null} */
     let filePickerMyTagFilter = null;
@@ -4825,6 +4831,12 @@ const AudioLibrary = (() => {
         }
         return file.section === filePickerSelectedSfxSection;
       }
+      if (t === "ambient") {
+        if (!filePickerSelectedAmbientLayer) {
+          return true;
+        }
+        return file.layer === filePickerSelectedAmbientLayer;
+      }
       const settingSel = filePickerSelectedSetting;
       const moodSel = filePickerSelectedMood;
       if (!settingSel && !moodSel) {
@@ -4844,6 +4856,7 @@ const AudioLibrary = (() => {
         filePickerSelectedSetting = null;
         filePickerSelectedMood = null;
         filePickerSelectedSfxSection = null;
+        filePickerSelectedAmbientLayer = null;
         filePickerFavoritesOnly = false;
         filePickerMyTagFilter = null;
         void renderFilePickerFilters();
@@ -5767,6 +5780,43 @@ const AudioLibrary = (() => {
         return;
       }
 
+      if (filePickerActiveType === "ambient") {
+        const ambientLayerTooltips = {
+          base: "The acoustic character of the space itself. What kind of place are we in.",
+          texture: "Movement and detail within the space. Wind, water, fire, weather.",
+          foreground: "The closest most identifiable sounds. Creatures, crowds, specific activity.",
+        };
+        const group = document.createElement("div");
+        group.className = "file-picker-filter-step";
+        group.setAttribute("role", "group");
+        group.setAttribute("aria-label", "Ambient layer");
+        const label = document.createElement("p");
+        label.className = "file-picker-tag-filters-label";
+        label.textContent = "Layer";
+        group.appendChild(label);
+        ["base", "texture", "foreground"].forEach((layerKey) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "file-picker-tag";
+          btn.textContent = layerKey.charAt(0).toUpperCase() + layerKey.slice(1);
+          btn.title = ambientLayerTooltips[layerKey];
+          const active = filePickerSelectedAmbientLayer === layerKey;
+          btn.setAttribute("aria-pressed", active ? "true" : "false");
+          if (active) {
+            btn.classList.add("active");
+          }
+          btn.addEventListener("click", () => {
+            filePickerSelectedAmbientLayer = active ? null : layerKey;
+            void renderFilePickerFilters();
+            void renderFilePickerList();
+          });
+          group.appendChild(btn);
+        });
+        filePickerTagFiltersWrap.appendChild(group);
+        appendFilePickerClearButton(filePickerTagFiltersWrap);
+        return;
+      }
+
       const files = await AudioLibrary.listFiles(filePickerActiveType);
       pruneFilePickerMoodIfStale(files, readme.all_mood_tags);
 
@@ -5924,6 +5974,13 @@ const AudioLibrary = (() => {
 
         info.appendChild(titleRow);
 
+        if (filePickerActiveType === "ambient" && file.layer) {
+          const layerLabel = document.createElement("span");
+          layerLabel.className = "file-picker-ambient-layer-label";
+          layerLabel.textContent = file.layer.charAt(0).toUpperCase() + file.layer.slice(1);
+          info.appendChild(layerLabel);
+        }
+
         if (useMultiRow) {
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
@@ -6014,6 +6071,7 @@ const AudioLibrary = (() => {
         filePickerSelectedSetting = null;
         filePickerSelectedMood = null;
         filePickerSelectedSfxSection = null;
+        filePickerSelectedAmbientLayer = null;
         filePickerFavoritesOnly = false;
         filePickerMyTagFilter = null;
       }
