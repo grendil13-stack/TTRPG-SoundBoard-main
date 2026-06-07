@@ -102,6 +102,9 @@ const AudioLibrary = (() => {
         const settingTags = Array.isArray(entry.setting_tags) ? entry.setting_tags.map((x) => String(x)) : [];
         const section =
           entry.section != null && String(entry.section).trim() !== "" ? String(entry.section).trim() : "";
+        const layer = type === "ambient" && entry.layer ? String(entry.layer).toLowerCase().trim() : "";
+        const environment =
+          type === "ambient" && entry.environment ? String(entry.environment).toLowerCase().trim() : "";
         let generated = true;
         if (type === "ambient" || type === "sfx") {
           generated = entry.generated === false ? false : true;
@@ -119,6 +122,8 @@ const AudioLibrary = (() => {
           mood_tags: moodTags,
           setting_tags: settingTags,
           section,
+          layer,
+          environment,
           generated,
         };
       };
@@ -1204,6 +1209,7 @@ const AudioLibrary = (() => {
     let ambientFadeHiddenMsAccum = 0;
     let ambientFadeHiddenAt = null;
     let ambientFadeOnComplete = null;
+    let ambientFadeDisposeOnComplete = true;
     const CUSTOM_SCENES_STORAGE_KEY = "dndMoodBuilder.v1.customScenes";
     const ACTIVE_SCENE_STORAGE_KEY = "dndMoodBuilder.v1.activeSceneKey";
     const ACTIVE_SESSION_STORAGE_KEY = "dndMoodBuilder.v1.activeSessionId";
@@ -1346,6 +1352,7 @@ const AudioLibrary = (() => {
     let filePickerSelectedSetting = null;
     let filePickerSelectedMood = null;
     let filePickerSelectedSfxSection = null;
+    let filePickerSelectedAmbientLayer = null;
     let filePickerFavoritesOnly = false;
     /** @type {string | null} */
     let filePickerMyTagFilter = null;
@@ -1376,6 +1383,101 @@ const AudioLibrary = (() => {
     const USER_UPLOAD_MAX_FILE_BYTES = 50 * 1024 * 1024;
     /** storage path within bucket → { url, expiresAt: unix seconds } */
     const userUploadSignedUrlCache = new Map();
+
+    // iOS volume control via Web Audio API
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    let iosAudioCtx = null;
+    let iosMasterGain = null;
+    let iosSfxGroupGain = null;
+
+    function getOrCreateIosAudioCtx() {
+      if (!isIOS) return null;
+      if (iosAudioCtx) return iosAudioCtx;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      iosAudioCtx = new AC();
+      iosMasterGain = iosAudioCtx.createGain();
+      iosMasterGain.gain.setValueAtTime(getMasterLevel(), iosAudioCtx.currentTime);
+      iosMasterGain.connect(iosAudioCtx.destination);
+      iosSfxGroupGain = iosAudioCtx.createGain();
+      iosSfxGroupGain.gain.setValueAtTime(getSfxLevel(), iosAudioCtx.currentTime);
+      iosSfxGroupGain.connect(iosMasterGain);
+      return iosAudioCtx;
+    }
+
+    function resumeIosAudioCtx() {
+      if (!iosAudioCtx) return;
+      if (iosAudioCtx.state === 'suspended') {
+        void iosAudioCtx.resume();
+      }
+    }
+
+    const iosGainNodes = new WeakMap();
+
+    function getOrCreateIosGainNode(audioEl) {
+      if (!isIOS || !audioEl) return null;
+      const ctx = getOrCreateIosAudioCtx();
+      if (!ctx) return null;
+      if (iosGainNodes.has(audioEl)) return iosGainNodes.get(audioEl);
+      // crossOrigin must be set before src for CORS to work
+      // Only wrap if element has a src already set
+      if (!audioEl.src && !audioEl.currentSrc) return null;
+      try {
+        const source = ctx.createMediaElementSource(audioEl);
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(1, ctx.currentTime);
+        source.connect(gainNode);
+        gainNode.connect(iosMasterGain);
+        iosGainNodes.set(audioEl, gainNode);
+        return gainNode;
+      } catch (e) {
+        console.warn('[Skald iOS] GainNode creation failed:', e.message);
+        return null;
+      }
+    }
+
+    function setAudioVolume(audioEl, effectiveVolume) {
+      audioEl.volume = Math.max(0, Math.min(1, effectiveVolume));
+    }
+
+    function routeSfxThroughIosGain(audioEl) {
+      if (!isIOS) return;
+      const ctx = getOrCreateIosAudioCtx();
+      if (!ctx || !iosSfxGroupGain) return;
+      if (iosGainNodes.has(audioEl)) return;
+      try {
+        const source = ctx.createMediaElementSource(audioEl);
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(1, ctx.currentTime);
+        source.connect(gainNode);
+        gainNode.connect(iosSfxGroupGain);
+        iosGainNodes.set(audioEl, gainNode);
+      } catch (e) {
+        console.warn('[Skald iOS SFX] GainNode failed:', e.message);
+      }
+    }
+
+    function attachIosDeviceVolumeHintBelow(sliderEl, wrapStyle) {
+      if (!isIOS || !sliderEl?.parentElement) {
+        return;
+      }
+      const parent = sliderEl.parentElement;
+      const wrap = document.createElement("div");
+      wrap.className = "ios-vol-hint-stack";
+      wrap.style.cssText =
+        wrapStyle ||
+        "display:flex;flex-direction:column;align-items:stretch;min-width:0;";
+      parent.insertBefore(wrap, sliderEl);
+      wrap.appendChild(sliderEl);
+      const hint = document.createElement("p");
+      hint.className = "ios-device-vol-hint";
+      hint.textContent = "Use device volume on iPhone";
+      hint.style.cssText =
+        "font-size:11px;color:var(--muted);font-weight:normal;margin:2px 0 0;line-height:1.3;";
+      wrap.appendChild(hint);
+    }
 
     async function getSignedUserUploadUrl(storagePath) {
       const path = String(storagePath || "").replace(/^\/+/, "");
@@ -3061,10 +3163,10 @@ const AudioLibrary = (() => {
 
     function applyBgmVolumesFromSliders() {
       customBgmLayerRegistry.forEach(({ audio, volumeSlider }) => {
-        audio.volume = effectiveBgmVolume(volumeSlider.value);
+        setAudioVolume(audio, effectiveBgmVolume(volumeSlider.value));
       });
       ambientCarryoverAudios.forEach(({ audio, sliderValue }) => {
-        audio.volume = effectiveBgmVolume(sliderValue);
+        setAudioVolume(audio, effectiveBgmVolume(sliderValue));
       });
     }
 
@@ -3075,7 +3177,31 @@ const AudioLibrary = (() => {
       audio.load();
     }
 
-    function cancelAmbientFadeAnim() {
+    function pauseAmbientAudio(audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function restoreAmbientFadeEntryVolume(entry) {
+      const vol =
+        entry.sliderValue ??
+        (entry.volumeSlider ? Number(entry.volumeSlider.value) : 50);
+      setAudioVolume(entry.audio, effectiveBgmVolume(vol));
+    }
+
+    function finalizeAmbientFadeEntry(entry, dispose) {
+      if (dispose) {
+        disposeAmbientAudio(entry.audio);
+      } else {
+        pauseAmbientAudio(entry.audio);
+        restoreAmbientFadeEntryVolume(entry);
+      }
+      if (entry.setLayerActiveState) {
+        entry.setLayerActiveState(false);
+      }
+    }
+
+    function cancelAmbientFadeAnim(disposePending = true) {
       ambientFadeGeneration += 1;
       if (ambientFadeRafId !== null) {
         cancelAnimationFrame(ambientFadeRafId);
@@ -3086,10 +3212,7 @@ const AudioLibrary = (() => {
       ambientFadeOnComplete = null;
       if (ambientFadePendingEntries && ambientFadePendingEntries.length) {
         ambientFadePendingEntries.forEach((e) => {
-          disposeAmbientAudio(e.audio);
-          if (e.setLayerActiveState) {
-            e.setLayerActiveState(false);
-          }
+          finalizeAmbientFadeEntry(e, disposePending);
         });
         ambientFadePendingEntries = null;
       }
@@ -3123,12 +3246,10 @@ const AudioLibrary = (() => {
       ambientFadeRafId = null;
       ambientFadePendingEntries = null;
       const onComplete = ambientFadeOnComplete;
+      const disposeOnComplete = ambientFadeDisposeOnComplete;
       ambientFadeOnComplete = null;
       entries.forEach((e) => {
-        disposeAmbientAudio(e.audio);
-        if (e.setLayerActiveState) {
-          e.setLayerActiveState(false);
-        }
+        finalizeAmbientFadeEntry(e, disposeOnComplete);
       });
       if (ambientFadeGenAtStart === ambientFadeGeneration && onComplete) {
         onComplete();
@@ -3165,16 +3286,18 @@ const AudioLibrary = (() => {
       }
     }
 
-    function fadeOutAmbientEntries(entries, onComplete) {
+    function fadeOutAmbientEntries(entries, onComplete, options = {}) {
       if (!entries.length) {
         if (onComplete) {
           onComplete();
         }
         return;
       }
-      cancelAmbientFadeAnim();
+      const disposeOnComplete = options.disposeOnComplete !== false;
+      cancelAmbientFadeAnim(disposeOnComplete);
       ambientFadeGenAtStart = ambientFadeGeneration;
       ambientFadePendingEntries = entries;
+      ambientFadeDisposeOnComplete = disposeOnComplete;
       ambientFadeOnComplete = onComplete;
       ambientFadeStartTime = performance.now();
       ambientFadeHiddenMsAccum = 0;
@@ -3216,7 +3339,7 @@ const AudioLibrary = (() => {
       });
     }
 
-    function fadeOutAllAmbientPlaying() {
+    function fadeOutAllAmbientPlaying(options = {}) {
       const fromRegistry = customBgmLayerRegistry
         .filter(({ audio }) => !audio.paused)
         .map(({ audio, volumeSlider, setLayerActiveState }) => ({
@@ -3230,7 +3353,7 @@ const AudioLibrary = (() => {
       if (!all.length) {
         return;
       }
-      fadeOutAmbientEntries(all, () => {});
+      fadeOutAmbientEntries(all, () => {}, options);
     }
 
     function promotePlayingLayersToCarryover() {
@@ -3328,7 +3451,7 @@ const AudioLibrary = (() => {
         volumeSliderOrValue && typeof volumeSliderOrValue === "object"
           ? effectiveBgmVolume(volumeSliderOrValue.value)
           : effectiveBgmVolume(volumeSliderOrValue);
-      audio.volume = vol;
+      setAudioVolume(audio, vol);
       const playPromise = audio.paused ? audio.play() : Promise.resolve();
       playPromise
         .then(() => {
@@ -3405,7 +3528,7 @@ const AudioLibrary = (() => {
     }
 
     function stopAllAmbientLayers() {
-      fadeOutAllAmbientPlaying();
+      fadeOutAllAmbientPlaying({ disposeOnComplete: false });
     }
 
     function applyIdleMusicVolume() {
@@ -3416,6 +3539,12 @@ const AudioLibrary = (() => {
     }
 
     function refreshMasterAndGroupVolumes() {
+      if (isIOS && iosMasterGain && iosAudioCtx) {
+        iosMasterGain.gain.setValueAtTime(getMasterLevel(), iosAudioCtx.currentTime);
+      }
+      if (isIOS && iosSfxGroupGain && iosAudioCtx) {
+        iosSfxGroupGain.gain.setValueAtTime(getSfxLevel(), iosAudioCtx.currentTime);
+      }
       applyBgmVolumesFromSliders();
       if (!musicPlayer.paused) {
         musicPlayer.volume = effectiveMusicVolume();
@@ -3476,6 +3605,7 @@ const AudioLibrary = (() => {
         void loadCurrentTrack().then((ok) => {
           if (ok) {
             musicPlayer.play().then(() => {
+              setupMediaSession();
               renderMusicPlaylist();
               syncSceneAudioIndicators();
             }).catch(() => {
@@ -3596,6 +3726,67 @@ const AudioLibrary = (() => {
         getTrackLabel(tracks[currentTrackIndex]);
       nowPlayingTitle.textContent = `Now Playing: ${title}`;
       updateMusicProgressUi();
+    }
+
+    function setupMediaSession() {
+      if (!("mediaSession" in navigator)) return;
+
+      const tracks = getSceneTracks(musicPlaybackScene);
+      if (!tracks.length || currentTrackIndex < 0) return;
+
+      const title = AudioLibrary.getPlaylistTrackTitle(tracks[currentTrackIndex])
+        || getTrackLabel(tracks[currentTrackIndex])
+        || "Skald";
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist: "Skald Sound Board",
+        album: currentScene ? String(currentScene) : "Session",
+      });
+
+      navigator.mediaSession.setActionHandler("play", () => {
+        void playMusic();
+      });
+
+      navigator.mediaSession.setActionHandler("pause", () => {
+        pauseMusic();
+      });
+
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        goToNextTrack(true);
+      });
+
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        goToPreviousTrack(true);
+      });
+
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime != null && Number.isFinite(details.seekTime)) {
+          try {
+            musicPlayer.currentTime = details.seekTime;
+          } catch {
+            /* ignore seek failures */
+          }
+        }
+      });
+
+      navigator.mediaSession.playbackState = "playing";
+    }
+
+    function updateMediaSessionPosition() {
+      if (!("mediaSession" in navigator)) return;
+      if (!navigator.mediaSession.setPositionState) return;
+      if (!musicPlayer.duration || !Number.isFinite(musicPlayer.duration)) return;
+
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: musicPlayer.duration,
+          playbackRate: musicPlayer.playbackRate || 1,
+          position: Math.min(musicPlayer.currentTime, musicPlayer.duration),
+        });
+      } catch {
+        /* ignore position state failures */
+      }
     }
 
     function renderMusicPlaylist() {
@@ -3739,6 +3930,7 @@ const AudioLibrary = (() => {
       musicPlayer.volume = effectiveMusicVolume();
       try {
         await musicPlayer.play();
+        setupMediaSession();
       } catch {
         /* ignore */
       }
@@ -3785,6 +3977,7 @@ const AudioLibrary = (() => {
         musicPlayer.volume = effectiveMusicVolume();
         try {
           await musicPlayer.play();
+          setupMediaSession();
         } catch {
           /* ignore */
         }
@@ -3811,6 +4004,9 @@ const AudioLibrary = (() => {
       cancelMusicVolumeAnim();
       detachMusicEnded(musicPlayer);
       musicPlayer.pause();
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+      }
       applyIdleMusicVolume();
       renderMusicPlaylist();
       updateMusicProgressUi();
@@ -3836,6 +4032,7 @@ const AudioLibrary = (() => {
             musicPlayer.volume = effectiveMusicVolume();
             musicPlayer.play()
               .then(() => {
+                setupMediaSession();
                 renderMusicPlaylist();
               })
               .catch(() => {
@@ -3881,6 +4078,7 @@ const AudioLibrary = (() => {
           musicPlayer.volume = effectiveMusicVolume();
           musicPlayer.play()
             .then(() => {
+              setupMediaSession();
               renderMusicPlaylist();
             })
             .catch(() => {
@@ -3911,6 +4109,7 @@ const AudioLibrary = (() => {
             musicPlayer.volume = effectiveMusicVolume();
             musicPlayer.play()
               .then(() => {
+                setupMediaSession();
                 renderMusicPlaylist();
               })
               .catch(() => {
@@ -3946,6 +4145,7 @@ const AudioLibrary = (() => {
           musicPlayer.volume = effectiveMusicVolume();
           musicPlayer.play()
             .then(() => {
+              setupMediaSession();
               renderMusicPlaylist();
             })
             .catch(() => {
@@ -4011,6 +4211,10 @@ const AudioLibrary = (() => {
       musicPlaybackScene = currentScene;
       musicPlayer.volume = effectiveMusicVolume();
 
+      if (isIOS && musicVolumeSlider) {
+        attachIosDeviceVolumeHintBelow(musicVolumeSlider);
+      }
+
       document.addEventListener("visibilitychange", onDocumentVisibilityForAmbient);
 
       musicPlayButton.addEventListener("click", () => {
@@ -4043,9 +4247,16 @@ const AudioLibrary = (() => {
         refreshMasterAndGroupVolumes();
       });
       sfxVolumeSlider.addEventListener("input", () => {
-        activeFxAudio.forEach((audio) => {
-          audio.volume = effectiveSfxVolume();
-        });
+        if (isIOS && iosSfxGroupGain && iosAudioCtx) {
+          iosSfxGroupGain.gain.setValueAtTime(
+            getSfxLevel(),
+            iosAudioCtx.currentTime
+          );
+        } else {
+          activeFxAudio.forEach((audio) => {
+            audio.volume = effectiveSfxVolume();
+          });
+        }
       });
 
       if (musicRepeatToggleButton) {
@@ -4091,7 +4302,10 @@ const AudioLibrary = (() => {
         });
       }
 
-      musicPlayer.addEventListener("timeupdate", updateMusicProgressUi);
+      musicPlayer.addEventListener("timeupdate", () => {
+        updateMusicProgressUi();
+        updateMediaSessionPosition();
+      });
       musicPlayer.addEventListener("loadedmetadata", updateMusicProgressUi);
       musicPlayer.addEventListener("durationchange", updateMusicProgressUi);
 
@@ -4213,6 +4427,12 @@ const AudioLibrary = (() => {
         pctEl.textContent = `${Math.round(defaultVol)}%`;
 
         volRow.appendChild(volumeSlider);
+        if (isIOS) {
+          attachIosDeviceVolumeHintBelow(
+            volumeSlider,
+            "display:flex;flex-direction:column;align-items:stretch;min-width:0;flex:1;",
+          );
+        }
         nameCol.appendChild(nameEl);
         rowMain.appendChild(toggleButton);
         rowMain.appendChild(nameCol);
@@ -4267,7 +4487,7 @@ const AudioLibrary = (() => {
         });
 
         volumeSlider.addEventListener("input", () => {
-          layerAudio.volume = effectiveBgmVolume(volumeSlider.value);
+          setAudioVolume(layerAudio, effectiveBgmVolume(volumeSlider.value));
           pctEl.textContent = `${Math.round(Number(volumeSlider.value) || 0)}%`;
         });
 
@@ -4349,8 +4569,20 @@ const AudioLibrary = (() => {
             return;
           }
         }
-        const audio = new Audio(src);
-        audio.volume = effectiveSfxVolume();
+        const audio = new Audio();
+        if (isIOS) {
+          audio.crossOrigin = 'anonymous';
+        }
+        audio.src = src;
+        if (isIOS) {
+          // Resume context in case it suspended
+          if (iosAudioCtx && iosAudioCtx.state === 'suspended') {
+            void iosAudioCtx.resume();
+          }
+          routeSfxThroughIosGain(audio);
+        } else {
+          audio.volume = effectiveSfxVolume();
+        }
         activeFxAudio.set(buttonElement, audio);
 
         const clearPlayingState = () => {
@@ -4946,6 +5178,12 @@ const AudioLibrary = (() => {
         }
         return file.section === filePickerSelectedSfxSection;
       }
+      if (t === "ambient") {
+        if (!filePickerSelectedAmbientLayer) {
+          return true;
+        }
+        return file.layer === filePickerSelectedAmbientLayer;
+      }
       const settingSel = filePickerSelectedSetting;
       const moodSel = filePickerSelectedMood;
       if (!settingSel && !moodSel) {
@@ -4965,6 +5203,7 @@ const AudioLibrary = (() => {
         filePickerSelectedSetting = null;
         filePickerSelectedMood = null;
         filePickerSelectedSfxSection = null;
+        filePickerSelectedAmbientLayer = null;
         filePickerFavoritesOnly = false;
         filePickerMyTagFilter = null;
         void renderFilePickerFilters();
@@ -5888,6 +6127,43 @@ const AudioLibrary = (() => {
         return;
       }
 
+      if (filePickerActiveType === "ambient") {
+        const ambientLayerTooltips = {
+          base: "The acoustic character of the space itself. What kind of place are we in.",
+          texture: "Movement and detail within the space. Wind, water, fire, weather.",
+          foreground: "The closest most identifiable sounds. Creatures, crowds, specific activity.",
+        };
+        const group = document.createElement("div");
+        group.className = "file-picker-filter-step";
+        group.setAttribute("role", "group");
+        group.setAttribute("aria-label", "Ambient layer");
+        const label = document.createElement("p");
+        label.className = "file-picker-tag-filters-label";
+        label.textContent = "Layer";
+        group.appendChild(label);
+        ["base", "texture", "foreground"].forEach((layerKey) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "file-picker-tag";
+          btn.textContent = layerKey.charAt(0).toUpperCase() + layerKey.slice(1);
+          btn.title = ambientLayerTooltips[layerKey];
+          const active = filePickerSelectedAmbientLayer === layerKey;
+          btn.setAttribute("aria-pressed", active ? "true" : "false");
+          if (active) {
+            btn.classList.add("active");
+          }
+          btn.addEventListener("click", () => {
+            filePickerSelectedAmbientLayer = active ? null : layerKey;
+            void renderFilePickerFilters();
+            void renderFilePickerList();
+          });
+          group.appendChild(btn);
+        });
+        filePickerTagFiltersWrap.appendChild(group);
+        appendFilePickerClearButton(filePickerTagFiltersWrap);
+        return;
+      }
+
       const files = await AudioLibrary.listFiles(filePickerActiveType);
       pruneFilePickerMoodIfStale(files, readme.all_mood_tags);
 
@@ -6135,6 +6411,7 @@ const AudioLibrary = (() => {
         filePickerSelectedSetting = null;
         filePickerSelectedMood = null;
         filePickerSelectedSfxSection = null;
+        filePickerSelectedAmbientLayer = null;
         filePickerFavoritesOnly = false;
         filePickerMyTagFilter = null;
       }

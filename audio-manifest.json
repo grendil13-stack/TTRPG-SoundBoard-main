@@ -1,16 +1,17 @@
 {
   "_readme": {
-    "description": "Skald Sound Board — master audio manifest v2. Setting + Mood two-step filter system. SFX filtered by section only.",
-    "version": "2.0",
+    "description": "Skald Sound Board \u2014 master audio manifest v3. Ambient uses three-layer system: base / texture / foreground.",
+    "version": "3.0",
     "filter_system": {
-      "music_and_ambient": "Two-step: select setting_tag first, then mood_tag. Both fields support multi-value comma-separated tags.",
+      "music": "Two-step: select setting_tag first, then mood_tag.",
+      "ambient": "Single filter: layer (base / texture / foreground). Names are self-explanatory.",
       "sfx": "Single filter: section column only (Combat, Magic, Nature, Creature, Object, Stinger, Social)"
     },
     "counts": {
       "music": 423,
-      "ambient": 53,
+      "ambient": 67,
       "sfx": 88,
-      "total": 564
+      "total": 578
     },
     "all_mood_tags": [
       "chaotic",
@@ -64,7 +65,26 @@
       "Social",
       "Stinger"
     ],
-    "supabase_migration": "Each entry maps to one row in an audio_files table. mood_tags and setting_tags become array columns or a join table."
+    "supabase_migration": "Each entry maps to one row in an audio_files table. mood_tags and setting_tags become array columns or a join table.",
+    "ambient_layers": {
+      "base": "The acoustic character of the space itself. What kind of place are we in.",
+      "texture": "Movement and detail within the space. Wind, water, fire, weather.",
+      "foreground": "The closest most identifiable sounds. Creatures, crowds, specific activity."
+    },
+    "ambient_environments": [
+      "any",
+      "cave",
+      "desert",
+      "dungeon",
+      "forest",
+      "mountain",
+      "mystical",
+      "ocean",
+      "plains",
+      "shop",
+      "swamp",
+      "tavern"
+    ]
   },
   "music": [
     {
@@ -2567,10 +2587,10 @@
       "mastered": true
     },
     {
-      "id": "exploring-unusual-forest",
-      "title": "Exploring Unusual Forest",
-      "filename": "exploring-unusual-forest.ogg",
-      "path": "sounds/music/peaceful-bgm/exploring-unusual-forest.ogg",
+      "id": "exploring-the-unusual-forest",
+      "title": "Exploring the Unusual Forest",
+      "filename": "exploring-the-unusual-forest.ogg",
+      "path": "sounds/music/peaceful-bgm/exploring-the-unusual-forest.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -5391,10 +5411,10 @@
       "mastered": true
     },
     {
-      "id": "roots-of-a-mountain",
-      "title": "Roots of a mountain",
-      "filename": "roots-of-a-mountain.ogg",
-      "path": "sounds/music/songs-high/roots-of-a-mountain.ogg",
+      "id": "roots-of-the-mountain",
+      "title": "Roots of the mountain",
+      "filename": "roots-of-the-mountain.ogg",
+      "path": "sounds/music/songs-high/roots-of-the-mountain.ogg",
       "type": "music",
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
@@ -5499,10 +5519,10 @@
       "mastered": true
     },
     {
-      "id": "sand-of-the-sky",
-      "title": "Sand of the Sky",
-      "filename": "sand-of-the-sky.ogg",
-      "path": "sounds/music/songs-high/sand-of-the-sky.ogg",
+      "id": "sands-of-the-sky",
+      "title": "Sands of the Sky",
+      "filename": "sands-of-the-sky.ogg",
+      "path": "sounds/music/songs-high/sands-of-the-sky.ogg",
       "type": "music",
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
@@ -6292,7 +6312,7 @@
     },
     {
       "id": "stumbling-shadows",
-      "title": "stumbling Shadows",
+      "title": "Stumbling Shadows",
       "filename": "stumbling-shadows.ogg",
       "path": "sounds/music/suspense-bgm/stumbling-shadows.ogg",
       "type": "music",
@@ -6456,10 +6476,10 @@
       "mastered": true
     },
     {
-      "id": "temples-of-the-sky",
-      "title": "Temples of the Sky",
-      "filename": "temples-of-the-sky.ogg",
-      "path": "sounds/music/holy-bgm/temples-of-the-sky.ogg",
+      "id": "temple-of-the-sky",
+      "title": "Temple of the Sky",
+      "filename": "temple-of-the-sky.ogg",
+      "path": "sounds/music/holy-bgm/temple-of-the-sky.ogg",
       "type": "music",
       "audio_type": "vocal",
       "song_type": "Chanting",
@@ -6540,7 +6560,7 @@
       "id": "the-army-of-shen",
       "title": "The Army Of Shen",
       "filename": "The-Army-of-Shen.ogg",
-      "path": "sounds/music/battle-bgm/The-Army-of-Shen.ogg",
+      "path": "sounds/music/battle-bgm/the-army-of-shen.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -7950,7 +7970,7 @@
       "id": "topological-mirror-room",
       "title": "Topological Mirror Room",
       "filename": "topological-mirror-room.ogg",
-      "path": "sounds/music/exciting-bgm/topological-mirror-room.ogg",
+      "path": "sounds/music/suspense-bgm/topological-mirror-room.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -7971,7 +7991,7 @@
       "id": "topological-mirror-space",
       "title": "Topological Mirror Space",
       "filename": "topological-mirror-space.ogg",
-      "path": "sounds/music/exciting-bgm/topological-mirror-space.ogg",
+      "path": "sounds/music/suspense-bgm/topological-mirror-space.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
@@ -9083,57 +9103,13 @@
   ],
   "ambient": [
     {
-      "id": "forest-day-dense",
-      "title": "forest-day-dense",
-      "filename": "forest-day-dense.ogg",
-      "path": "sounds/ambient/forest/forest-day-dense.ogg",
+      "id": "forest-air",
+      "title": "Forest Air",
+      "filename": "forest-air.ogg",
+      "path": "sounds/ambient/base/forest-air.ogg",
       "type": "ambient",
-      "section": "Forest",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "forest"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "forest-night",
-      "title": "forest-night",
-      "filename": "forest-night.ogg",
-      "path": "sounds/ambient/forest/forest-night.ogg",
-      "type": "ambient",
-      "section": "Forest",
-      "mood_tags": [
-        "peaceful",
-        "suspense"
-      ],
-      "setting_tags": [
-        "forest"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "forest-rain",
-      "title": "forest-rain",
-      "filename": "forest-rain.ogg",
-      "path": "sounds/ambient/forest/forest-rain.ogg",
-      "type": "ambient",
-      "section": "Forest",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "forest"
-      ],
+      "layer": "base",
+      "environment": "forest",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9141,197 +9117,13 @@
       "mastered": true
     },
     {
-      "id": "forest-battle-chaos",
-      "title": "forest-battle-chaos",
-      "filename": "forest-battle-chaos.ogg",
-      "path": "sounds/ambient/forest/forest-battle-chaos.ogg",
-      "type": "ambient",
-      "section": "Forest",
-      "mood_tags": [
-        "battle"
-      ],
-      "setting_tags": [
-        "forest"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "Med",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "forest-eerie",
-      "title": "forest-eerie",
-      "filename": "forest-eerie.ogg",
-      "path": "sounds/ambient/forest/forest-eerie.ogg",
-      "type": "ambient",
-      "section": "Forest",
-      "mood_tags": [
-        "creepy",
-        "suspense"
-      ],
-      "setting_tags": [
-        "forest"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "forest-fey",
-      "title": "forest-fey",
-      "filename": "forest-fey.ogg",
-      "path": "sounds/ambient/forest/forest-fey.ogg",
-      "type": "ambient",
-      "section": "Forest",
-      "mood_tags": [
-        "exciting"
-      ],
-      "setting_tags": [
-        "fey",
-        "forest"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "forest-camp",
-      "title": "forest-camp",
-      "filename": "forest-cap.ogg",
-      "path": "sounds/ambient/forest/forest-camp.ogg",
-      "type": "ambient",
-      "section": "Forest",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "forest",
-        "wilderness"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "Low",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "tavern-quiet",
-      "title": "tavern-quiet",
-      "filename": "tavern-quiet.ogg",
-      "path": "sounds/ambient/tavern/tavern-quiet.ogg",
-      "type": "ambient",
-      "section": "Tavern",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "tavern"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "tavern-brawl-chaos",
-      "title": "tavern-brawl-chaos",
-      "filename": "tavern-brawl-chaos.ogg",
-      "path": "sounds/ambient/tavern/tavern-brawl-chaos.ogg",
-      "type": "ambient",
-      "section": "Tavern",
-      "mood_tags": [
-        "battle"
-      ],
-      "setting_tags": [
-        "tavern",
-        "battle"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "tavern-fire-crackle",
-      "title": "tavern-fire-crackle",
-      "filename": "tavern-fire-crackle.ogg",
-      "path": "sounds/ambient/tavern/tavern-fire-crackle.ogg",
-      "type": "ambient",
-      "section": "Tavern",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "tavern"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "tavern-rain-outside",
-      "title": "tavern-rain-outside",
-      "filename": "tavern-rain-outside.ogg",
-      "path": "sounds/ambient/tavern/tavern-rain-outside.ogg",
-      "type": "ambient",
-      "section": "Tavern",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "tavern"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "Med",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "dungeon-drips",
-      "title": "dungeon-drips",
-      "filename": "dungeon-drips.ogg",
-      "path": "sounds/ambient/dungeon/dungeon-drips.ogg",
-      "type": "ambient",
-      "section": "Dungeon",
-      "mood_tags": [
-        "suspense",
-        "creepy"
-      ],
-      "setting_tags": [
-        "dungeon",
-        "underground"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "dungeon-deep-hum",
-      "title": "dungeon-deep-hum",
+      "id": "dungeon-hum",
+      "title": "Dungeon Hum",
       "filename": "dungeon-deep-hum.ogg",
-      "path": "sounds/ambient/dungeon/dungeon-deep-hum.ogg",
+      "path": "sounds/ambient/base/dungeon-deep-hum.ogg",
       "type": "ambient",
-      "section": "Dungeon",
-      "mood_tags": [
-        "creepy",
-        "suspense"
-      ],
-      "setting_tags": [
-        "dungeon",
-        "underground"
-      ],
+      "layer": "base",
+      "environment": "dungeon",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9339,19 +9131,13 @@
       "mastered": true
     },
     {
-      "id": "dungeon-wind",
-      "title": "dungeon-wind",
-      "filename": "dungeon-wind.ogg",
-      "path": "sounds/ambient/dungeon/dungeon-wind.ogg",
+      "id": "desert-air",
+      "title": "Desert Air",
+      "filename": "desert-air.ogg",
+      "path": "sounds/ambient/base/desert-air.ogg",
       "type": "ambient",
-      "section": "Dungeon",
-      "mood_tags": [
-        "creepy"
-      ],
-      "setting_tags": [
-        "dungeon",
-        "underground"
-      ],
+      "layer": "base",
+      "environment": "desert",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9359,58 +9145,13 @@
       "mastered": true
     },
     {
-      "id": "dungeon-chains",
-      "title": "dungeon-chains",
-      "filename": "dungeon-chains.ogg",
-      "path": "sounds/ambient/dungeon/dungeon-chains.ogg",
+      "id": "mountain-air",
+      "title": "Mountain Air",
+      "filename": "mountain-air.ogg",
+      "path": "sounds/ambient/base/mountain-air.ogg",
       "type": "ambient",
-      "section": "Dungeon",
-      "mood_tags": [
-        "creepy"
-      ],
-      "setting_tags": [
-        "dungeon",
-        "underground"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "Med",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "dungeon-ritual",
-      "title": "dungeon-ritual",
-      "filename": "dungeon-ritual.ogg",
-      "path": "sounds/ambient/dungeon/dungeon-ritual.ogg",
-      "type": "ambient",
-      "section": "Dungeon",
-      "mood_tags": [
-        "creepy"
-      ],
-      "setting_tags": [
-        "dungeon",
-        "underground"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "rain-light",
-      "title": "rain-light",
-      "filename": "rain-light.ogg",
-      "path": "sounds/ambient/weather/rain-light.ogg",
-      "type": "ambient",
-      "section": "Weather",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "wilderness"
-      ],
+      "layer": "base",
+      "environment": "mountain",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9418,18 +9159,13 @@
       "mastered": true
     },
     {
-      "id": "rain-heavy",
-      "title": "rain-heavy",
-      "filename": "rain-heavy.ogg",
-      "path": "sounds/ambient/weather/rain-heavy.ogg",
+      "id": "ocean-waves-calm",
+      "title": "Ocean Waves Calm",
+      "filename": "ocean-calm.ogg",
+      "path": "sounds/ambient/base/ocean-calm.ogg",
       "type": "ambient",
-      "section": "Weather",
-      "mood_tags": [
-        "exciting"
-      ],
-      "setting_tags": [
-        "wilderness"
-      ],
+      "layer": "base",
+      "environment": "ocean",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9437,19 +9173,13 @@
       "mastered": true
     },
     {
-      "id": "storm-full",
-      "title": "storm-full",
-      "filename": "storm-full.ogg",
-      "path": "sounds/ambient/weather/storm-full.ogg",
+      "id": "ocean-waves-rough",
+      "title": "Ocean Waves Rough",
+      "filename": "ocean-storm.ogg",
+      "path": "sounds/ambient/base/ocean-storm.ogg",
       "type": "ambient",
-      "section": "Weather",
-      "mood_tags": [
-        "exciting",
-        "danger"
-      ],
-      "setting_tags": [
-        "wilderness"
-      ],
+      "layer": "base",
+      "environment": "ocean",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9457,20 +9187,13 @@
       "mastered": true
     },
     {
-      "id": "wind-plains",
-      "title": "wind-plains",
-      "filename": "wind-plains.ogg",
-      "path": "sounds/ambient/weather/wind-plains.ogg",
+      "id": "cave-silence",
+      "title": "Cave Silence",
+      "filename": "cave-silence.ogg",
+      "path": "sounds/ambient/base/cave-silence.ogg",
       "type": "ambient",
-      "section": "Weather",
-      "mood_tags": [
-        "exciting"
-      ],
-      "setting_tags": [
-        "plains",
-        "wilderness",
-        "sea"
-      ],
+      "layer": "base",
+      "environment": "cave",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9478,61 +9201,13 @@
       "mastered": true
     },
     {
-      "id": "wind-howling",
-      "title": "wind-howling",
-      "filename": "wind-howling.ogg",
-      "path": "sounds/ambient/weather/wind-howling.ogg",
+      "id": "wooden-building",
+      "title": "Wooden Building",
+      "filename": "wooden-building.ogg",
+      "path": "sounds/ambient/base/wooden-building.ogg",
       "type": "ambient",
-      "section": "Weather",
-      "mood_tags": [
-        "suspense"
-      ],
-      "setting_tags": [
-        "plains",
-        "wilderness",
-        "sea"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "Med",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "blizzard",
-      "title": "blizzard",
-      "filename": "blizzard.ogg",
-      "path": "sounds/ambient/weather/blizzard.ogg",
-      "type": "ambient",
-      "section": "Weather",
-      "mood_tags": [
-        "suspense"
-      ],
-      "setting_tags": [
-        "plains",
-        "wilderness",
-        "sea",
-        "arctic"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "Med",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "desert-day",
-      "title": "desert-day",
-      "filename": "desert-day.ogg",
-      "path": "sounds/ambient/desert/desert-day.ogg",
-      "type": "ambient",
-      "section": "Desert",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "desert"
-      ],
+      "layer": "base",
+      "environment": "tavern",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9540,19 +9215,13 @@
       "mastered": true
     },
     {
-      "id": "desert-night",
-      "title": "desert-night",
-      "filename": "desert-night.ogg",
-      "path": "sounds/ambient/desert/desert-night.ogg",
+      "id": "plains-air",
+      "title": "Plains Air",
+      "filename": "plains-air.ogg",
+      "path": "sounds/ambient/base/plains-air.ogg",
       "type": "ambient",
-      "section": "Desert",
-      "mood_tags": [
-        "peaceful",
-        "suspense"
-      ],
-      "setting_tags": [
-        "desert"
-      ],
+      "layer": "base",
+      "environment": "plains",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9560,196 +9229,13 @@
       "mastered": true
     },
     {
-      "id": "desert-sandstorm",
-      "title": "desert-sandstorm",
-      "filename": "desert-sandstorm.ogg",
-      "path": "sounds/ambient/desert/desert-sandstorm.ogg",
+      "id": "swamp-air",
+      "title": "Swamp Air",
+      "filename": "swamp-air.ogg",
+      "path": "sounds/ambient/base/swamp-air.ogg",
       "type": "ambient",
-      "section": "Desert",
-      "mood_tags": [
-        "suspense",
-        "exciting"
-      ],
-      "setting_tags": [
-        "desert"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "desert-city",
-      "title": "desert-city",
-      "filename": "desert-city.ogg",
-      "path": "sounds/ambient/desert/desert-city.ogg",
-      "type": "ambient",
-      "section": "Desert",
-      "mood_tags": [
-        "exciting",
-        "chaotic"
-      ],
-      "setting_tags": [
-        "desert",
-        "city"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "desert-ruins",
-      "title": "desert-ruins",
-      "filename": "desert-ruins.ogg",
-      "path": "sounds/ambient/desert/desert-ruins.ogg",
-      "type": "ambient",
-      "section": "Desert",
-      "mood_tags": [
-        "creepy",
-        "suspense"
-      ],
-      "setting_tags": [
-        "desert"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "city-busy",
-      "title": "city-busy",
-      "filename": "city-busy.ogg",
-      "path": "sounds/ambient/urban/city-busy.ogg",
-      "type": "ambient",
-      "section": "Urban",
-      "mood_tags": [
-        "exciting",
-        "chaotic"
-      ],
-      "setting_tags": [
-        "city"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "city-night",
-      "title": "city-night",
-      "filename": "city-night.ogg",
-      "path": "sounds/ambient/urban/city-night.ogg",
-      "type": "ambient",
-      "section": "Urban",
-      "mood_tags": [
-        "suspense"
-      ],
-      "setting_tags": [
-        "city"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "city-docks",
-      "title": "city-docks",
-      "filename": "city-docks.ogg",
-      "path": "sounds/ambient/urban/city-docks.ogg",
-      "type": "ambient",
-      "section": "Urban",
-      "mood_tags": [
-        "danger",
-        "exciting"
-      ],
-      "setting_tags": [
-        "docks"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "city-market",
-      "title": "city-market",
-      "filename": "city-market.ogg",
-      "path": "sounds/ambient/urban/city-market.ogg",
-      "type": "ambient",
-      "section": "Urban",
-      "mood_tags": [
-        "festival"
-      ],
-      "setting_tags": [
-        "city"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "city-slums",
-      "title": "city-slums",
-      "filename": "city-slums.ogg",
-      "path": "sounds/ambient/urban/city-slums.ogg",
-      "type": "ambient",
-      "section": "Urban",
-      "mood_tags": [
-        "suspense"
-      ],
-      "setting_tags": [
-        "city"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "Med",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "palace-interior",
-      "title": "palace-interior",
-      "filename": "palace-interior.ogg",
-      "path": "sounds/ambient/urban/palace-interior.ogg",
-      "type": "ambient",
-      "section": "Urban",
-      "mood_tags": [
-        "exciting"
-      ],
-      "setting_tags": [
-        "city"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "fey-forest",
-      "title": "fey-forest",
-      "filename": "fey-forest.ogg",
-      "path": "sounds/ambient/mystical/fey-forest.ogg",
-      "type": "ambient",
-      "section": "Mystical",
-      "mood_tags": [
-        "exciting",
-        "peaceful"
-      ],
-      "setting_tags": [
-        "fey"
-      ],
+      "layer": "base",
+      "environment": "swamp",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9758,17 +9244,404 @@
     },
     {
       "id": "shadow-realm",
-      "title": "shadow-realm",
+      "title": "Shadow Realm",
       "filename": "shadow-realm.ogg",
-      "path": "sounds/ambient/mystical/shadow-realm.ogg",
+      "path": "sounds/ambient/base/shadow-realm.ogg",
       "type": "ambient",
-      "section": "Mystical",
-      "mood_tags": [
-        "creepy"
-      ],
-      "setting_tags": [
-        "magical"
-      ],
+      "layer": "base",
+      "environment": "mystical",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "eerie-hum",
+      "title": "Eerie Hum",
+      "filename": "errie-hum.ogg",
+      "path": "sounds/ambient/base/errie-hum.ogg",
+      "type": "ambient",
+      "layer": "base",
+      "environment": "mystical",
+      "loop": true,
+      "source": "ElevenLabs",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "leaves-wind-light",
+      "title": "Leaves Wind Light",
+      "filename": "leaves-wind-light.ogg",
+      "path": "sounds/ambient/texture/leaves-wind-light.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "forest",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "leaves-wind-heavy",
+      "title": "Leaves Wind Heavy",
+      "filename": "leaves-wind-heavy.ogg",
+      "path": "sounds/ambient/texture/leaves-wind-heavy.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "forest",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "branches-creak",
+      "title": "Branches Creak",
+      "filename": "branches-creak.ogg",
+      "path": "sounds/ambient/texture/branches-creak.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "forest",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "forest-rain-canopy",
+      "title": "Forest Rain Canopy",
+      "filename": "forest-rain.ogg",
+      "path": "sounds/ambient/texture/forest-rain.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "forest",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "torch-flicker",
+      "title": "Torch Flicker",
+      "filename": "torch-flicker.ogg",
+      "path": "sounds/ambient/texture/torch-flicker.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "dungeon",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "sand-wind-light",
+      "title": "Sand Wind Light",
+      "filename": "sand-wind-light.ogg",
+      "path": "sounds/ambient/texture/sand-wind-light.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "desert",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "sandstorm",
+      "title": "Sandstorm",
+      "filename": "sandstorm.ogg",
+      "path": "sounds/ambient/texture/sandstorm.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "desert",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "desert-night",
+      "title": "Desert Night",
+      "filename": "desert-night.ogg",
+      "path": "sounds/ambient/texture/desert-night.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "desert",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "wind-through-peaks",
+      "title": "Wind Through Peaks",
+      "filename": "wind-through-peaks.ogg",
+      "path": "sounds/ambient/texture/wind-through-peaks.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "mountain",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "wind-across-rock",
+      "title": "Wind Across Rock",
+      "filename": "wind-across-rock.ogg",
+      "path": "sounds/ambient/texture/wind-across-rock.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "mountain",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "ocean-wind",
+      "title": "Ocean Wind",
+      "filename": "ocean-wind.ogg",
+      "path": "sounds/ambient/texture/ocean-wind.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "ocean",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "ship-creak",
+      "title": "Ship Creak",
+      "filename": "ship-creak.ogg",
+      "path": "sounds/ambient/texture/ship-creak.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "ocean",
+      "loop": true,
+      "source": "ElevenLabs",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "beach-waves",
+      "title": "Beach Waves",
+      "filename": "beach-waves.ogg",
+      "path": "sounds/ambient/texture/beach-waves.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "ocean",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": false,
+      "mastered": false
+    },
+    {
+      "id": "cave-drips",
+      "title": "Cave Drips",
+      "filename": "cave-drips.ogg",
+      "path": "sounds/ambient/texture/cave-drips.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "cave",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "underground-river",
+      "title": "Underground River",
+      "filename": "underground-river.ogg",
+      "path": "sounds/ambient/texture/underground-river.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "cave",
+      "loop": true,
+      "source": "ElevenLabs",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "cave-wind",
+      "title": "Cave Wind",
+      "filename": "cave-wind.ogg",
+      "path": "sounds/ambient/texture/cave-wind.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "cave",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "fire-hearth-crackle",
+      "title": "Fire Hearth Crackle",
+      "filename": "tavern-fire-crackle.ogg",
+      "path": "sounds/ambient/texture/fire-hearth-crackle.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "tavern",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "rain-on-windows",
+      "title": "Rain on Windows",
+      "filename": "tavern-rain-outside.ogg",
+      "path": "sounds/ambient/texture/rain-on-windows.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "tavern",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "water-lap-slow",
+      "title": "Water Lap Slow",
+      "filename": "water-lap-slow.ogg",
+      "path": "sounds/ambient/texture/water-lap-slow.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "swamp",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "reeds-in-wind",
+      "title": "Reeds in Wind",
+      "filename": "reeds-in-wind.ogg",
+      "path": "sounds/ambient/texture/reeds-in-wind.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "swamp",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "rain-light",
+      "title": "Rain Light",
+      "filename": "rain-light.ogg",
+      "path": "sounds/ambient/texture/rain-light.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "any",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "rain-heavy",
+      "title": "Rain Heavy",
+      "filename": "rain-heavy.ogg",
+      "path": "sounds/ambient/texture/rain-heavy.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "any",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "storm-full",
+      "title": "Storm Full",
+      "filename": "storm-full.ogg",
+      "path": "sounds/ambient/texture/storm-full.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "any",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "wind-plains",
+      "title": "Wind Plains",
+      "filename": "wind-plains.ogg",
+      "path": "sounds/ambient/texture/wind-plains.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "any",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "wind-howling",
+      "title": "Wind Howling",
+      "filename": "wind-howling.ogg",
+      "path": "sounds/ambient/texture/wind-howling.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "any",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "blizzard",
+      "title": "Blizzard",
+      "filename": "blizzard.ogg",
+      "path": "sounds/ambient/texture/blizzard.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "any",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "fey-forest",
+      "title": "Fey Forest",
+      "filename": "fey-forest.ogg",
+      "path": "sounds/ambient/texture/fey-forest.ogg",
+      "type": "ambient",
+      "layer": "texture",
+      "environment": "mystical",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9777,58 +9650,26 @@
     },
     {
       "id": "divine-space",
-      "title": "divine-space",
+      "title": "Divine Space",
       "filename": "divine-space.ogg",
-      "path": "sounds/ambient/mystical/divine-space.ogg",
+      "path": "sounds/ambient/texture/divine-space.ogg",
       "type": "ambient",
-      "section": "Mystical",
-      "mood_tags": [
-        "holy"
-      ],
-      "setting_tags": [
-        "temple"
-      ],
+      "layer": "texture",
+      "environment": "mystical",
       "loop": true,
       "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "arcane-laboratory",
-      "title": "arcane-laboratory",
-      "filename": "arcane-laboratory.ogg",
-      "path": "sounds/ambient/mystical/arcane-laboratory.ogg",
-      "type": "ambient",
-      "section": "Mystical",
-      "mood_tags": [
-        "exciting",
-        "funny"
-      ],
-      "setting_tags": [
-        "city",
-        "magical"
-      ],
-      "loop": true,
-      "source": "Freesound CC0",
       "priority": "High",
       "generated": true,
       "mastered": true
     },
     {
       "id": "portal-active",
-      "title": "portal-active",
+      "title": "Portal Active",
       "filename": "portal-active.ogg",
-      "path": "sounds/ambient/mystical/portal-active.ogg",
+      "path": "sounds/ambient/texture/portal-active.ogg",
       "type": "ambient",
-      "section": "Mystical",
-      "mood_tags": [
-        "exciting",
-        "suspense"
-      ],
-      "setting_tags": [
-        "magical"
-      ],
+      "layer": "texture",
+      "environment": "mystical",
       "loop": true,
       "source": "ElevenLabs",
       "priority": "Med",
@@ -9836,78 +9677,13 @@
       "mastered": true
     },
     {
-      "id": "underground-cave",
-      "title": "underground-cave",
-      "filename": "underground-cave.ogg",
-      "path": "sounds/ambient/earth/underground-cave.ogg",
+      "id": "birds-dense",
+      "title": "Birds Dense",
+      "filename": "birds-dense.ogg",
+      "path": "sounds/ambient/foreground/birds-dense.ogg",
       "type": "ambient",
-      "section": "Earth",
-      "mood_tags": [
-        "suspense"
-      ],
-      "setting_tags": [
-        "underground"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "underground-river",
-      "title": "underground-river",
-      "filename": "underground-river.ogg",
-      "path": "sounds/ambient/earth/underground-river.ogg",
-      "type": "ambient",
-      "section": "Earth",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "underground"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "dwarven-forge",
-      "title": "dwarven-forge",
-      "filename": "dwarven-forge.ogg",
-      "path": "sounds/ambient/earth/dwarven-forge.ogg",
-      "type": "ambient",
-      "section": "Earth",
-      "mood_tags": [
-        "exciting",
-        "chaotic"
-      ],
-      "setting_tags": [
-        "underground",
-        "city",
-        "village"
-      ],
-      "loop": true,
-      "source": "ElevenLabs",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "ocean-calm",
-      "title": "ocean-calm",
-      "filename": "ocean-calm.ogg",
-      "path": "sounds/ambient/water/ocean-calm.ogg",
-      "type": "ambient",
-      "section": "Water",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "docks"
-      ],
+      "layer": "foreground",
+      "environment": "forest",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9915,19 +9691,13 @@
       "mastered": true
     },
     {
-      "id": "ocean-storm",
-      "title": "ocean-storm",
-      "filename": "ocean-storm.ogg",
-      "path": "sounds/ambient/water/ocean-storm.ogg",
+      "id": "birds-sparse",
+      "title": "Birds Sparse",
+      "filename": "birds-sparse.ogg",
+      "path": "sounds/ambient/foreground/birds-sparse.ogg",
       "type": "ambient",
-      "section": "Water",
-      "mood_tags": [
-        "suspense",
-        "danger"
-      ],
-      "setting_tags": [
-        "docks"
-      ],
+      "layer": "foreground",
+      "environment": "forest",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9935,20 +9705,13 @@
       "mastered": true
     },
     {
-      "id": "river-babble",
-      "title": "river-babble",
-      "filename": "river-babble.ogg",
-      "path": "sounds/ambient/water/river-babble.ogg",
+      "id": "owl-distant",
+      "title": "Owl Distant",
+      "filename": "owl-distant.ogg",
+      "path": "sounds/ambient/foreground/owl-distant.ogg",
       "type": "ambient",
-      "section": "Water",
-      "mood_tags": [
-        "peaceful"
-      ],
-      "setting_tags": [
-        "forest",
-        "plains",
-        "wilderness"
-      ],
+      "layer": "foreground",
+      "environment": "forest",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "High",
@@ -9956,18 +9719,41 @@
       "mastered": true
     },
     {
-      "id": "underwater",
-      "title": "underwater",
-      "filename": "underwater.ogg",
-      "path": "sounds/ambient/water/underwater.ogg",
+      "id": "crickets-night",
+      "title": "Crickets Night",
+      "filename": "crickets-night.ogg",
+      "path": "sounds/ambient/foreground/crickets-night.ogg",
       "type": "ambient",
-      "section": "Water",
-      "mood_tags": [
-        "suspense"
-      ],
-      "setting_tags": [
-        "wilderness"
-      ],
+      "layer": "foreground",
+      "environment": "forest",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "frog-chorus",
+      "title": "Frog Chorus",
+      "filename": "frog-chorus.ogg",
+      "path": "sounds/ambient/foreground/frog-chorus.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "forest",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "chains-distant",
+      "title": "Chains Distant",
+      "filename": "dungeon-chains.ogg",
+      "path": "sounds/ambient/foreground/chains-distant.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "dungeon",
       "loop": true,
       "source": "ElevenLabs",
       "priority": "Med",
@@ -9975,37 +9761,251 @@
       "mastered": true
     },
     {
-      "id": "ship-deck",
-      "title": "ship-deck",
-      "filename": "ship-deck.ogg",
-      "path": "sounds/ambient/water/ship-deck.ogg",
+      "id": "chanting-ritual",
+      "title": "Chanting Ritual",
+      "filename": "dungeon-ritual.ogg",
+      "path": "sounds/ambient/foreground/chanting-ritual.ogg",
       "type": "ambient",
-      "section": "Water",
-      "mood_tags": [
-        "exciting"
-      ],
-      "setting_tags": [
-        "docks"
-      ],
+      "layer": "foreground",
+      "environment": "dungeon",
       "loop": true,
       "source": "ElevenLabs",
       "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "desert-insects",
+      "title": "Desert Insects",
+      "filename": "desert-insects.ogg",
+      "path": "sounds/ambient/foreground/desert-insects.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "desert",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "hawk-cry-distant",
+      "title": "Hawk Cry Distant",
+      "filename": "hawk-cry-distant.ogg",
+      "path": "sounds/ambient/foreground/hawk-cry-distant.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "desert",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "eagle-cry-distant",
+      "title": "Eagle Cry Distant",
+      "filename": "eagle-cry-distant.ogg",
+      "path": "sounds/ambient/foreground/eagle-cry-distant.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "mountain",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "mountain-stream",
+      "title": "Mountain Stream",
+      "filename": "mountain-stream.ogg",
+      "path": "sounds/ambient/foreground/mountain-stream.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "mountain",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "seagulls-distant",
+      "title": "Seagulls Distant",
+      "filename": "seagulls-distant.ogg",
+      "path": "sounds/ambient/foreground/seagulls-distant.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "ocean",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "seagulls-close",
+      "title": "Seagulls Close",
+      "filename": "seagulls-close.ogg",
+      "path": "sounds/ambient/foreground/seagulls-close.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "ocean",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "harbor",
+      "title": "Harbor",
+      "filename": "harbor.ogg",
+      "path": "sounds/ambient/foreground/harbor.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "ocean",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "bats",
+      "title": "Bats",
+      "filename": "bats.ogg",
+      "path": "sounds/ambient/foreground/bats.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "cave",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "low-murmur",
+      "title": "Low Murmur",
+      "filename": "low-murmur.ogg",
+      "path": "sounds/ambient/foreground/low-murmur.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "tavern",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "crowd-medium",
+      "title": "Crowd Medium",
+      "filename": "crowd-medium.ogg",
+      "path": "sounds/ambient/foreground/crowd-medium.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "tavern",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "tavern-brawl",
+      "title": "Tavern Brawl",
+      "filename": "tavern-brawl.ogg",
+      "path": "sounds/ambient/foreground/tavern-brawl.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "tavern",
+      "loop": true,
+      "source": "ElevenLabs",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "crickets-day",
+      "title": "Crickets Day",
+      "filename": "crickets-day.ogg",
+      "path": "sounds/ambient/foreground/crickets-day.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "plains",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "thunder-distant",
+      "title": "Thunder Distant",
+      "filename": "thunder-distant.ogg",
+      "path": "sounds/ambient/foreground/thunder-distant.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "plains",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "High",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "buzzing",
+      "title": "Buzzing",
+      "filename": "buzzing.ogg",
+      "path": "sounds/ambient/foreground/buzzing.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "swamp",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "bubbling",
+      "title": "Bubbling",
+      "filename": "bubbling.ogg",
+      "path": "sounds/ambient/foreground/bubbling.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "shop",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
       "generated": true,
       "mastered": true
     },
     {
       "id": "clock-ticking",
-      "title": "clock-ticking",
+      "title": "Clock Ticking",
       "filename": "clock-ticking.ogg",
-      "path": "sounds/ambient/urban/clock-ticking.ogg",
+      "path": "sounds/ambient/foreground/clock-ticking.ogg",
       "type": "ambient",
-      "section": "urban",
-      "mood_tags": [
-        "suspense"
-      ],
-      "setting_tags": [
-        "city"
-      ],
+      "layer": "foreground",
+      "environment": "shop",
+      "loop": true,
+      "source": "Freesound CC0",
+      "priority": "Med",
+      "generated": true,
+      "mastered": true
+    },
+    {
+      "id": "forge",
+      "title": "Forge",
+      "filename": "forge.ogg",
+      "path": "sounds/ambient/foreground/forge.ogg",
+      "type": "ambient",
+      "layer": "foreground",
+      "environment": "shop",
       "loop": true,
       "source": "Freesound CC0",
       "priority": "Med",
