@@ -9327,34 +9327,6 @@
       "mastered": true
     },
     {
-      "id": "dungeon-drips",
-      "title": "Dungeon Drips",
-      "filename": "dungeon-drips.ogg",
-      "path": "sounds/ambient/texture/dungeon-drips.ogg",
-      "type": "ambient",
-      "layer": "texture",
-      "environment": "dungeon",
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
-      "id": "dungeon-wind-corridor",
-      "title": "Dungeon Wind Corridor",
-      "filename": "dungeon-wind.ogg",
-      "path": "sounds/ambient/texture/dungeon-wind.ogg",
-      "type": "ambient",
-      "layer": "texture",
-      "environment": "dungeon",
-      "loop": true,
-      "source": "Freesound CC0",
-      "priority": "High",
-      "generated": true,
-      "mastered": true
-    },
-    {
       "id": "torch-flicker",
       "title": "Torch Flicker",
       "filename": "torch-flicker.ogg",
@@ -9385,8 +9357,8 @@
     {
       "id": "sandstorm",
       "title": "Sandstorm",
-      "filename": "desert-sandstorm.ogg",
-      "path": "sounds/ambient/texture/sand-wind-heavy.ogg",
+      "filename": "sandstorm.ogg",
+      "path": "sounds/ambient/texture/sandstorm.ogg",
       "type": "ambient",
       "layer": "texture",
       "environment": "desert",
