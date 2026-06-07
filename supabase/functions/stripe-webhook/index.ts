@@ -36,12 +36,23 @@ Deno.serve(async (req) => {
         const subscriptionId =
           typeof subscription === "string" ? subscription : subscription?.id ?? null;
 
+        if (!subscriptionId) {
+          console.warn(
+            "checkout.session.completed: event.data.object.subscription is null or missing",
+            { clientReferenceId, sessionId: session?.id },
+          );
+        }
+
+        const updatePayload: { tier: "pro"; stripe_subscription_id?: string } = {
+          tier: "pro",
+        };
+        if (subscriptionId) {
+          updatePayload.stripe_subscription_id = subscriptionId;
+        }
+
         const { error } = await supabase
           .from("profiles")
-          .update({
-            tier: "pro",
-            stripe_subscription_id: subscriptionId,
-          })
+          .update(updatePayload)
           .eq("id", clientReferenceId);
 
         if (error) {
