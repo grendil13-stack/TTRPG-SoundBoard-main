@@ -5974,13 +5974,6 @@ const AudioLibrary = (() => {
 
         info.appendChild(titleRow);
 
-        if (filePickerActiveType === "ambient" && file.layer) {
-          const layerLabel = document.createElement("span");
-          layerLabel.className = "file-picker-ambient-layer-label";
-          layerLabel.textContent = file.layer.charAt(0).toUpperCase() + file.layer.slice(1);
-          info.appendChild(layerLabel);
-        }
-
         if (useMultiRow) {
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
