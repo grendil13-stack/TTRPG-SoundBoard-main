@@ -502,7 +502,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       if (!authSession?.user) {
         return false;
       }
-      return PAID_TIERS.has(String(userTier || "free").toLowerCase());
+      return userTier === "pro";
     }
 
     function isLimitModalOnCooldown() {
@@ -588,6 +588,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
 
     function isFreeSignedInSceneLimitReached() {
+      if (userTier === "pro") {
+        return false;
+      }
       if (userLimits && typeof userLimits.scene_limit_reached === "boolean") {
         return userLimits.scene_limit_reached;
       }
@@ -603,6 +606,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
 
     function isFreeSignedInSessionLimitReached() {
+      if (userTier === "pro") {
+        return false;
+      }
       if (userLimits && typeof userLimits.session_limit_reached === "boolean") {
         return userLimits.session_limit_reached;
       }
@@ -722,7 +728,6 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
     function updateTierUsageIndicators() {
       const { data: { session } } = { data: { session: lastAuthSession } };
-      const paid = userHasPaidSessionFeatures(session);
       const signedIn = Boolean(session?.user);
 
       if (createNewSceneButton) {
@@ -730,12 +735,14 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         createNewSceneButton.removeAttribute("aria-disabled");
         let blocked = false;
         let tip = "";
-        if (!signedIn) {
+        if (userTier === "pro") {
+          blocked = false;
+        } else if (!signedIn) {
           blocked = isAnonSceneLimitReached();
           tip = blocked
             ? "You have used all 3 anonymous scenes. Sign in or create a free account to save more."
             : "";
-        } else if (!paid) {
+        } else {
           blocked = isFreeSignedInSceneLimitReached();
           tip = blocked
             ? "You have reached the free limit of 5 scenes. Upgrade to create more."
@@ -756,11 +763,13 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         let showSceneUsage = false;
         let count = 0;
         let limit = 0;
-        if (!signedIn) {
+        if (userTier === "pro") {
+          showSceneUsage = false;
+        } else if (!signedIn) {
           count = loadCustomScenesFromStorage().length;
           limit = ANON_CUSTOM_SCENE_LIMIT;
           showSceneUsage = true;
-        } else if (!paid) {
+        } else {
           count =
             userLimits && typeof userLimits.scene_count === "number"
               ? userLimits.scene_count
@@ -791,7 +800,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       if (sessionUsageEl) {
         sessionUsageEl.remove();
       }
-      if (signedIn && !paid && sessionSelectorWrap && !sessionSelectorWrap.hidden) {
+      if (userTier !== "pro" && signedIn && sessionSelectorWrap && !sessionSelectorWrap.hidden) {
         const sessionCount =
           userLimits && typeof userLimits.session_count === "number"
             ? userLimits.session_count
@@ -1064,7 +1073,6 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         }
         return;
       }
-      const paid = userHasPaidSessionFeatures(session);
       sessionsList.forEach((sess) => {
         const id = sess && sess.id != null ? String(sess.id) : "";
         const name = sess && sess.name != null ? String(sess.name).trim() : "";
@@ -1092,8 +1100,8 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       } else if (editorSceneSessionSelect.options.length) {
         editorSceneSessionSelect.selectedIndex = 0;
       }
-      editorSceneSessionSelect.disabled = !paid;
-      editorSceneSessionSelect.title = paid
+      editorSceneSessionSelect.disabled = userTier !== "pro";
+      editorSceneSessionSelect.title = userTier === "pro"
         ? ""
         : "Upgrade to organize scenes into multiple sessions";
     }
@@ -1171,8 +1179,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       const newWrap = document.createElement("div");
       newWrap.className = "session-menu-new";
 
-      const sessionLimitReached = !userHasPaidSessionFeatures(lastAuthSession)
-        && isFreeSignedInSessionLimitReached();
+      const sessionLimitReached = userTier === "pro"
+        ? false
+        : isFreeSignedInSessionLimitReached();
 
       const newToggle = document.createElement("button");
       newToggle.type = "button";
@@ -1240,7 +1249,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
           showSessionCreateError("You must be signed in to create a session.");
           return;
         }
-        if (!userHasPaidSessionFeatures(session) && isFreeSignedInSessionLimitReached()) {
+        if (userTier === "pro") {
+          /* allow action */
+        } else if (isFreeSignedInSessionLimitReached()) {
           closeSessionMenu();
           openUpgradeModal();
           return;
@@ -3805,8 +3816,10 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       };
 
       if (session?.user) {
-        let limits = null;
-        if (!userHasPaidSessionFeatures(session)) {
+        if (userTier === "pro") {
+          /* allow action */
+        } else {
+          let limits = null;
           await fetchUserTier(session.user.id);
           limits = await fetchUserLimits();
           if (
@@ -3910,16 +3923,18 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         return;
       }
       const { data: { session } } = await supabase.auth.getSession();
+      if (userTier === "pro") {
+        void openSceneEditorNew();
+        return;
+      }
       if (!session?.user) {
         if (isAnonSceneLimitReached()) {
           openSceneLimitModal();
           return;
         }
-      } else if (!userHasPaidSessionFeatures(session)) {
-        if (isFreeSignedInSceneLimitReached()) {
-          openUpgradeModal();
-          return;
-        }
+      } else if (isFreeSignedInSceneLimitReached()) {
+        openUpgradeModal();
+        return;
       }
       void openSceneEditorNew();
     });
