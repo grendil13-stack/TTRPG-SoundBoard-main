@@ -1158,6 +1158,29 @@
   <script type="module">
     import { createClient } from "@supabase/supabase-js";
 
+    if (new URLSearchParams(window.location.search).get("checkout") === "success") {
+      const banner = document.createElement("div");
+      banner.setAttribute("role", "status");
+      banner.textContent =
+        "You're subscribed! Welcome to Skald Pro. Sign in to access your account.";
+      Object.assign(banner.style, {
+        position: "fixed",
+        top: "0",
+        left: "0",
+        right: "0",
+        zIndex: "9999",
+        padding: "16px 24px",
+        textAlign: "center",
+        fontWeight: "600",
+        fontSize: "0.95rem",
+        background: "var(--accent)",
+        color: "var(--bg)",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+      });
+      document.body.prepend(banner);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const THEME_KEY = "skald-landing-theme";
     const VALID_THEMES = ["dark", "parchment", "forest", "arcane"];
 
@@ -1420,32 +1443,6 @@
     document.getElementById("subscribe-yearly")?.addEventListener("click", () => {
       startCheckout("price_1TflKC0STsOu7LObK0KSZm2t");
     });
-
-    if (new URLSearchParams(window.location.search).get("checkout") === "success") {
-      const banner = document.createElement("div");
-      banner.setAttribute("role", "status");
-      banner.textContent =
-        "You're subscribed! Welcome to Skald Pro. Sign in to access your account.";
-      Object.assign(banner.style, {
-        position: "fixed",
-        top: "0",
-        left: "0",
-        right: "0",
-        zIndex: "9999",
-        padding: "16px 24px",
-        textAlign: "center",
-        fontWeight: "600",
-        fontSize: "0.95rem",
-        background: "var(--accent)",
-        color: "var(--bg)",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-      });
-      document.body.prepend(banner);
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("checkout");
-      window.history.replaceState({}, "", url);
-    }
   </script>
 </body>
 </html>
