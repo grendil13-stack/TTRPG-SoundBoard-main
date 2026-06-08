@@ -4269,6 +4269,18 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       });
     })();
 
+    (function initAboutSkaldFooterLink() {
+      const footer = document.querySelector(".app-legal-footer");
+      if (!footer || footer.querySelector("[data-about-skald-link]")) {
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = "landing.html";
+      link.textContent = "About Skald";
+      link.dataset.aboutSkaldLink = "1";
+      footer.appendChild(link);
+    })();
+
     initProductTour({
       helpButton: document.getElementById("tour-help-btn"),
     });

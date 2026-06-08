@@ -1202,11 +1202,15 @@
         }
 
         const signInLink = container.querySelector("[data-landing-sign-in]");
+        const signUpBtn = container.querySelector("[data-open-signup]");
         let signedInWrap = container.querySelector("[data-landing-signed-in]");
 
         if (signedIn) {
           if (signInLink) {
             signInLink.hidden = true;
+          }
+          if (signUpBtn) {
+            signUpBtn.hidden = true;
           }
           if (!signedInWrap) {
             signedInWrap = document.createElement("div");
@@ -1233,6 +1237,9 @@
         if (signInLink) {
           signInLink.hidden = false;
           signInLink.href = "index.html?signin=true";
+        }
+        if (signUpBtn) {
+          signUpBtn.hidden = false;
         }
       });
     }
