@@ -216,6 +216,12 @@
       flex-shrink: 0;
     }
 
+    .nav-auth-desktop {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .theme-switcher {
       display: flex;
       align-items: center;
@@ -865,8 +871,7 @@
     @media (max-width: 900px) {
       .nav-toggle { display: block; }
 
-      .nav-links,
-      .nav-auth-desktop {
+      .nav-links {
         display: none;
       }
 
@@ -939,10 +944,7 @@
         <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
         <a href="#about">About</a>
-        <div class="nav-auth-mobile" id="nav-auth-mobile">
-          <a href="index.html?signin=true" class="btn btn-ghost btn-sm" data-landing-sign-in>Sign In</a>
-          <button type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
-        </div>
+        <div class="nav-auth-mobile" id="nav-auth-mobile" hidden></div>
       </nav>
       <div class="nav-right">
         <div class="theme-switcher" role="group" aria-label="Theme">
@@ -952,8 +954,10 @@
           <button type="button" data-theme-set="arcane" aria-pressed="false">Arcane</button>
         </div>
         <div class="nav-auth-desktop">
-          <a href="index.html?signin=true" class="btn btn-ghost btn-sm" data-landing-sign-in>Sign In</a>
-          <button type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
+          <span id="nav-user-email" style="display:none;font-size:0.75rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <a id="nav-open-skald" href="index.html" class="btn btn-ghost btn-sm" style="display:none;">Open Skald</a>
+          <a id="nav-signin" href="index.html?signin=true" class="btn btn-ghost btn-sm">Sign In</a>
+          <button id="nav-signup" type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
         </div>
       </div>
     </div>
@@ -1192,66 +1196,36 @@
         ? createClient(supabaseUrl, supabaseAnonKey)
         : null;
 
-    function updateNavAuthUI(session) {
-      const signedIn = Boolean(session?.user);
-      const email = session?.user?.email || "";
-
-      document.querySelectorAll(".nav-auth-desktop, .nav-auth-mobile").forEach((container) => {
-        if (!container) {
-          return;
-        }
-
-        const signInLink = container.querySelector("[data-landing-sign-in]");
-        const signUpBtn = container.querySelector("[data-open-signup]");
-        let signedInWrap = container.querySelector("[data-landing-signed-in]");
-
-        if (signedIn) {
-          if (signInLink) {
-            signInLink.hidden = true;
-          }
-          if (signUpBtn) {
-            signUpBtn.hidden = true;
-          }
-          if (!signedInWrap) {
-            signedInWrap = document.createElement("div");
-            signedInWrap.dataset.landingSignedIn = "1";
-            signedInWrap.style.display = "flex";
-            signedInWrap.style.alignItems = "center";
-            signedInWrap.style.gap = "8px";
-            signedInWrap.style.flexWrap = "wrap";
-            container.insertBefore(signedInWrap, container.firstChild);
-          }
-          signedInWrap.innerHTML =
-            '<span style="font-size:0.75rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' +
-            email.replace(/"/g, "&quot;") +
-            '">' +
-            email +
-            '</span><a href="index.html" class="btn btn-ghost btn-sm">Open Skald</a>';
-          signedInWrap.hidden = false;
-          return;
-        }
-
-        if (signedInWrap) {
-          signedInWrap.hidden = true;
-        }
-        if (signInLink) {
-          signInLink.hidden = false;
-          signInLink.href = "index.html?signin=true";
-        }
-        if (signUpBtn) {
-          signUpBtn.hidden = false;
-        }
-      });
-    }
-
     async function initNavAuth() {
       if (!supabase) {
         return;
       }
       const { data: { session } } = await supabase.auth.getSession();
-      updateNavAuthUI(session);
+      if (session) {
+        document.getElementById("nav-signin")?.style.setProperty("display", "none", "important");
+        document.getElementById("nav-signup")?.style.setProperty("display", "none", "important");
+        document.getElementById("nav-user-email").textContent = session.user.email;
+        document.getElementById("nav-user-email")?.style.setProperty("display", "inline", "important");
+        document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
+      } else {
+        document.getElementById("nav-signin")?.style.setProperty("display", "inline", "important");
+        document.getElementById("nav-signup")?.style.setProperty("display", "inline-block", "important");
+        document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
+        document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
+      }
       supabase.auth.onAuthStateChange((_event, nextSession) => {
-        updateNavAuthUI(nextSession);
+        if (nextSession) {
+          document.getElementById("nav-signin")?.style.setProperty("display", "none", "important");
+          document.getElementById("nav-signup")?.style.setProperty("display", "none", "important");
+          document.getElementById("nav-user-email").textContent = nextSession.user.email;
+          document.getElementById("nav-user-email")?.style.setProperty("display", "inline", "important");
+          document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
+        } else {
+          document.getElementById("nav-signin")?.style.setProperty("display", "inline", "important");
+          document.getElementById("nav-signup")?.style.setProperty("display", "inline-block", "important");
+          document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
+          document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
+        }
       });
     }
 

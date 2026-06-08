@@ -4277,6 +4277,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       const link = document.createElement("a");
       link.href = "landing.html";
       link.textContent = "About Skald";
+      link.style.marginLeft = "16px";
       link.dataset.aboutSkaldLink = "1";
       footer.appendChild(link);
     })();
