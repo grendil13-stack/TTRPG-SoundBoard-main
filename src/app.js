@@ -146,6 +146,10 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const upgradeModalSubscribeBtn = document.getElementById("upgrade-modal-subscribe");
     const upgradeModalLaterBtn = document.getElementById("upgrade-modal-later");
     const upgradeModalRestoreSignInBtn = document.getElementById("upgrade-modal-restore-sign-in");
+    const upgradeModalBodyEl = document.getElementById("upgrade-modal-body");
+    const upgradeModalBodyDefaultHtml = upgradeModalBodyEl?.innerHTML ?? "";
+    const UPGRADE_CHECKOUT_PRICE_MONTHLY = "price_1TflHz0STsOu7LOb6WSJJG9H";
+    const UPGRADE_CHECKOUT_PRICE_YEARLY = "price_1TflKC0STsOu7LObK0KSZm2t";
     const railSceneUsageEl = document.getElementById("rail-scene-usage");
     const feedbackModalBackdrop = document.getElementById("feedback-modal-backdrop");
     const feedbackBtnDesktop = document.getElementById("feedback-btn-desktop");
@@ -615,14 +619,91 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       return count >= limit;
     }
 
-    function handleUpgradeClick() {
-      // Placeholder — wire to Stripe checkout when billing is live.
+    function restoreUpgradeModalBody() {
+      if (!upgradeModalBodyEl || !upgradeModalBodyDefaultHtml) {
+        return;
+      }
+      upgradeModalBodyEl.innerHTML = upgradeModalBodyDefaultHtml;
+      wireDefaultUpgradeModalBodyHandlers();
+    }
+
+    function wireDefaultUpgradeModalBodyHandlers() {
+      document.getElementById("upgrade-modal-subscribe")?.addEventListener("click", () => {
+        openSubscribeOptions();
+      });
+      document.getElementById("upgrade-modal-later")?.addEventListener("click", () => {
+        closeUpgradeModal();
+      });
+      document.getElementById("upgrade-modal-restore-sign-in")?.addEventListener("click", () => {
+        closeUpgradeModal();
+        openAuthModal();
+      });
+    }
+
+    async function startCheckout(priceId) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          closeUpgradeModal();
+          openAuthModal();
+          return;
+        }
+
+        const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
+        const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || "");
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            apikey: supabaseAnonKey,
+          },
+          body: JSON.stringify({ priceId, userId: session.user.id }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.url) {
+          throw new Error(data.error || "Checkout failed");
+        }
+
+        window.location.href = data.url;
+      } catch (_) {
+        alert("Something went wrong. Please try again.");
+      }
+    }
+
+    function openSubscribeOptions() {
+      if (!upgradeModalBodyEl) {
+        return;
+      }
+      upgradeModalBodyEl.innerHTML =
+        '<div class="upgrade-price-block">' +
+        '<div class="upgrade-price">Choose your plan</div>' +
+        "</div>" +
+        '<div class="upgrade-modal-actions">' +
+        '<button type="button" class="upgrade-subscribe-btn" id="upgrade-checkout-monthly">Monthly — $5/mo</button>' +
+        '<button type="button" class="upgrade-subscribe-btn" id="upgrade-checkout-yearly">Yearly — $50/yr</button>' +
+        '<button type="button" class="secondary" id="upgrade-checkout-back">Back</button>' +
+        "</div>";
+
+      document.getElementById("upgrade-checkout-monthly")?.addEventListener("click", () => {
+        void startCheckout(UPGRADE_CHECKOUT_PRICE_MONTHLY);
+      });
+      document.getElementById("upgrade-checkout-yearly")?.addEventListener("click", () => {
+        void startCheckout(UPGRADE_CHECKOUT_PRICE_YEARLY);
+      });
+      document.getElementById("upgrade-checkout-back")?.addEventListener("click", () => {
+        restoreUpgradeModalBody();
+      });
     }
 
     function openUpgradeModal() {
       if (!upgradeModalBackdrop) {
         return;
       }
+      restoreUpgradeModalBody();
       const freeList = document.getElementById("upgrade-free-features");
       if (freeList) {
         freeList.innerHTML = [
@@ -635,9 +716,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       }
       upgradeModalBackdrop.classList.add("open");
       upgradeModalBackdrop.setAttribute("aria-hidden", "false");
-      if (upgradeModalLaterBtn) {
-        upgradeModalLaterBtn.focus();
-      }
+      document.getElementById("upgrade-modal-later")?.focus();
     }
 
     function closeUpgradeModal() {
@@ -646,6 +725,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       }
       upgradeModalBackdrop.classList.remove("open");
       upgradeModalBackdrop.setAttribute("aria-hidden", "true");
+      restoreUpgradeModalBody();
       startLimitModalCooldown();
     }
 
@@ -4047,20 +4127,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         }
       });
     }
-    if (upgradeModalLaterBtn) {
-      upgradeModalLaterBtn.addEventListener("click", () => closeUpgradeModal());
-    }
-    if (upgradeModalSubscribeBtn) {
-      upgradeModalSubscribeBtn.addEventListener("click", () => {
-        handleUpgradeClick();
-      });
-    }
-    if (upgradeModalRestoreSignInBtn) {
-      upgradeModalRestoreSignInBtn.addEventListener("click", () => {
-        closeUpgradeModal();
-        openAuthModal();
-      });
-    }
+    wireDefaultUpgradeModalBodyHandlers();
     if (upgradeModalBackdrop) {
       upgradeModalBackdrop.addEventListener("click", (e) => {
         if (e.target === upgradeModalBackdrop) {
