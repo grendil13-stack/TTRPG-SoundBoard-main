@@ -1648,6 +1648,18 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       }
     }
 
+    function isPricingRedirectRequested() {
+      return new URLSearchParams(window.location.search).get("redirect") === "pricing";
+    }
+
+    function redirectToLandingPricingIfRequested() {
+      if (isPricingRedirectRequested()) {
+        window.location.href = "landing.html#pricing";
+        return true;
+      }
+      return false;
+    }
+
     function openAuthModal() {
       if (!authModalBackdrop) {
         return;
@@ -3956,6 +3968,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
           }
           return;
         }
+        if (redirectToLandingPricingIfRequested()) {
+          return;
+        }
         closeAuthModal();
       });
     }
@@ -4003,6 +4018,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
               /* ignore */
             }
           }
+        }
+        if (redirectToLandingPricingIfRequested()) {
+          return;
         }
         closeAuthModal();
       });
@@ -4153,6 +4171,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
       const { data: { session } } = await supabase.auth.getSession();
       updateAccountUI(session);
+      if (isPricingRedirectRequested() && !session?.user) {
+        openAuthModal();
+      }
       if (session?.user) {
         await migrateLocalScenesToCloudIfNeeded(session.user.id);
         await Favorites.migrateLocalToCloud(session.user.id);
