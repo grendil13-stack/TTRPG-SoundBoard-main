@@ -148,8 +148,6 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const upgradeModalRestoreSignInBtn = document.getElementById("upgrade-modal-restore-sign-in");
     const upgradeModalBodyEl = document.getElementById("upgrade-modal-body");
     const upgradeModalBodyDefaultHtml = upgradeModalBodyEl?.innerHTML ?? "";
-    const UPGRADE_CHECKOUT_PRICE_MONTHLY = "price_1TflHz0STsOu7LOb6WSJJG9H";
-    const UPGRADE_CHECKOUT_PRICE_YEARLY = "price_1TflKC0STsOu7LObK0KSZm2t";
     const railSceneUsageEl = document.getElementById("rail-scene-usage");
     const feedbackModalBackdrop = document.getElementById("feedback-modal-backdrop");
     const feedbackBtnDesktop = document.getElementById("feedback-btn-desktop");
@@ -629,7 +627,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
     function wireDefaultUpgradeModalBodyHandlers() {
       document.getElementById("upgrade-modal-subscribe")?.addEventListener("click", () => {
-        openSubscribeOptions();
+        void handleUpgradeSubscribeClick();
       });
       document.getElementById("upgrade-modal-later")?.addEventListener("click", () => {
         closeUpgradeModal();
@@ -640,62 +638,55 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       });
     }
 
-    async function startCheckout(priceId) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          closeUpgradeModal();
-          openAuthModal();
-          return;
-        }
+    async function handleUpgradeSubscribeClick() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const SUPABASE_URL = "https://gtkqpgiimbuxcmonanjh.supabase.co";
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
-        const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || "");
-
-        const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            apikey: supabaseAnonKey,
-          },
-          body: JSON.stringify({ priceId, userId: session.user.id }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.url) {
-          throw new Error(data.error || "Checkout failed");
-        }
-
-        window.location.href = data.url;
-      } catch (_) {
-        alert("Something went wrong. Please try again.");
-      }
-    }
-
-    function openSubscribeOptions() {
-      if (!upgradeModalBodyEl) {
-        return;
-      }
-      upgradeModalBodyEl.innerHTML =
-        '<div class="upgrade-price-block">' +
-        '<div class="upgrade-price">Choose your plan</div>' +
-        "</div>" +
-        '<div class="upgrade-modal-actions">' +
-        '<button type="button" class="upgrade-subscribe-btn" id="upgrade-checkout-monthly">Monthly — $5/mo</button>' +
-        '<button type="button" class="upgrade-subscribe-btn" id="upgrade-checkout-yearly">Yearly — $50/yr</button>' +
-        '<button type="button" class="secondary" id="upgrade-checkout-back">Back</button>' +
+      const priceOptions =
+        '<div style="display:flex;flex-direction:column;gap:12px;padding:16px;">' +
+        '<p style="text-align:center;margin-bottom:8px;">Choose your plan:</p>' +
+        '<button id="checkout-monthly" style="padding:14px;background:#7c6af7;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Monthly — $5/mo</button>' +
+        '<button id="checkout-yearly" style="padding:14px;background:#5a4fd6;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Yearly — $50/yr</button>' +
         "</div>";
 
-      document.getElementById("upgrade-checkout-monthly")?.addEventListener("click", () => {
-        void startCheckout(UPGRADE_CHECKOUT_PRICE_MONTHLY);
+      const subscribeBtn = document.getElementById("upgrade-modal-subscribe")
+        || document.getElementById("upgrade-subscribe-btn")
+        || document.querySelector('button[data-action="subscribe"]')
+        || [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Subscribe");
+
+      if (subscribeBtn) {
+        subscribeBtn.insertAdjacentHTML("afterend", priceOptions);
+        subscribeBtn.style.display = "none";
+      }
+
+      async function doCheckout(priceId) {
+        try {
+          const userId = session?.user?.id || null;
+          const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              apikey: SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ priceId, userId }),
+          });
+          const data = await response.json();
+          if (!response.ok || !data.url) {
+            throw new Error(data.error || "Checkout failed");
+          }
+          window.location.href = data.url;
+        } catch (e) {
+          alert("Something went wrong. Please try again.");
+        }
+      }
+
+      document.getElementById("checkout-monthly")?.addEventListener("click", () => {
+        void doCheckout("price_1TflHz0STsOu7LOb6WSJJG9H");
       });
-      document.getElementById("upgrade-checkout-yearly")?.addEventListener("click", () => {
-        void startCheckout(UPGRADE_CHECKOUT_PRICE_YEARLY);
-      });
-      document.getElementById("upgrade-checkout-back")?.addEventListener("click", () => {
-        restoreUpgradeModalBody();
+      document.getElementById("checkout-yearly")?.addEventListener("click", () => {
+        void doCheckout("price_1TflKC0STsOu7LObK0KSZm2t");
       });
     }
 

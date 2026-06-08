@@ -1161,8 +1161,9 @@
     if (new URLSearchParams(window.location.search).get("checkout") === "success") {
       const banner = document.createElement("div");
       banner.setAttribute("role", "status");
-      banner.textContent =
-        "You're subscribed! Welcome to Skald Pro. Sign in to access your account.";
+      banner.innerHTML =
+        "You're subscribed! Welcome to Skald Pro. Sign in to access your account." +
+        '<a href="index.html" style="margin-left:16px;padding:8px 16px;background:white;color:#333;border-radius:6px;text-decoration:none;font-weight:bold;">Open Skald</a>';
       Object.assign(banner.style, {
         position: "fixed",
         top: "0",
