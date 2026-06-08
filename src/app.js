@@ -1723,6 +1723,10 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       return new URLSearchParams(window.location.search).get("redirect") === "pricing";
     }
 
+    function isSignInRedirectRequested() {
+      return new URLSearchParams(window.location.search).get("signin") === "true";
+    }
+
     function redirectToLandingPricingIfRequested() {
       if (isPricingRedirectRequested()) {
         window.location.href = "landing.html#pricing";
@@ -4229,7 +4233,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
       const { data: { session } } = await supabase.auth.getSession();
       updateAccountUI(session);
-      if (isPricingRedirectRequested() && !session?.user) {
+      if ((isPricingRedirectRequested() || isSignInRedirectRequested()) && !session?.user) {
         openAuthModal();
       }
       if (session?.user) {

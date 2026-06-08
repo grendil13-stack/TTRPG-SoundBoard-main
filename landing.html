@@ -940,7 +940,7 @@
         <a href="#pricing">Pricing</a>
         <a href="#about">About</a>
         <div class="nav-auth-mobile" id="nav-auth-mobile">
-          <a href="index.html" class="btn btn-ghost btn-sm">Sign In</a>
+          <a href="index.html?signin=true" class="btn btn-ghost btn-sm" data-landing-sign-in>Sign In</a>
           <button type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
         </div>
       </nav>
@@ -952,7 +952,7 @@
           <button type="button" data-theme-set="arcane" aria-pressed="false">Arcane</button>
         </div>
         <div class="nav-auth-desktop">
-          <a href="index.html" class="btn btn-ghost btn-sm">Sign In</a>
+          <a href="index.html?signin=true" class="btn btn-ghost btn-sm" data-landing-sign-in>Sign In</a>
           <button type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
         </div>
       </div>
@@ -1191,6 +1191,64 @@
       supabaseUrl && supabaseAnonKey
         ? createClient(supabaseUrl, supabaseAnonKey)
         : null;
+
+    function updateNavAuthUI(session) {
+      const signedIn = Boolean(session?.user);
+      const email = session?.user?.email || "";
+
+      document.querySelectorAll(".nav-auth-desktop, .nav-auth-mobile").forEach((container) => {
+        if (!container) {
+          return;
+        }
+
+        const signInLink = container.querySelector("[data-landing-sign-in]");
+        let signedInWrap = container.querySelector("[data-landing-signed-in]");
+
+        if (signedIn) {
+          if (signInLink) {
+            signInLink.hidden = true;
+          }
+          if (!signedInWrap) {
+            signedInWrap = document.createElement("div");
+            signedInWrap.dataset.landingSignedIn = "1";
+            signedInWrap.style.display = "flex";
+            signedInWrap.style.alignItems = "center";
+            signedInWrap.style.gap = "8px";
+            signedInWrap.style.flexWrap = "wrap";
+            container.insertBefore(signedInWrap, container.firstChild);
+          }
+          signedInWrap.innerHTML =
+            '<span style="font-size:0.75rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' +
+            email.replace(/"/g, "&quot;") +
+            '">' +
+            email +
+            '</span><a href="index.html" class="btn btn-ghost btn-sm">Open Skald</a>';
+          signedInWrap.hidden = false;
+          return;
+        }
+
+        if (signedInWrap) {
+          signedInWrap.hidden = true;
+        }
+        if (signInLink) {
+          signInLink.hidden = false;
+          signInLink.href = "index.html?signin=true";
+        }
+      });
+    }
+
+    async function initNavAuth() {
+      if (!supabase) {
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      updateNavAuthUI(session);
+      supabase.auth.onAuthStateChange((_event, nextSession) => {
+        updateNavAuthUI(nextSession);
+      });
+    }
+
+    void initNavAuth();
 
     const html = document.documentElement;
     const themeButtons = document.querySelectorAll("[data-theme-set]");
