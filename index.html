@@ -456,6 +456,13 @@
       color: var(--muted);
     }
 
+    .upgrade-plan-label {
+      text-align: center;
+      margin: 0 0 12px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
     .upgrade-modal-actions {
       display: flex;
       flex-direction: column;
@@ -4163,11 +4170,10 @@
             </ul>
           </div>
         </div>
-        <div class="upgrade-price-block">
-          <div class="upgrade-price">$5 <span>per month</span></div>
-        </div>
+        <p class="upgrade-plan-label">Choose your plan:</p>
         <div class="upgrade-modal-actions">
-          <button type="button" class="upgrade-subscribe-btn" id="upgrade-modal-subscribe" title="Coming Soon">Subscribe</button>
+          <button type="button" class="upgrade-subscribe-btn" id="upgrade-checkout-monthly">Monthly — $5/mo</button>
+          <button type="button" class="upgrade-subscribe-btn" id="upgrade-checkout-yearly">Yearly — $50/yr</button>
           <button type="button" class="secondary" id="upgrade-modal-later">Maybe later</button>
         </div>
         <p class="upgrade-modal-footer-note">
