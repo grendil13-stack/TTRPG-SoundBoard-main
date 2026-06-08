@@ -4215,5 +4215,17 @@
   </footer>
 
   <script type="module" src="/src/app.js"></script>
+  <script type="module">
+    import { supabase } from "/supabase.js";
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (!session || event !== "SIGNED_IN") {
+        return;
+      }
+      if (new URLSearchParams(window.location.search).get("redirect") === "pricing") {
+        window.location.href = "landing.html#pricing";
+      }
+    });
+  </script>
 </body>
 </html>

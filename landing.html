@@ -1412,7 +1412,14 @@
     async function startCheckout(priceId) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id ?? null;
+
+        if (!session) {
+          sessionStorage.setItem("pendingPriceId", priceId);
+          window.location.href = "index.html?redirect=pricing";
+          return;
+        }
+
+        const userId = session.user.id;
 
         const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`, {
           method: "POST",
@@ -1436,6 +1443,22 @@
       }
     }
 
+    async function resumePendingCheckout() {
+      const pendingPriceId = sessionStorage.getItem("pendingPriceId");
+      if (!pendingPriceId) {
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        sessionStorage.removeItem("pendingPriceId");
+        await startCheckout(pendingPriceId);
+        return;
+      }
+
+      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+    }
+
     document.getElementById("subscribe-monthly")?.addEventListener("click", () => {
       startCheckout("price_1TflHz0STsOu7LOb6WSJJG9H");
     });
@@ -1443,6 +1466,8 @@
     document.getElementById("subscribe-yearly")?.addEventListener("click", () => {
       startCheckout("price_1TflKC0STsOu7LObK0KSZm2t");
     });
+
+    void resumePendingCheckout();
   </script>
 </body>
 </html>
