@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
           .update({
             tier: 'pro',
             stripe_subscription_id: subscriptionId,
+            stripe_customer_id: session.customer,
           })
           .eq('id', userId)
 
@@ -56,6 +57,7 @@ Deno.serve(async (req) => {
             .update({
               tier: 'pro',
               stripe_subscription_id: subscriptionId,
+              stripe_customer_id: session.customer,
             })
             .eq('id', matchedUser.id)
           if (error) {
