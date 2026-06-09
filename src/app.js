@@ -128,6 +128,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const accountSignedInEl = document.getElementById("account-signed-in");
     const accountEmailEl = document.getElementById("account-email");
     const accountSubscribeBtn = document.getElementById("account-subscribe");
+    const accountManageSubscriptionBtn = document.getElementById("account-manage-subscription");
     const accountSignOutBtn = document.getElementById("account-sign-out");
     const authModalBackdrop = document.getElementById("auth-modal-backdrop");
     const authModalErrorEl = document.getElementById("auth-modal-error");
@@ -170,6 +171,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     /** @type {null | { scene_count: number, session_count: number, scene_limit: number, session_limit: number, scene_limit_reached: boolean, session_limit_reached: boolean }} */
     let userLimits = null;
     let userTier = "free";
+    let stripeCustomerId = null;
     let limitModalCooldownUntil = 0;
     const LIMIT_MODAL_COOLDOWN_MS = 2000;
 
@@ -515,19 +517,22 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     async function fetchUserTier(userId) {
       if (!userId) {
         userTier = "free";
+        stripeCustomerId = null;
         return userTier;
       }
       const { data, error } = await supabase
         .from("profiles")
-        .select("tier")
+        .select("tier, stripe_subscription_id, stripe_customer_id")
         .eq("id", userId)
         .maybeSingle();
       if (error) {
         console.error("profiles tier load", error);
         userTier = "free";
+        stripeCustomerId = null;
         return userTier;
       }
       userTier = data?.tier ? String(data.tier).toLowerCase() : "free";
+      stripeCustomerId = data?.stripe_customer_id ? String(data.stripe_customer_id) : null;
       return userTier;
     }
 
@@ -1631,8 +1636,40 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         return;
       }
       const signedIn = Boolean(lastAuthSession?.user);
-      const paid = userHasPaidSessionFeatures(lastAuthSession);
-      accountSubscribeBtn.hidden = !signedIn || paid;
+      const isPro = userTier === "pro";
+      accountSubscribeBtn.hidden = !signedIn || isPro;
+      if (accountManageSubscriptionBtn) {
+        accountManageSubscriptionBtn.hidden = !signedIn || !isPro;
+      }
+    }
+
+    async function openCustomerPortal() {
+      try {
+        const SUPABASE_URL = "https://gtkqpgiimbuxcmonanjh.supabase.co";
+        const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const returnUrl = window.location.href;
+
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/create-portal-session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            apikey: SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            customerId: stripeCustomerId,
+            returnUrl: returnUrl,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.url) {
+          throw new Error(data.error || "Portal failed");
+        }
+        window.location.href = data.url;
+      } catch (e) {
+        alert("Could not open subscription management. Please try again.");
+      }
     }
 
     function updateAccountUI(session) {
@@ -4003,6 +4040,11 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         openUpgradeModal();
       });
     }
+    if (accountManageSubscriptionBtn) {
+      accountManageSubscriptionBtn.addEventListener("click", () => {
+        void openCustomerPortal();
+      });
+    }
     if (authModalCancelBtn) {
       authModalCancelBtn.addEventListener("click", () => closeAuthModal());
     }
@@ -4205,6 +4247,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         openFilePicker.onSignedOut();
         userLimits = null;
         userTier = "free";
+        stripeCustomerId = null;
         await refreshCustomScenesList();
         refreshSceneSelectorBar();
         restorePersistedActiveSceneOrDefault();
