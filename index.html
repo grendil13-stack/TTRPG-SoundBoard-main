@@ -159,7 +159,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      max-width: 220px;
+      flex-shrink: 0;
     }
 
     #account-signed-in[hidden],
@@ -168,11 +168,7 @@
     }
 
     .account-email {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 11px;
-      color: var(--muted);
+      display: none !important;
     }
 
     .account-subscribe {
@@ -2326,11 +2322,12 @@
 
       .topbar-actions {
         flex-shrink: 0;
-        gap: 6px;
+        gap: 8px;
       }
 
       .account-sign-in,
       .account-sign-out,
+      .account-subscribe,
       #edit-scene-top {
         min-height: 44px;
         min-width: 44px;
@@ -2342,7 +2339,7 @@
       }
 
       .account-signed-in {
-        max-width: min(160px, 38vw);
+        max-width: none;
       }
 
       .panel-header {
@@ -3807,9 +3804,9 @@
         <div class="topbar-account" id="topbar-account">
           <button type="button" id="account-sign-in" class="account-sign-in">Sign in</button>
           <div class="account-signed-in" id="account-signed-in" hidden>
-            <span class="account-email" id="account-email" style="margin-right: 8px;"></span>
+            <span class="account-email" id="account-email" hidden aria-hidden="true"></span>
             <button type="button" id="account-subscribe" class="account-subscribe" hidden>Subscribe</button>
-            <button type="button" id="account-manage-subscription" class="account-subscribe" style="margin-right: 8px;" hidden>Manage Subscription</button>
+            <button type="button" id="account-manage-subscription" class="account-subscribe" hidden>Manage Subscription</button>
             <button type="button" id="account-sign-out" class="account-sign-out">Sign out</button>
           </div>
         </div>
