@@ -5,6 +5,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 }
 
+const HANDLED_EVENT_TYPES = [
+  'checkout.session.completed',
+  'customer.subscription.deleted',
+]
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -71,6 +76,30 @@ Deno.serve(async (req) => {
       } else {
         console.log('No userId or email found in session')
       }
+    } else if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object
+      const customer = subscription.customer
+
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      )
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          tier: 'free',
+          stripe_subscription_id: null,
+        })
+        .eq('stripe_customer_id', customer)
+
+      if (error) {
+        console.error('Supabase downgrade error:', error)
+        throw error
+      }
+      console.log('Downgraded user to free for customer:', customer)
+    } else if (!HANDLED_EVENT_TYPES.includes(event.type)) {
+      console.log('Ignoring unhandled event type:', event.type)
     }
 
     return new Response(JSON.stringify({ received: true }), {
