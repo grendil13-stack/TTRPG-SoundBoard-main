@@ -637,10 +637,10 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
     function wireDefaultUpgradeModalBodyHandlers() {
       document.getElementById("upgrade-checkout-monthly")?.addEventListener("click", () => {
-        void doCheckout("price_1TflHz0STsOu7LOb6WSJJG9H");
+        void doCheckout("price_1ThthV07rpjVXRecuZndtEbH");
       });
       document.getElementById("upgrade-checkout-yearly")?.addEventListener("click", () => {
-        void doCheckout("price_1TflKC0STsOu7LObK0KSZm2t");
+        void doCheckout("price_1ThthU07rpjVXRec7rT4LCOp");
       });
       document.getElementById("upgrade-modal-later")?.addEventListener("click", () => {
         closeUpgradeModal();
