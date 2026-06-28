@@ -409,49 +409,15 @@
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
       box-shadow: var(--shadow);
-      position: relative;
       overflow: hidden;
     }
 
-    .demo-placeholder::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: var(--card-decor);
-      pointer-events: none;
-    }
-
-    .play-icon {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--bg);
-      position: relative;
-      z-index: 1;
-    }
-
-    [data-theme="dark"] .play-icon,
-    [data-theme="forest"] .play-icon,
-    [data-theme="arcane"] .play-icon { color: #fff; }
-
-    .play-icon svg { width: 28px; height: 28px; margin-left: 4px; }
-
-    .demo-placeholder p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-      position: relative;
-      z-index: 1;
+    .demo-placeholder iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
     }
 
     .screenshots {
@@ -970,13 +936,19 @@
         <p class="hero-sub">Skald is the audio toolkit built for Game Masters. Original music, layered ambience, and instant sound effects — all in one place.</p>
         <div class="hero-actions">
           <button type="button" class="btn btn-primary" data-open-signup>Sign Up Free</button>
-          <button type="button" class="btn btn-secondary" data-tooltip="Demo video coming soon">Watch Demo</button>
+          <button type="button" class="btn btn-secondary" id="watch-demo">Watch Demo</button>
         </div>
-        <div class="demo-placeholder" aria-label="Demo video placeholder">
-          <div class="play-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          </div>
-          <p>Demo video coming soon</p>
+        <div class="demo-placeholder" id="demo-video" aria-label="Skald demo video">
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/sUAtAeRe6NY?rel=0&modestbranding=1&iv_load_policy=3"
+            title="YouTube video player"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
         </div>
         <div class="screenshots">
           <div class="screenshot-card">Music Player</div>
@@ -1274,6 +1246,10 @@
         });
       });
     }
+
+    document.getElementById("watch-demo")?.addEventListener("click", () => {
+      document.getElementById("demo-video")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
 
     /* Modals */
     function openModal(id) {
