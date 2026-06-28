@@ -430,30 +430,41 @@
       background: var(--bg-soft);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      aspect-ratio: 4 / 3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-display);
-      font-size: 1rem;
-      color: var(--muted);
       box-shadow: var(--shadow);
-      position: relative;
       overflow: hidden;
+      margin: 0;
     }
 
-    .screenshot-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: var(--card-decor);
-      pointer-events: none;
+    .screenshot-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      vertical-align: middle;
+    }
+
+    .screenshot-card figcaption {
+      padding: 10px 12px;
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--bg-elevated);
     }
 
     [data-theme="parchment"] .screenshot-card {
       border-width: 2px;
       border-style: solid;
       border-color: var(--border-strong);
+    }
+
+    .feature-screenshot {
+      display: block;
+      margin: -28px -24px 20px;
+      width: calc(100% + 48px);
+      height: auto;
+      border-bottom: 1px solid var(--border);
     }
 
     /* ── Sections ── */
@@ -951,9 +962,18 @@
           ></iframe>
         </div>
         <div class="screenshots">
-          <div class="screenshot-card">Music Player</div>
-          <div class="screenshot-card">Scene Builder</div>
-          <div class="screenshot-card">Sound FX Pad</div>
+          <figure class="screenshot-card">
+            <img src="images/landing/music-player.png" alt="Skald music player with track list and playback controls" loading="lazy" width="560" height="640" />
+            <figcaption>Music Player</figcaption>
+          </figure>
+          <figure class="screenshot-card">
+            <img src="images/landing/scene-builder.png" alt="Skald scene builder with playlist and ambient sound layers" loading="lazy" width="560" height="640" />
+            <figcaption>Scene Builder</figcaption>
+          </figure>
+          <figure class="screenshot-card">
+            <img src="images/landing/sound-fx.png" alt="Skald sound effects pad with categorized SFX grid" loading="lazy" width="560" height="640" />
+            <figcaption>Sound FX Pad</figcaption>
+          </figure>
         </div>
       </div>
     </section>
@@ -964,23 +984,38 @@
         <p class="section-lead">Music, ambience, and effects — composed and organized for tabletop RPG sessions.</p>
         <div class="features-grid">
           <article class="feature-card">
-            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-            </svg>
+            <img
+              class="feature-screenshot"
+              src="images/landing/music-player.png"
+              alt="Music player with track list, playback controls, and volume slider"
+              loading="lazy"
+              width="560"
+              height="640"
+            />
             <h3>Original Music Library</h3>
             <p>Over 400 original tracks composed specifically for tabletop RPG sessions. Battle, suspense, peaceful, and everything in between.</p>
           </article>
           <article class="feature-card">
-            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-              <path d="M2 12c2-4 6-6 10-6s8 2 10 6"/><path d="M2 12c2 4 6 6 10 6s8-2 10-6"/><path d="M6 12h12" opacity="0.5"/>
-            </svg>
+            <img
+              class="feature-screenshot"
+              src="images/landing/scene-builder.png"
+              alt="Scene editor with playlist tracks and layered ambient background sounds"
+              loading="lazy"
+              width="560"
+              height="640"
+            />
             <h3>Layered Atmosphere</h3>
             <p>Stack looping ambient sounds and mix them in real time. Forest rain, tavern crowd, dungeon echoes — build the perfect backdrop.</p>
           </article>
           <article class="feature-card">
-            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
+            <img
+              class="feature-screenshot"
+              src="images/landing/sound-fx.png"
+              alt="Sound effects library with category filters and one-click playback"
+              loading="lazy"
+              width="560"
+              height="640"
+            />
             <h3>Instant Sound Effects</h3>
             <p>Fire sword clashes, spell blasts, and dramatic stings the moment the action happens. 88 effects organized and ready.</p>
           </article>
