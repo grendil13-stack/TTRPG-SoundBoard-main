@@ -377,6 +377,9 @@
     .hero {
       padding: 72px 0 56px;
       background: var(--hero-glow);
+    }
+
+    .hero-intro {
       text-align: center;
     }
 
@@ -420,43 +423,8 @@
       border: 0;
     }
 
-    .screenshots {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
-    .screenshot-card {
-      background: var(--bg-soft);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      margin: 0;
-    }
-
-    .screenshot-card img {
-      width: 100%;
-      height: auto;
-      display: block;
-      vertical-align: middle;
-    }
-
-    .screenshot-card figcaption {
-      padding: 10px 12px;
-      font-family: var(--font-display);
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-align: center;
-      color: var(--muted);
-      border-top: 1px solid var(--border);
-      background: var(--bg-elevated);
-    }
-
-    [data-theme="parchment"] .screenshot-card {
-      border-width: 2px;
-      border-style: solid;
-      border-color: var(--border-strong);
+    .hero-features {
+      padding-top: 56px;
     }
 
     .feature-screenshot {
@@ -884,8 +852,7 @@
       .nav-right { margin-left: 0; }
 
       .features-grid,
-      .steps,
-      .screenshots {
+      .steps {
         grid-template-columns: 1fr;
       }
 
@@ -942,7 +909,7 @@
 
   <main>
     <section class="hero" id="top">
-      <div class="container">
+      <div class="container hero-intro">
         <h1>Set the Mood. Enhance Your Story.</h1>
         <p class="hero-sub">Skald is the audio toolkit built for Game Masters. Original music, layered ambience, and instant sound effects — all in one place.</p>
         <div class="hero-actions">
@@ -961,25 +928,9 @@
             loading="lazy"
           ></iframe>
         </div>
-        <div class="screenshots">
-          <figure class="screenshot-card">
-            <img src="images/landing/music-player.png" alt="Skald music player with track list and playback controls" loading="lazy" width="560" height="640" />
-            <figcaption>Music Player</figcaption>
-          </figure>
-          <figure class="screenshot-card">
-            <img src="images/landing/scene-builder.png" alt="Skald scene builder with playlist and ambient sound layers" loading="lazy" width="560" height="640" />
-            <figcaption>Scene Builder</figcaption>
-          </figure>
-          <figure class="screenshot-card">
-            <img src="images/landing/sound-fx.png" alt="Skald sound effects pad with categorized SFX grid" loading="lazy" width="560" height="640" />
-            <figcaption>Sound FX Pad</figcaption>
-          </figure>
-        </div>
       </div>
-    </section>
 
-    <section id="features">
-      <div class="container">
+      <div class="container hero-features" id="features">
         <h2 class="section-title">Everything you need at the table</h2>
         <p class="section-lead">Music, ambience, and effects — composed and organized for tabletop RPG sessions.</p>
         <div class="features-grid">
