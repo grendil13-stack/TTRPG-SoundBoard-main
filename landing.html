@@ -901,6 +901,7 @@
           <span id="nav-user-email" style="display:none;font-size:0.75rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
           <button id="nav-manage-subscription" type="button" class="btn btn-ghost btn-sm" style="display:none;">Manage Subscription</button>
           <a id="nav-open-skald" href="index.html" class="btn btn-ghost btn-sm" style="display:none;">Open Skald</a>
+          <button id="nav-sign-out" type="button" class="btn btn-ghost btn-sm" style="display:none;">Sign Out</button>
           <a id="nav-signin" href="index.html?signin=true" class="btn btn-ghost btn-sm">Sign In</a>
           <button id="nav-signup" type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
         </div>
@@ -1183,6 +1184,7 @@
         document.getElementById("nav-manage-subscription")?.style.setProperty("display", "none", "important");
       }
       document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
+      document.getElementById("nav-sign-out")?.style.setProperty("display", "inline-block", "important");
     }
 
     function updateLoggedOutNav() {
@@ -1191,6 +1193,7 @@
       document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-manage-subscription")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
+      document.getElementById("nav-sign-out")?.style.setProperty("display", "none", "important");
     }
 
     async function openCustomerPortal() {
@@ -1243,6 +1246,14 @@
 
     document.getElementById("nav-manage-subscription")?.addEventListener("click", () => {
       void openCustomerPortal();
+    });
+
+    document.getElementById("nav-sign-out")?.addEventListener("click", async () => {
+      if (!supabase) {
+        return;
+      }
+      await supabase.auth.signOut();
+      window.location.reload();
     });
 
     void initNavAuth();
