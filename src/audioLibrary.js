@@ -5,9 +5,7 @@ const AudioLibrary = (() => {
         /\/$/,
         "",
       );
-      const STORAGE_BASE_URL = supabaseBaseUrl
-        ? `${supabaseBaseUrl}/storage/v1/object/public`
-        : "";
+      const STORAGE_BASE_URL = "https://kquiougzmjxtaneeedip.supabase.co/storage/v1/object/public";
       /** Set to `true` for local `sounds/…` paths; `false` for Supabase Storage URLs. */
       const LOCAL_MODE = false;
 
