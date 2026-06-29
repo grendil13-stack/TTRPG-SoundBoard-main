@@ -3,6 +3,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const RETURN_URL = "https://skaldsoundboard.com/index.html";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -13,14 +15,10 @@ Deno.serve(async (req) => {
       throw new Error("Method not allowed");
     }
 
-    const { customerId, returnUrl } = await req.json();
+    const { customerId } = await req.json();
 
     if (!customerId || typeof customerId !== "string") {
       throw new Error("customerId is required");
-    }
-
-    if (!returnUrl || typeof returnUrl !== "string") {
-      throw new Error("returnUrl is required");
     }
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -30,7 +28,7 @@ Deno.serve(async (req) => {
 
     const params = new URLSearchParams();
     params.append("customer", customerId);
-    params.append("return_url", returnUrl);
+    params.append("return_url", RETURN_URL);
 
     const stripeResponse = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
       method: "POST",

@@ -899,6 +899,7 @@
         </div>
         <div class="nav-auth-desktop">
           <span id="nav-user-email" style="display:none;font-size:0.75rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <button id="nav-manage-subscription" type="button" class="btn btn-ghost btn-sm" style="display:none;">Manage Subscription</button>
           <a id="nav-open-skald" href="index.html" class="btn btn-ghost btn-sm" style="display:none;">Open Skald</a>
           <a id="nav-signin" href="index.html?signin=true" class="btn btn-ghost btn-sm">Sign In</a>
           <button id="nav-signup" type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
@@ -1154,38 +1155,95 @@
         ? createClient(supabaseUrl, supabaseAnonKey)
         : null;
 
+    let userTier = null;
+    let stripeCustomerId = null;
+
+    async function loadUserProfile(userId) {
+      userTier = null;
+      stripeCustomerId = null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("stripe_customer_id, tier")
+        .eq("id", userId)
+        .maybeSingle();
+      if (!error && data) {
+        userTier = data.tier;
+        stripeCustomerId = data.stripe_customer_id;
+      }
+    }
+
+    function updateLoggedInNav(session) {
+      document.getElementById("nav-signin")?.style.setProperty("display", "none", "important");
+      document.getElementById("nav-signup")?.style.setProperty("display", "none", "important");
+      document.getElementById("nav-user-email").textContent = session.user.email;
+      document.getElementById("nav-user-email")?.style.setProperty("display", "inline", "important");
+      if (userTier === "pro") {
+        document.getElementById("nav-manage-subscription")?.style.setProperty("display", "inline-block", "important");
+      } else {
+        document.getElementById("nav-manage-subscription")?.style.setProperty("display", "none", "important");
+      }
+      document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
+    }
+
+    function updateLoggedOutNav() {
+      document.getElementById("nav-signin")?.style.setProperty("display", "inline", "important");
+      document.getElementById("nav-signup")?.style.setProperty("display", "inline-block", "important");
+      document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
+      document.getElementById("nav-manage-subscription")?.style.setProperty("display", "none", "important");
+      document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
+    }
+
+    async function openCustomerPortal() {
+      if (!stripeCustomerId) {
+        alert("Could not open subscription management. Please try again.");
+        return;
+      }
+      try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/create-portal-session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            apikey: supabaseAnonKey,
+          },
+          body: JSON.stringify({ customerId: stripeCustomerId }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.url) {
+          throw new Error(data.error || "Portal failed");
+        }
+        window.location.href = data.url;
+      } catch (_) {
+        alert("Could not open subscription management. Please try again.");
+      }
+    }
+
     async function initNavAuth() {
       if (!supabase) {
         return;
       }
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        document.getElementById("nav-signin")?.style.setProperty("display", "none", "important");
-        document.getElementById("nav-signup")?.style.setProperty("display", "none", "important");
-        document.getElementById("nav-user-email").textContent = session.user.email;
-        document.getElementById("nav-user-email")?.style.setProperty("display", "inline", "important");
-        document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
+        await loadUserProfile(session.user.id);
+        updateLoggedInNav(session);
       } else {
-        document.getElementById("nav-signin")?.style.setProperty("display", "inline", "important");
-        document.getElementById("nav-signup")?.style.setProperty("display", "inline-block", "important");
-        document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
-        document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
+        updateLoggedOutNav();
       }
-      supabase.auth.onAuthStateChange((_event, nextSession) => {
+      supabase.auth.onAuthStateChange(async (_event, nextSession) => {
         if (nextSession) {
-          document.getElementById("nav-signin")?.style.setProperty("display", "none", "important");
-          document.getElementById("nav-signup")?.style.setProperty("display", "none", "important");
-          document.getElementById("nav-user-email").textContent = nextSession.user.email;
-          document.getElementById("nav-user-email")?.style.setProperty("display", "inline", "important");
-          document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
+          await loadUserProfile(nextSession.user.id);
+          updateLoggedInNav(nextSession);
         } else {
-          document.getElementById("nav-signin")?.style.setProperty("display", "inline", "important");
-          document.getElementById("nav-signup")?.style.setProperty("display", "inline-block", "important");
-          document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
-          document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
+          userTier = null;
+          stripeCustomerId = null;
+          updateLoggedOutNav();
         }
       });
     }
+
+    document.getElementById("nav-manage-subscription")?.addEventListener("click", () => {
+      void openCustomerPortal();
+    });
 
     void initNavAuth();
 

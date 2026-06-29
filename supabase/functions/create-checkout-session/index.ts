@@ -3,10 +3,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SUCCESS_URL =
-  "https://ttrpg-sound-board-main-git-staging-grendil13-s-projects.vercel.app/landing.html?checkout=success";
-const CANCEL_URL =
-  "https://ttrpg-sound-board-main-git-staging-grendil13-s-projects.vercel.app/landing.html?checkout=cancelled";
+const SUCCESS_URL = "https://skaldsoundboard.com/landing.html?checkout=success";
+const CANCEL_URL = "https://skaldsoundboard.com/landing.html";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
