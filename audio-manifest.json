@@ -21,7 +21,6 @@
       "festival",
       "funny",
       "holy",
-      "lyrics",
       "mysterious",
       "peaceful",
       "reverent",
@@ -95,9 +94,7 @@
       "type": "music",
       "audio_type": "vocal",
       "song_type": "Fey song",
-      "mood_tags": [
-        "lyrics"
-      ],
+      "mood_tags": [],
       "setting_tags": [
         "fey",
         "pregame"
@@ -179,8 +176,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "funny",
-        "lyrics"
+        "funny"
       ],
       "setting_tags": [
         "tavern",
@@ -222,8 +218,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -244,8 +239,7 @@
       "song_type": "Slow Tavern Song",
       "mood_tags": [
         "mysterious",
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "pregame",
@@ -374,8 +368,7 @@
       "audio_type": "vocal",
       "song_type": "Elven Song",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -686,8 +679,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "mysterious",
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "fey",
@@ -710,8 +702,7 @@
       "song_type": "Folk Song",
       "mood_tags": [
         "mysterious",
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "pregame",
@@ -731,8 +722,7 @@
       "audio_type": "vocal",
       "song_type": "Sea Shanty",
       "mood_tags": [
-        "danger",
-        "lyrics"
+        "danger"
       ],
       "setting_tags": [
         "docks",
@@ -773,8 +763,7 @@
       "audio_type": "vocal",
       "song_type": "Dragonborn song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -796,8 +785,7 @@
       "audio_type": "vocal",
       "song_type": "Military Chant",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -1084,8 +1072,7 @@
       "audio_type": "vocal",
       "song_type": "Gnome Songs",
       "mood_tags": [
-        "funny",
-        "lyrics"
+        "funny"
       ],
       "setting_tags": [
         "tavern",
@@ -1108,8 +1095,7 @@
       "song_type": "Gnome Songs",
       "mood_tags": [
         "funny",
-        "romantic",
-        "lyrics"
+        "romantic"
       ],
       "setting_tags": [
         "tavern",
@@ -1154,8 +1140,7 @@
       "audio_type": "vocal",
       "song_type": "Fey song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "fey",
@@ -1177,8 +1162,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -1774,8 +1758,7 @@
       "audio_type": "vocal",
       "song_type": "Sea Shanty",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "docks",
@@ -1923,8 +1906,7 @@
       "audio_type": "vocal",
       "song_type": "Funny Tavern Song",
       "mood_tags": [
-        "funny",
-        "lyrics"
+        "funny"
       ],
       "setting_tags": [
         "tavern",
@@ -2098,8 +2080,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -2119,8 +2100,7 @@
       "audio_type": "vocal",
       "song_type": "Sea Shanty",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "docks",
@@ -2296,8 +2276,7 @@
       "audio_type": "vocal",
       "song_type": "Gnome Songs",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -2771,8 +2750,7 @@
       "audio_type": "vocal",
       "song_type": "Fey song",
       "mood_tags": [
-        "funny",
-        "lyrics"
+        "funny"
       ],
       "setting_tags": [
         "fey",
@@ -2795,8 +2773,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "creepy",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -2955,8 +2932,7 @@
       "audio_type": "vocal",
       "song_type": "Dragonborn song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -2978,8 +2954,7 @@
       "audio_type": "vocal",
       "song_type": "Dwarf Songs",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -3001,8 +2976,7 @@
       "audio_type": "vocal",
       "song_type": "Dragonborn song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -3047,8 +3021,7 @@
       "audio_type": "vocal",
       "song_type": "Dwarf Songs",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -3070,8 +3043,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -3114,8 +3086,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -3156,8 +3127,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "reverent",
-        "lyrics"
+        "reverent"
       ],
       "setting_tags": [
         "pregame",
@@ -3323,8 +3293,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -3344,8 +3313,7 @@
       "audio_type": "vocal",
       "song_type": "Dwarf Songs",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -3714,8 +3682,7 @@
       "audio_type": "vocal",
       "song_type": "Orc Song",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -3737,8 +3704,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -3758,8 +3724,7 @@
       "audio_type": "vocal",
       "song_type": "Fey song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "fey",
@@ -3782,8 +3747,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "creepy",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -3869,8 +3833,7 @@
       "audio_type": "vocal",
       "song_type": "Dwarf Songs",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -3914,8 +3877,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "peaceful",
-        "lyrics"
+        "peaceful"
       ],
       "setting_tags": [
         "tavern",
@@ -3936,8 +3898,7 @@
       "song_type": "Fast Tavern Song",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -3959,8 +3920,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -3980,8 +3940,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -4104,8 +4063,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "mysterious",
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "fey",
@@ -4145,8 +4103,7 @@
       "audio_type": "vocal",
       "song_type": "Soul",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -4250,8 +4207,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "mysterious",
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "fey",
@@ -4463,8 +4419,7 @@
       "audio_type": "vocal",
       "song_type": "Elven Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -4507,8 +4462,7 @@
       "audio_type": "vocal",
       "song_type": "Soul",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -4677,8 +4631,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -4699,8 +4652,7 @@
       "song_type": "Funny Tavern Song",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -4746,8 +4698,7 @@
       "audio_type": "vocal",
       "song_type": "Orc Song",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -4769,8 +4720,7 @@
       "audio_type": "vocal",
       "song_type": "Orc Song",
       "mood_tags": [
-        "peaceful",
-        "lyrics"
+        "peaceful"
       ],
       "setting_tags": [
         "tavern",
@@ -4925,8 +4875,7 @@
       "song_type": "Funny Tavern Song",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5058,8 +5007,7 @@
       "audio_type": "vocal",
       "song_type": "Sea Shanty",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "docks",
@@ -5283,8 +5231,7 @@
       "audio_type": "vocal",
       "song_type": "Sea Shanty",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "docks",
@@ -5304,8 +5251,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5368,8 +5314,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -5390,8 +5335,7 @@
       "song_type": "Gnome Songs",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5413,8 +5357,7 @@
       "audio_type": "vocal",
       "song_type": "Fey song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "fey",
@@ -5436,8 +5379,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5478,8 +5420,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5587,8 +5528,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5609,8 +5549,7 @@
       "song_type": "Folk Song",
       "mood_tags": [
         "reverent",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -5687,8 +5626,7 @@
       "audio_type": "vocal",
       "song_type": "Military Chant",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5752,8 +5690,7 @@
       "audio_type": "vocal",
       "song_type": "Gnome Songs",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "tavern",
@@ -5775,8 +5712,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "peaceful",
-        "lyrics"
+        "peaceful"
       ],
       "setting_tags": [
         "tavern",
@@ -5796,8 +5732,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -5818,8 +5753,7 @@
       "song_type": "Fast Tavern Song",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -5857,9 +5791,7 @@
       "type": "music",
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
-      "mood_tags": [
-        "lyrics"
-      ],
+      "mood_tags": [],
       "setting_tags": [
         "pregame",
         "story"
@@ -5937,8 +5869,7 @@
       "audio_type": "vocal",
       "song_type": "Waltz",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -6026,8 +5957,7 @@
       "song_type": "Fast Tavern Song",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -6047,8 +5977,7 @@
       "audio_type": "vocal",
       "song_type": "Dragonborn song",
       "mood_tags": [
-        "triumphant",
-        "lyrics"
+        "triumphant"
       ],
       "setting_tags": [
         "tavern",
@@ -6094,8 +6023,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "creepy",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -6118,8 +6046,7 @@
       "song_type": "Elven Song",
       "mood_tags": [
         "mysterious",
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -6162,8 +6089,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -6206,8 +6132,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "creepy",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -6251,8 +6176,7 @@
       "audio_type": "vocal",
       "song_type": "Orc Song",
       "mood_tags": [
-        "triumphant",
-        "lyrics"
+        "triumphant"
       ],
       "setting_tags": [
         "tavern",
@@ -6274,8 +6198,7 @@
       "audio_type": "vocal",
       "song_type": "Dwarf Songs",
       "mood_tags": [
-        "triumphant",
-        "lyrics"
+        "triumphant"
       ],
       "setting_tags": [
         "tavern",
@@ -6317,8 +6240,7 @@
       "song_type": "Slow Tavern Song",
       "mood_tags": [
         "reverent",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "tavern",
@@ -6338,8 +6260,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "tavern",
@@ -6608,8 +6529,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "peaceful",
-        "lyrics"
+        "peaceful"
       ],
       "setting_tags": [
         "tavern",
@@ -6812,8 +6732,7 @@
       "song_type": "Fast Tavern Song",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -6835,8 +6754,7 @@
       "audio_type": "vocal",
       "song_type": "Elven Song",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -6946,8 +6864,7 @@
       "audio_type": "vocal",
       "song_type": "Fey song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "fey",
@@ -6992,8 +6909,7 @@
       "song_type": "Fast Tavern Song",
       "mood_tags": [
         "funny",
-        "chaotic",
-        "lyrics"
+        "chaotic"
       ],
       "setting_tags": [
         "pregame",
@@ -7035,8 +6951,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -7115,8 +7030,7 @@
       "audio_type": "vocal",
       "song_type": "Fey song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "fey",
@@ -7138,8 +7052,7 @@
       "audio_type": "vocal",
       "song_type": "Sea Shanty",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "docks",
@@ -7159,8 +7072,7 @@
       "audio_type": "vocal",
       "song_type": "Folk Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -7180,8 +7092,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "peaceful",
-        "lyrics"
+        "peaceful"
       ],
       "setting_tags": [
         "tavern",
@@ -7201,8 +7112,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "peaceful",
-        "lyrics"
+        "peaceful"
       ],
       "setting_tags": [
         "tavern",
@@ -7264,8 +7174,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "tavern",
@@ -7410,8 +7319,7 @@
       "audio_type": "vocal",
       "song_type": "Folk Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -7431,8 +7339,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "peaceful",
-        "lyrics"
+        "peaceful"
       ],
       "setting_tags": [
         "tavern",
@@ -7606,8 +7513,7 @@
       "audio_type": "vocal",
       "song_type": "Folk Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -7665,8 +7571,7 @@
       "audio_type": "vocal",
       "song_type": "Elven Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "tavern",
@@ -7688,8 +7593,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -7709,8 +7613,7 @@
       "audio_type": "instrumental",
       "song_type": "Instrumental",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "pregame",
@@ -7860,8 +7763,7 @@
       "audio_type": "vocal",
       "song_type": "Gnome Songs",
       "mood_tags": [
-        "funny",
-        "lyrics"
+        "funny"
       ],
       "setting_tags": [
         "tavern",
@@ -7883,8 +7785,7 @@
       "audio_type": "vocal",
       "song_type": "Folk Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -8222,8 +8123,7 @@
       "audio_type": "vocal",
       "song_type": "Fey song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -8245,8 +8145,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -8266,8 +8165,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -8287,8 +8185,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -8308,8 +8205,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -8329,8 +8225,7 @@
       "audio_type": "vocal",
       "song_type": "Slow Tavern Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -8374,8 +8269,7 @@
       "song_type": "Fast Tavern Song",
       "mood_tags": [
         "funny",
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -8395,8 +8289,7 @@
       "audio_type": "vocal",
       "song_type": "Folk Song",
       "mood_tags": [
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "pregame",
@@ -8505,8 +8398,7 @@
       "audio_type": "vocal",
       "song_type": "Dwarf Songs",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -8807,8 +8699,7 @@
       "audio_type": "vocal",
       "song_type": "Orc Song",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -8830,8 +8721,7 @@
       "audio_type": "vocal",
       "song_type": "Dragonborn song",
       "mood_tags": [
-        "triumphant",
-        "lyrics"
+        "triumphant"
       ],
       "setting_tags": [
         "tavern",
@@ -8936,8 +8826,7 @@
       "audio_type": "vocal",
       "song_type": "Elven Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -8981,8 +8870,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "creepy",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -9005,8 +8893,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "creepy",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -9051,8 +8938,7 @@
       "audio_type": "vocal",
       "song_type": "Gnome Songs",
       "mood_tags": [
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
@@ -9075,8 +8961,7 @@
       "song_type": "Fey song",
       "mood_tags": [
         "creepy",
-        "mysterious",
-        "lyrics"
+        "mysterious"
       ],
       "setting_tags": [
         "fey",
@@ -9098,8 +8983,7 @@
       "audio_type": "vocal",
       "song_type": "Fast Tavern Song",
       "mood_tags": [
-        "exciting",
-        "lyrics"
+        "exciting"
       ],
       "setting_tags": [
         "tavern",
@@ -9120,8 +9004,7 @@
       "song_type": "Slow Tavern Song",
       "mood_tags": [
         "mysterious",
-        "sad",
-        "lyrics"
+        "sad"
       ],
       "setting_tags": [
         "tavern",
