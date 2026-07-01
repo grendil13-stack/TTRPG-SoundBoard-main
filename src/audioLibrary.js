@@ -99,6 +99,7 @@ const AudioLibrary = (() => {
         const settingTags = Array.isArray(entry.setting_tags) ? entry.setting_tags.map((x) => String(x)) : [];
         const section =
           entry.section != null && String(entry.section).trim() !== "" ? String(entry.section).trim() : "";
+        const hasLyrics = type === "music" ? Boolean(entry.has_lyrics) : false;
         const layer = type === "ambient" && entry.layer ? String(entry.layer).toLowerCase().trim() : "";
         const environment =
           type === "ambient" && entry.environment ? String(entry.environment).toLowerCase().trim() : "";
@@ -119,6 +120,7 @@ const AudioLibrary = (() => {
           mood_tags: moodTags,
           setting_tags: settingTags,
           section,
+          hasLyrics,
           layer,
           environment,
           generated,

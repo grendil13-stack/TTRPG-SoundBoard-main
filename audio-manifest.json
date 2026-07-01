@@ -1,6 +1,6 @@
 {
   "_readme": {
-    "description": "Skald Sound Board \u2014 master audio manifest v3. Ambient uses three-layer system: base / texture / foreground.",
+    "description": "Skald Sound Board — master audio manifest v3. Ambient uses three-layer system: base / texture / foreground.",
     "version": "3.0",
     "filter_system": {
       "music": "Two-step: select setting_tag first, then mood_tag.",
@@ -106,7 +106,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "a-day-in-the-village",
@@ -189,7 +190,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "alley-in-the-dwarven-city",
@@ -229,7 +231,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "amethyst-road",
@@ -250,7 +253,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "among-the-canals",
@@ -381,7 +385,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "at-what-cost",
@@ -692,7 +697,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "black-flames",
@@ -713,7 +719,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "black-fog-rolls",
@@ -733,7 +740,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "blades-of-the-elves",
@@ -776,7 +784,8 @@
       "faction_tags": [
         "dragonborn"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "blood-bread-and-brothers",
@@ -796,7 +805,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "bridging-the-chasm",
@@ -867,7 +877,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "calling-the-door",
@@ -894,7 +905,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "canyon-market",
@@ -1083,7 +1095,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "color-between-colors",
@@ -1106,7 +1119,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "creep-in-the-shadow-realm",
@@ -1151,7 +1165,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "crown-of-alzamrod",
@@ -1171,7 +1186,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "crown-of-the-earth",
@@ -1767,7 +1783,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "devine-space",
@@ -1915,7 +1932,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "dragonborn-ceremony",
@@ -2089,7 +2107,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "drown-lullaby",
@@ -2109,7 +2128,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "drums-of-war",
@@ -2287,7 +2307,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "empire-of-trees",
@@ -2761,7 +2782,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "fey-mirror",
@@ -2784,7 +2806,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "fey-mystery",
@@ -2943,7 +2966,8 @@
       "faction_tags": [
         "dragonborn"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "fire-within-stone",
@@ -2965,7 +2989,8 @@
       "faction_tags": [
         "dwarf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "flames-on-our-heels",
@@ -2987,7 +3012,8 @@
       "faction_tags": [
         "dragonborn"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "flicker-of-light",
@@ -3032,7 +3058,8 @@
       "faction_tags": [
         "dwarf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "fox-and-fiddle",
@@ -3052,7 +3079,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "fractured-light",
@@ -3095,7 +3123,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "fun-in-the-village",
@@ -3136,7 +3165,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "gnomish-curiosity",
@@ -3302,7 +3332,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "granite-memories",
@@ -3324,7 +3355,8 @@
       "faction_tags": [
         "dwarf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "graves-are-empty",
@@ -3693,7 +3725,8 @@
       "faction_tags": [
         "orc"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "hollow-road",
@@ -3713,7 +3746,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "hunt-or-hunted",
@@ -3735,7 +3769,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "i-am-the-tale",
@@ -3758,7 +3793,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "i-walk-through-the-market",
@@ -3844,7 +3880,8 @@
       "faction_tags": [
         "dwarf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "judgement-begins",
@@ -3886,7 +3923,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "leaves-in-our-cup",
@@ -3909,7 +3947,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "life-and-growth",
@@ -3929,7 +3968,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "light-in-the-mist",
@@ -3949,7 +3989,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "light-mourning",
@@ -4074,7 +4115,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "low-stake",
@@ -4112,7 +4154,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "march-of-stone",
@@ -4218,7 +4261,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "modron-breakdown",
@@ -4430,7 +4474,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "more-questions",
@@ -4471,7 +4516,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "mourning",
@@ -4640,7 +4686,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "only-lost-one",
@@ -4661,7 +4708,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "opening-the-door",
@@ -4686,7 +4734,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "orc-funeral",
@@ -4708,7 +4757,8 @@
       "faction_tags": [
         "orc"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "orc-lullaby",
@@ -4730,7 +4780,8 @@
       "faction_tags": [
         "orc"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "over-the-chasm",
@@ -4883,7 +4934,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "power-of-the-dao",
@@ -5015,7 +5067,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "purshar-alley",
@@ -5239,7 +5292,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "raise-the-walls",
@@ -5259,7 +5313,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "reflections-of-dragonborn",
@@ -5322,7 +5377,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "riddles-around-the-table",
@@ -5345,7 +5401,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "rise-to-the-hunt",
@@ -5367,7 +5424,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "roll-the-casks",
@@ -5387,7 +5445,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "room-of-clocks",
@@ -5428,7 +5487,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "royal-dao",
@@ -5536,7 +5596,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "set-in-blue",
@@ -5557,7 +5618,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "shadow-reveal",
@@ -5634,7 +5696,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "shougard-deals",
@@ -5700,7 +5763,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "silk-on-the-line",
@@ -5720,7 +5784,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "sing-for-the-mourning",
@@ -5740,7 +5805,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "sing-it-while-you-swing",
@@ -5761,7 +5827,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "skirmish",
@@ -5799,7 +5866,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "sleepless-deep",
@@ -5878,7 +5946,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "smoke-and-glass-instrumental",
@@ -5898,7 +5967,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "sneaking-whimsy",
@@ -5965,7 +6035,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "soul-of-scales",
@@ -5987,7 +6058,8 @@
       "faction_tags": [
         "dragonborn"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "soul-of-the-mountain",
@@ -6033,7 +6105,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "split-asunder",
@@ -6056,7 +6129,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "spooky",
@@ -6097,7 +6171,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "stealth-through-the-grass",
@@ -6142,7 +6217,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "step-over-the-chasm",
@@ -6186,7 +6262,8 @@
       "faction_tags": [
         "orc"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "stone-and-star",
@@ -6208,7 +6285,8 @@
       "faction_tags": [
         "dwarf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "stone-skirmish",
@@ -6248,7 +6326,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "storm-in-the-bones",
@@ -6268,7 +6347,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "streets-on-edge",
@@ -6495,7 +6575,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "tension-in-the-shadows",
@@ -6536,7 +6617,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-army-holds",
@@ -6741,7 +6823,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-dawn-forgets",
@@ -6763,7 +6846,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-dead-wake",
@@ -6873,7 +6957,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-ice-march",
@@ -6916,7 +7001,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-light-blesses",
@@ -6937,7 +7023,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-light-forever",
@@ -6957,7 +7044,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-long-walk",
@@ -7038,7 +7126,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-ravens-omen",
@@ -7058,7 +7147,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-red-of-life",
@@ -7078,7 +7168,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-road-beyond",
@@ -7098,7 +7189,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-road-knows-my-name",
@@ -7118,7 +7210,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-royal-dao",
@@ -7180,7 +7273,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-shadow-dragon-arrives",
@@ -7325,7 +7419,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-stone-still-stands",
@@ -7345,7 +7440,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-undead-armies",
@@ -7519,7 +7615,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-wizard-battles",
@@ -7579,7 +7676,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-world-sundered",
@@ -7599,7 +7697,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-world-will-not-surrender",
@@ -7619,7 +7718,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "the-wrong-way",
@@ -7771,7 +7871,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "tides-of-power",
@@ -7791,7 +7892,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "tight-battle",
@@ -8131,7 +8233,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "twelve-entwined",
@@ -8151,7 +8254,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "twelve-gems",
@@ -8171,7 +8275,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "twelve-lights-fell",
@@ -8191,7 +8296,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "twelve-ravens",
@@ -8211,7 +8317,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "twelve-shall-shine",
@@ -8231,7 +8338,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "twisting-halls",
@@ -8275,7 +8383,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "unblinking-diamond",
@@ -8295,7 +8404,8 @@
       ],
       "intensity": "low",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "uncertain-in-the-dark",
@@ -8406,7 +8516,8 @@
       "faction_tags": [
         "dwarf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "unknown-below",
@@ -8707,7 +8818,8 @@
       "faction_tags": [
         "orc"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "we-who-bend-the-sky",
@@ -8729,7 +8841,8 @@
       "faction_tags": [
         "dragonborn"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "what-did-we-lose",
@@ -8834,7 +8947,8 @@
       "faction_tags": [
         "elf"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "which-way-to-go",
@@ -8878,7 +8992,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "whisperglass",
@@ -8901,7 +9016,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "whispers-of-law",
@@ -8946,7 +9062,8 @@
       "faction_tags": [
         "gnome"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "wildness-of-fey",
@@ -8969,7 +9086,8 @@
       "faction_tags": [
         "fey"
       ],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "wind-on-my-heels",
@@ -8989,7 +9107,8 @@
       ],
       "intensity": "high",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "wine-for-the-oarsman",
@@ -9010,7 +9129,8 @@
       ],
       "intensity": "mid",
       "faction_tags": [],
-      "mastered": true
+      "mastered": true,
+      "has_lyrics": true
     },
     {
       "id": "wings-of-dawn",

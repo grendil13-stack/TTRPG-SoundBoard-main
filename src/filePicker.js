@@ -40,6 +40,7 @@ let filePickerAppBridge = null;
     let filePickerSelectedSfxSection = null;
     let filePickerSelectedAmbientLayer = null;
     let filePickerFavoritesOnly = false;
+    let filePickerLyricsFilter = null; // null = All, "hide" = no lyrics, "only" = lyrics only
     /** @type {string | null} */
     let filePickerMyTagFilter = null;
     let myLibraryUploadSelectedFile = null;
@@ -209,6 +210,8 @@ let filePickerAppBridge = null;
           return false;
         }
       }
+      if (t === "music" && filePickerLyricsFilter === "hide" && file.hasLyrics) return false;
+      if (t === "music" && filePickerLyricsFilter === "only" && !file.hasLyrics) return false;
       if (t === "sfx") {
         if (!filePickerSelectedSfxSection) {
           return true;
@@ -242,6 +245,7 @@ let filePickerAppBridge = null;
         filePickerSelectedSfxSection = null;
         filePickerSelectedAmbientLayer = null;
         filePickerFavoritesOnly = false;
+        filePickerLyricsFilter = null;
         filePickerMyTagFilter = null;
         void renderFilePickerFilters();
         void renderFilePickerList();
@@ -1206,6 +1210,37 @@ let filePickerAppBridge = null;
 
       if (filePickerActiveType === "music") {
         appendFilePickerFavoritesToggle(filePickerTagFiltersWrap);
+        const lyricsGroup = document.createElement("div");
+        lyricsGroup.className = "file-picker-filter-step";
+        lyricsGroup.setAttribute("role", "group");
+        lyricsGroup.setAttribute("aria-label", "Lyrics filter");
+        const lyricsLabel = document.createElement("p");
+        lyricsLabel.className = "file-picker-tag-filters-label";
+        lyricsLabel.textContent = "Lyrics";
+        lyricsGroup.appendChild(lyricsLabel);
+        const lyricsBtn = document.createElement("button");
+        lyricsBtn.type = "button";
+        lyricsBtn.className = "file-picker-lyrics-toggle";
+        const lyricsStates = [
+          { value: null,   label: "All" },
+          { value: "only", label: "Lyrics" },
+          { value: "hide", label: "No Lyrics" },
+        ];
+        const syncLyricsBtn = () => {
+          const state = lyricsStates.find(s => s.value === filePickerLyricsFilter) || lyricsStates[0];
+          lyricsBtn.textContent = state.label;
+          lyricsBtn.classList.toggle("active", filePickerLyricsFilter !== null);
+          lyricsBtn.setAttribute("aria-pressed", filePickerLyricsFilter !== null ? "true" : "false");
+        };
+        syncLyricsBtn();
+        lyricsBtn.addEventListener("click", () => {
+          const idx = lyricsStates.findIndex(s => s.value === filePickerLyricsFilter);
+          filePickerLyricsFilter = lyricsStates[(idx + 1) % lyricsStates.length].value;
+          syncLyricsBtn();
+          void renderFilePickerList();
+        });
+        lyricsGroup.appendChild(lyricsBtn);
+        filePickerTagFiltersWrap.appendChild(lyricsGroup);
       }
 
       const settingGroup = document.createElement("div");
@@ -1450,6 +1485,7 @@ let filePickerAppBridge = null;
         filePickerSelectedSfxSection = null;
         filePickerSelectedAmbientLayer = null;
         filePickerFavoritesOnly = false;
+        filePickerLyricsFilter = null;
         filePickerMyTagFilter = null;
       }
       filePickerTabs.querySelectorAll(".file-picker-tab").forEach((button) => {

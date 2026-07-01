@@ -181,6 +181,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     let sceneEditorDraftPlaylist = [];
     let sceneEditorDraftAmbient = [];
     let sceneEditorEditingId = null;
+    let sceneEditorPreviewAudio = null;
     /** @type {HTMLElement | null} */
     let sceneEditorReturnFocus = null;
     const nowPlayingTitle = document.querySelector(".track-title");
@@ -3564,7 +3565,15 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
 
 
+    function stopSceneEditorPreview() {
+      if (!sceneEditorPreviewAudio) return;
+      sceneEditorPreviewAudio.pause();
+      sceneEditorPreviewAudio.currentTime = 0;
+      sceneEditorPreviewAudio = null;
+    }
+
     function closeSceneEditor() {
+      stopSceneEditorPreview();
       const returnEl = sceneEditorReturnFocus;
       sceneEditorReturnFocus = null;
       sceneEditorBackdrop.classList.remove("open");
@@ -3602,6 +3611,23 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
           renderEditorPlaylist();
         });
 
+        const previewBtn = document.createElement("button");
+        previewBtn.type = "button";
+        previewBtn.className = "editor-playlist-preview-btn";
+        previewBtn.textContent = "▶";
+        previewBtn.setAttribute("aria-label", `Preview ${displayTitle}`);
+        previewBtn.addEventListener("click", () => {
+          stopSceneEditorPreview();
+          void resolveAudioPlaybackUrl(path).then((url) => {
+            if (!url) return;
+            const audio = new Audio(url);
+            audio.volume = 0.7;
+            audio.play().catch(() => { sceneEditorPreviewAudio = null; });
+            sceneEditorPreviewAudio = audio;
+            audio.addEventListener("ended", () => { sceneEditorPreviewAudio = null; }, { once: true });
+          });
+        });
+
         const down = document.createElement("button");
         down.type = "button";
         down.textContent = "Down";
@@ -3626,6 +3652,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
         li.appendChild(span);
         li.appendChild(up);
+        li.insertBefore(previewBtn, up);
         li.appendChild(down);
         li.appendChild(remove);
         editorPlaylistList.appendChild(li);
@@ -3780,6 +3807,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
 
     async function saveSceneFromEditor() {
+      stopSceneEditorPreview();
       const name = editorSceneName.value.trim();
       if (!name) {
         window.alert("Please enter a scene name.");
@@ -3963,6 +3991,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
 
     editorPlaylistBrowse.addEventListener("click", () => {
+      stopSceneEditorPreview();
       openFilePicker(
         "music",
         (paths) => {
