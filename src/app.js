@@ -115,7 +115,6 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const editorPlaylistFile = document.getElementById("editor-playlist-file");
     const editorPlaylistSelectedFile = document.getElementById("editor-playlist-selected-file");
     const editorPlaylistBrowse = document.getElementById("editor-playlist-browse");
-    const editorPlaylistAdd = document.getElementById("editor-playlist-add");
     const editorAmbientRows = document.getElementById("editor-ambient-rows");
     const editorAmbientAdd = document.getElementById("editor-ambient-add");
     const editorSaveScene = document.getElementById("editor-save-scene");
@@ -4008,17 +4007,6 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         },
         { multi: true },
       );
-    });
-
-    editorPlaylistAdd.addEventListener("click", () => {
-      const v = editorPlaylistFile.value.trim();
-      if (!v) {
-        return;
-      }
-      sceneEditorDraftPlaylist.push(v);
-      editorPlaylistFile.value = "";
-      editorPlaylistSelectedFile.textContent = "No file selected";
-      renderEditorPlaylist();
     });
 
     editorAmbientAdd.addEventListener("click", () => {
