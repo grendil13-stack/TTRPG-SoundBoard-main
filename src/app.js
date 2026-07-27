@@ -654,7 +654,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     async function doCheckout(priceId) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const SUPABASE_URL = "https://gtkqpgiimbuxcmonanjh.supabase.co";
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
         const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
         const userId = session?.user?.id || null;
         const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`, {
