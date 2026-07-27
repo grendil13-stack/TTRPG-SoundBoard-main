@@ -1750,12 +1750,66 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       return new URLSearchParams(window.location.search).get("signin") === "true";
     }
 
-    function redirectToLandingPricingIfRequested() {
-      if (isPricingRedirectRequested()) {
-        window.location.href = "landing.html#pricing";
-        return true;
+    function landingPageUrl(pathAndHash = "/") {
+      const host = window.location.hostname;
+      const isLocal = host === "localhost" || host === "127.0.0.1";
+      let path = pathAndHash || "/";
+      if (path.startsWith("?") || path.startsWith("#")) {
+        path = `/${path}`;
+      } else if (!path.startsWith("/")) {
+        path = `/${path}`;
       }
-      return false;
+      if (isLocal) {
+        return path;
+      }
+      return `https://www.skaldsoundboard.com${path}`;
+    }
+
+    async function startCheckoutForPriceId(priceId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || !priceId) {
+        return false;
+      }
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnonKey) {
+        return false;
+      }
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({ priceId, userId: session.user.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || "Checkout failed");
+      }
+      window.location.href = data.url;
+      return true;
+    }
+
+    async function redirectToLandingPricingIfRequested() {
+      if (!isPricingRedirectRequested()) {
+        return false;
+      }
+      const priceId = new URLSearchParams(window.location.search).get("priceId");
+      if (priceId) {
+        try {
+          const started = await startCheckoutForPriceId(priceId);
+          if (started) {
+            return true;
+          }
+        } catch (_) {
+          /* fall through to landing pricing */
+        }
+      }
+      const qs = priceId ? `?priceId=${encodeURIComponent(priceId)}` : "";
+      window.location.href = landingPageUrl(`${qs}#pricing`);
+      return true;
     }
 
     function openAuthModal() {
@@ -4092,7 +4146,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
           }
           return;
         }
-        if (redirectToLandingPricingIfRequested()) {
+        if (await redirectToLandingPricingIfRequested()) {
           return;
         }
         closeAuthModal();
@@ -4143,7 +4197,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
             }
           }
         }
-        if (redirectToLandingPricingIfRequested()) {
+        if (await redirectToLandingPricingIfRequested()) {
           return;
         }
         closeAuthModal();
@@ -4286,6 +4340,11 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       if ((isPricingRedirectRequested() || isSignInRedirectRequested()) && !session?.user) {
         openAuthModal();
       }
+      if (session?.user && isPricingRedirectRequested()) {
+        if (await redirectToLandingPricingIfRequested()) {
+          return;
+        }
+      }
       if (session?.user) {
         await migrateLocalScenesToCloudIfNeeded(session.user.id);
         await Favorites.migrateLocalToCloud(session.user.id);
@@ -4335,7 +4394,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
         return;
       }
       const link = document.createElement("a");
-      link.href = "landing.html";
+      link.href = landingPageUrl("/");
       link.textContent = "About Skald";
       link.style.marginLeft = "16px";
       link.dataset.aboutSkaldLink = "1";

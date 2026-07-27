@@ -1,0 +1,39 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "app.skaldsoundboard.com" }],
+      "destination": "/app.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/landing",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/landing.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/app.html",
+      "has": [{ "type": "host", "value": "www.skaldsoundboard.com" }],
+      "destination": "https://app.skaldsoundboard.com/",
+      "permanent": false
+    },
+    {
+      "source": "/app.html",
+      "has": [{ "type": "host", "value": "skaldsoundboard.com" }],
+      "destination": "https://app.skaldsoundboard.com/",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "has": [{ "type": "host", "value": "app.skaldsoundboard.com" }],
+      "destination": "/",
+      "permanent": false
+    }
+  ]
+}
