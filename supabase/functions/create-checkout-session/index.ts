@@ -3,8 +3,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SUCCESS_URL = "https://skaldsoundboard.com/landing.html?checkout=success";
-const CANCEL_URL = "https://skaldsoundboard.com/landing.html";
+const SUCCESS_URL = "https://app.skaldsoundboard.com/?checkout=success";
+const CANCEL_URL = "https://app.skaldsoundboard.com/";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

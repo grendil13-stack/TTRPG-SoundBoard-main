@@ -3,7 +3,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RETURN_URL = "https://skaldsoundboard.com/index.html";
+const RETURN_URL = "https://app.skaldsoundboard.com/";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
