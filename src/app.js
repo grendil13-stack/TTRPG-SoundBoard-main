@@ -1645,7 +1645,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
     async function openCustomerPortal() {
       try {
-        const SUPABASE_URL = "https://gtkqpgiimbuxcmonanjh.supabase.co";
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
         const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
         const returnUrl = window.location.href;
 
