@@ -6,6 +6,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/",
+      "destination": "/landing.html"
+    },
+    {
       "source": "/reset-password",
       "destination": "/reset-password.html"
     }
@@ -22,6 +26,11 @@
       "permanent": true
     },
     {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/app.html",
       "has": [{ "type": "host", "value": "www.skaldsoundboard.com" }],
       "destination": "https://app.skaldsoundboard.com/",
@@ -31,12 +40,6 @@
       "source": "/app.html",
       "has": [{ "type": "host", "value": "skaldsoundboard.com" }],
       "destination": "https://app.skaldsoundboard.com/",
-      "permanent": false
-    },
-    {
-      "source": "/index.html",
-      "has": [{ "type": "host", "value": "app.skaldsoundboard.com" }],
-      "destination": "/",
       "permanent": false
     }
   ]
