@@ -4,6 +4,10 @@
       "source": "/",
       "has": [{ "type": "host", "value": "app.skaldsoundboard.com" }],
       "destination": "/app.html"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/reset-password.html"
     }
   ],
   "redirects": [

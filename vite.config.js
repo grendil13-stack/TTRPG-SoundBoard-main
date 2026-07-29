@@ -68,6 +68,7 @@ export default defineConfig(({ mode }) => {
           main: path.join(__dirname, "index.html"),
           legal: path.join(__dirname, "legal.html"),
           app: path.join(__dirname, "app.html"),
+          resetPassword: path.join(__dirname, "reset-password.html"),
         },
       },
     },

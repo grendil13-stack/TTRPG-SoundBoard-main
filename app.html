@@ -281,6 +281,24 @@
       min-height: 1.2em;
     }
 
+    .auth-forgot-password-link {
+      justify-self: start;
+      margin-top: 2px;
+      padding: 0;
+      border: none;
+      background: none;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .auth-forgot-password-link:hover {
+      text-decoration: underline;
+      background: none;
+    }
+
     .scene-limit-modal-panel p {
       margin: 0 0 16px;
       color: var(--muted);
@@ -4120,6 +4138,7 @@
       <div class="auth-field">
         <label for="auth-password">Password</label>
         <input id="auth-password" type="password" autocomplete="current-password" />
+        <button type="button" id="auth-forgot-password-link" class="auth-forgot-password-link">Forgot password?</button>
       </div>
       <div class="auth-tos-field">
         <label class="auth-tos-label" for="auth-tos-checkbox">

@@ -136,6 +136,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const authModalCancelBtn = document.getElementById("auth-modal-cancel");
     const authModalSubmitBtn = document.getElementById("auth-modal-submit");
     const authModalSignUpBtn = document.getElementById("auth-modal-sign-up");
+    const authForgotPasswordLink = document.getElementById("auth-forgot-password-link");
     const authTosCheckbox = document.getElementById("auth-tos-checkbox");
     const PENDING_TOS_AGREEMENT_KEY = "skald_pending_tos_agreement";
     const sceneLimitModalBackdrop = document.getElementById("scene-limit-modal-backdrop");
@@ -4123,6 +4124,33 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       authModalBackdrop.addEventListener("click", (e) => {
         if (e.target === authModalBackdrop) {
           closeAuthModal();
+        }
+      });
+    }
+    if (authForgotPasswordLink) {
+      authForgotPasswordLink.addEventListener("click", async () => {
+        const email = (authEmailInput && authEmailInput.value.trim()) || "";
+        if (!email) {
+          if (authModalErrorEl) {
+            authModalErrorEl.textContent =
+              "Enter your email above, then click 'Forgot password?' again.";
+          }
+          return;
+        }
+        if (authModalErrorEl) {
+          authModalErrorEl.textContent = "";
+        }
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: "https://app.skaldsoundboard.com/reset-password",
+        });
+        if (error) {
+          if (authModalErrorEl) {
+            authModalErrorEl.textContent = error.message;
+          }
+          return;
+        }
+        if (authModalErrorEl) {
+          authModalErrorEl.textContent = "Check your email for a password reset link.";
         }
       });
     }
