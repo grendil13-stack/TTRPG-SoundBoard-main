@@ -915,7 +915,7 @@
         <h1>Set the Mood. Enhance Your Story.</h1>
         <p class="hero-sub">Skald is the audio toolkit built for Game Masters. Original music, layered ambience, and instant sound effects — all in one place.</p>
         <div class="hero-actions">
-          <button type="button" class="btn btn-primary" data-open-signup>Sign Up Free</button>
+          <button type="button" id="hero-signup" class="btn btn-primary" data-open-signup>Sign Up Free</button>
           <button type="button" class="btn btn-secondary" id="watch-demo">Watch Demo</button>
         </div>
         <div class="demo-placeholder" id="demo-video" aria-label="Skald demo video">
@@ -1014,7 +1014,7 @@
               <li>Sound effects and ambience</li>
               <li>Works on any device</li>
             </ul>
-            <button type="button" class="btn btn-primary" data-open-signup>Get Started Free</button>
+            <button type="button" id="pricing-signup-free" class="btn btn-primary" data-open-signup>Get Started Free</button>
           </div>
           <div class="price-card recommended">
             <h3>Skald Subscription</h3>
@@ -1198,6 +1198,8 @@
       }
       document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
       document.getElementById("nav-sign-out")?.style.setProperty("display", "inline-block", "important");
+      document.getElementById("hero-signup")?.style.setProperty("display", "none", "important");
+      document.getElementById("pricing-signup-free")?.style.setProperty("display", "none", "important");
     }
 
     function updateLoggedOutNav() {
@@ -1207,6 +1209,8 @@
       document.getElementById("nav-manage-subscription")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-sign-out")?.style.setProperty("display", "none", "important");
+      document.getElementById("hero-signup")?.style.setProperty("display", "inline-flex", "important");
+      document.getElementById("pricing-signup-free")?.style.setProperty("display", "inline-flex", "important");
     }
 
     async function openCustomerPortal() {
