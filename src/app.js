@@ -4380,6 +4380,11 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
       const { data: { session } } = await supabase.auth.getSession();
       updateAccountUI(session);
+      if (session?.user) {
+        setSkaldAuthHintCookie();
+      } else {
+        clearSkaldAuthHintCookie();
+      }
       if ((isPricingRedirectRequested() || isSignInRedirectRequested()) && !session?.user) {
         openAuthModal();
       }
