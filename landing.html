@@ -1119,6 +1119,23 @@
     </div>
   </div>
 
+  <script>
+    (function () {
+      var hasAuthHint = document.cookie.split(";").some(function (part) {
+        return part.trim() === "skald_auth=true";
+      });
+      if (!hasAuthHint) {
+        return;
+      }
+      var signIn = document.getElementById("nav-signin");
+      if (!signIn) {
+        return;
+      }
+      signIn.textContent = "Go to App";
+      signIn.href = "https://app.skaldsoundboard.com/";
+    })();
+  </script>
+
   <script type="module">
     import { createClient } from "@supabase/supabase-js";
 

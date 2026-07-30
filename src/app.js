@@ -4305,6 +4305,16 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       });
     }
 
+    function setSkaldAuthHintCookie() {
+      document.cookie =
+        "skald_auth=true; domain=.skaldsoundboard.com; path=/; max-age=2592000; SameSite=Lax; Secure";
+    }
+
+    function clearSkaldAuthHintCookie() {
+      document.cookie =
+        "skald_auth=; domain=.skaldsoundboard.com; path=/; max-age=0";
+    }
+
     async function handleSupabaseAuthChange(event, nextSession) {
       updateAccountUI(nextSession);
       if (
@@ -4360,6 +4370,11 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     void (async () => {
       void loadSuggestedTagsOnce();
       supabase.auth.onAuthStateChange((event, nextSession) => {
+        if (nextSession?.user) {
+          setSkaldAuthHintCookie();
+        } else if (event === "SIGNED_OUT") {
+          clearSkaldAuthHintCookie();
+        }
         void handleSupabaseAuthChange(event, nextSession);
       });
 
