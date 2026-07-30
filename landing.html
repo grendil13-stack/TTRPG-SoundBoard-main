@@ -900,9 +900,9 @@
         <div class="nav-auth-desktop">
           <span id="nav-user-email" style="display:none;font-size:0.75rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
           <button id="nav-manage-subscription" type="button" class="btn btn-ghost btn-sm" style="display:none;">Manage Subscription</button>
-          <a id="nav-open-skald" href="/app.html" class="btn btn-ghost btn-sm" style="display:none;">Open Skald</a>
+          <a id="nav-open-skald" href="https://app.skaldsoundboard.com/" class="btn btn-ghost btn-sm" style="display:none;">Open Skald</a>
           <button id="nav-sign-out" type="button" class="btn btn-ghost btn-sm" style="display:none;">Sign Out</button>
-          <a id="nav-signin" href="/app.html?signin=true" class="btn btn-ghost btn-sm">Sign In</a>
+          <a id="nav-signin" href="https://app.skaldsoundboard.com/?signin=true" class="btn btn-ghost btn-sm">Sign In</a>
           <button id="nav-signup" type="button" class="btn btn-primary btn-sm" data-open-signup>Sign Up Free</button>
         </div>
       </div>
@@ -1050,7 +1050,7 @@
       <nav class="footer-links" aria-label="Footer">
         <a href="legal.html#terms">Terms of Service</a>
         <a href="legal.html#privacy">Privacy Policy</a>
-        <a href="/app.html">Feedback</a>
+        <a href="https://app.skaldsoundboard.com/">Feedback</a>
       </nav>
       <p class="footer-copy">Copyright 2026 Grendil Studios LLC</p>
     </div>
@@ -1080,14 +1080,14 @@
           <button type="button" class="btn btn-primary" id="signup-submit" disabled>Create account</button>
         </div>
         <p class="sub" style="margin-top:16px;text-align:center;">
-          Already have an account? <a href="/app.html?signin=true">Sign in</a>
+          Already have an account? <a href="https://app.skaldsoundboard.com/?signin=true">Sign in</a>
         </p>
       </div>
       <div id="signup-success-view" class="modal-thanks" hidden>
         <h2>Welcome to Skald</h2>
         <p>Your account was created. Check your email if confirmation is required, then open the app to get started.</p>
         <div class="modal-actions" style="justify-content:center;margin-top:20px;">
-          <a href="/app.html" class="btn btn-primary">Open Skald</a>
+          <a href="https://app.skaldsoundboard.com/" class="btn btn-primary">Open Skald</a>
         </div>
       </div>
     </div>
@@ -1137,14 +1137,14 @@
   </script>
 
   <script type="module">
-    import { createClient } from "@supabase/supabase-js";
+    import { supabase } from "/supabase.js";
 
     if (new URLSearchParams(window.location.search).get("checkout") === "success") {
       const banner = document.createElement("div");
       banner.setAttribute("role", "status");
       banner.innerHTML =
         "You're subscribed! Welcome to Skald Pro. Sign in to access your account." +
-        '<a href="/app.html" style="margin-left:16px;padding:8px 16px;background:white;color:#333;border-radius:6px;text-decoration:none;font-weight:bold;">Open Skald</a>';
+        '<a href="https://app.skaldsoundboard.com/" style="margin-left:16px;padding:8px 16px;background:white;color:#333;border-radius:6px;text-decoration:none;font-weight:bold;">Open Skald</a>';
       Object.assign(banner.style, {
         position: "fixed",
         top: "0",
@@ -1168,10 +1168,6 @@
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const supabase =
-      supabaseUrl && supabaseAnonKey
-        ? createClient(supabaseUrl, supabaseAnonKey)
-        : null;
 
     let userTier = null;
     let stripeCustomerId = null;
@@ -1489,13 +1485,10 @@
   </script>
 
   <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    import { supabase } from "/supabase.js";
 
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0a3FwZ2lpbWJ1eGNtb25hbmpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMzcyMTAsImV4cCI6MjA5NDYxMzIxMH0.GzyHd6gz71huMbZ0kJnECu2DjjbS2HYt0vsKOXi-lEo";
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     async function startCheckout(priceId) {
       try {
@@ -1508,7 +1501,7 @@
             priceId,
             signin: "true",
           });
-          window.location.href = `/app.html?${qs.toString()}`;
+          window.location.href = `https://app.skaldsoundboard.com/?${qs.toString()}`;
           return;
         }
 
