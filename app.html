@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="Skald Sound Board, the audio toolkit for tabletop RPG game masters. Set the mood with music, ambient layers, and sound effects." />
   <title>Skald Sound Board</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/logo/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png" />
+  <link rel="manifest" href="/logo/site.webmanifest" />
   <script>
     (function () {
       var host = window.location.hostname;
@@ -80,12 +84,22 @@
     }
 
     .topbar-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       margin: 0;
       font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.02em;
       color: var(--text);
       white-space: nowrap;
+    }
+
+    .topbar-logo {
+      height: 32px;
+      width: auto;
+      flex-shrink: 0;
+      display: block;
     }
 
     .topbar-master {
@@ -3810,7 +3824,10 @@
   <div id="env-badge" class="env-badge" hidden aria-hidden="true">STAGING</div>
   <div class="app-shell">
     <header class="topbar">
-      <h1 class="topbar-title">Skald Sound Board</h1>
+      <h1 class="topbar-title">
+        <img class="topbar-logo" src="/logo/logo-header.png" alt="Skald Soundboard" width="32" height="32" />
+        Skald Sound Board
+      </h1>
       <div class="topbar-master topbar-master--desktop">
         <label for="master-volume">Master</label>
         <input id="master-volume" type="range" min="0" max="100" value="70" aria-label="Master volume" />
