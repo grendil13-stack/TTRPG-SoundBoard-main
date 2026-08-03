@@ -1,17 +1,3 @@
-<!--
--- Run in Supabase SQL Editor before deploying:
--- create table public.waitlist (
---   id uuid default gen_random_uuid() primary key,
---   email text not null unique,
---   created_at timestamp with time zone default timezone('utc', now())
--- );
--- alter table public.waitlist enable row level security;
--- create policy "Anyone can join waitlist"
---   on public.waitlist for insert
---   to anon, authenticated
---   with check (true);
--- grant insert on public.waitlist to anon, authenticated;
--->
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -657,23 +643,6 @@
       font-size: 0.75rem;
     }
 
-    .price-notify {
-      margin: 12px 0 0;
-      font-size: 0.85rem;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .price-notify button {
-      background: none;
-      border: none;
-      padding: 0;
-      font: inherit;
-      color: var(--accent);
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
     .about-text {
       max-width: 62ch;
       margin: 0 auto;
@@ -1109,32 +1078,6 @@
     </div>
   </div>
 
-  <!-- Waitlist modal -->
-  <div class="modal-backdrop" id="waitlist-modal" aria-hidden="true">
-    <div class="modal-panel" role="dialog" aria-labelledby="waitlist-title" aria-modal="true">
-      <div id="waitlist-form-view">
-        <h2 id="waitlist-title">Get notified when Skald Subscription launches</h2>
-        <p class="sub">We will email you when subscriptions are ready.</p>
-        <p class="modal-error" id="waitlist-error" aria-live="polite"></p>
-        <div class="field">
-          <label for="waitlist-email">Email</label>
-          <input id="waitlist-email" type="email" autocomplete="email" placeholder="you@example.com" />
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" data-close-modal="waitlist-modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="waitlist-submit">Notify Me</button>
-        </div>
-      </div>
-      <div id="waitlist-success-view" class="modal-thanks" hidden>
-        <h2>Thank you</h2>
-        <p>We will let you know as soon as Skald Subscription is available.</p>
-        <div class="modal-actions" style="justify-content:center;margin-top:20px;">
-          <button type="button" class="btn btn-secondary" data-close-modal="waitlist-modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
     (function () {
       var hasAuthHint = document.cookie.split(";").some(function (part) {
@@ -1450,58 +1393,6 @@
       openSignupModal();
     }
 
-    /* Waitlist */
-    const waitlistOpen = document.getElementById("open-waitlist");
-    const waitlistEmail = document.getElementById("waitlist-email");
-    const waitlistError = document.getElementById("waitlist-error");
-    const waitlistSubmit = document.getElementById("waitlist-submit");
-    const waitlistFormView = document.getElementById("waitlist-form-view");
-    const waitlistSuccessView = document.getElementById("waitlist-success-view");
-
-    function resetWaitlistModal() {
-      if (waitlistError) waitlistError.textContent = "";
-      if (waitlistEmail) waitlistEmail.value = "";
-      if (waitlistFormView) waitlistFormView.hidden = false;
-      if (waitlistSuccessView) waitlistSuccessView.hidden = true;
-    }
-
-    if (waitlistOpen) {
-      waitlistOpen.addEventListener("click", () => {
-        resetWaitlistModal();
-        openModal("waitlist-modal");
-      });
-    }
-
-    if (waitlistSubmit) {
-      waitlistSubmit.addEventListener("click", async () => {
-        const email = waitlistEmail?.value.trim() || "";
-        if (!email) {
-          if (waitlistError) waitlistError.textContent = "Enter your email address.";
-          return;
-        }
-        if (!supabase) {
-          if (waitlistError) {
-            waitlistError.textContent =
-              "Waitlist is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.";
-          }
-          return;
-        }
-        if (waitlistError) waitlistError.textContent = "";
-        waitlistSubmit.disabled = true;
-        const { error } = await supabase.from("waitlist").insert({ email });
-        waitlistSubmit.disabled = false;
-        if (error) {
-          const msg =
-            error.code === "23505"
-              ? "This email is already on the waitlist."
-              : error.message;
-          if (waitlistError) waitlistError.textContent = msg;
-          return;
-        }
-        if (waitlistFormView) waitlistFormView.hidden = true;
-        if (waitlistSuccessView) waitlistSuccessView.hidden = false;
-      });
-    }
   </script>
 
   <script type="module">
