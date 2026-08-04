@@ -459,8 +459,14 @@ let filePickerAppBridge = null;
       const textEl = document.getElementById("file-picker-storage-text");
       const limitMsg = document.getElementById("file-picker-storage-limit-msg");
       const uploadBtn = document.getElementById("file-picker-my-library-upload-btn");
+      const storageRow =
+        (fillEl && fillEl.closest(".library-storage-row")) ||
+        document.querySelector("#file-picker-library-chrome .library-storage-row");
       const uid = filePickerAppBridge.getLastAuthSession()?.user?.id;
       if (!uid) {
+        if (storageRow) {
+          storageRow.hidden = false;
+        }
         if (fillEl) {
           fillEl.style.width = "0%";
         }
@@ -475,6 +481,40 @@ let filePickerAppBridge = null;
         }
         return;
       }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("tier")
+        .eq("id", uid)
+        .maybeSingle();
+      if (profileError) {
+        console.error("profiles tier", profileError);
+      }
+      const tier = profile?.tier ? String(profile.tier).toLowerCase() : "free";
+      if (tier !== "pro") {
+        if (storageRow) {
+          storageRow.hidden = true;
+        }
+        if (fillEl) {
+          fillEl.style.width = "0%";
+        }
+        if (textEl) {
+          textEl.textContent = "—";
+        }
+        if (limitMsg) {
+          limitMsg.hidden = false;
+          limitMsg.textContent =
+            "Uploading your own audio is a Pro feature. Upgrade to unlock unlimited storage and custom uploads.";
+        }
+        if (uploadBtn) {
+          uploadBtn.disabled = true;
+        }
+        return;
+      }
+
+      if (storageRow) {
+        storageRow.hidden = false;
+      }
       const used = await fetchUserStorageUsedBytes(uid);
       const pct = Math.min(100, (used / USER_LIBRARY_QUOTA_BYTES) * 100);
       if (fillEl) {
@@ -487,6 +527,10 @@ let filePickerAppBridge = null;
       const atLimit = used >= USER_LIBRARY_QUOTA_BYTES;
       if (limitMsg) {
         limitMsg.hidden = !atLimit;
+        if (atLimit) {
+          limitMsg.textContent =
+            "Storage limit reached (500 MB). Delete files to upload more.";
+        }
       }
       if (uploadBtn) {
         uploadBtn.disabled = atLimit;
