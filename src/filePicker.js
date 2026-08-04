@@ -504,7 +504,7 @@ let filePickerAppBridge = null;
         if (limitMsg) {
           limitMsg.hidden = false;
           limitMsg.textContent =
-            "Uploading your own audio is a Pro feature. Upgrade to unlock unlimited storage and custom uploads.";
+            "Upgrade to unlock custom audio uploads (500MB storage) and unlimited scenes/sessions.";
         }
         if (uploadBtn) {
           uploadBtn.disabled = true;
