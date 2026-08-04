@@ -1290,7 +1290,7 @@
       manageWrap?.classList.add("is-visible");
       const billingBtn = document.getElementById("nav-account-billing");
       const billingDivider = document.getElementById("nav-account-menu-divider");
-      const showBilling = userTier === "pro";
+      const showBilling = Boolean(stripeCustomerId && String(stripeCustomerId).trim());
       if (billingBtn) billingBtn.hidden = !showBilling;
       if (billingDivider) billingDivider.hidden = !showBilling;
       document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
@@ -1312,8 +1312,7 @@
     }
 
     async function openCustomerPortal() {
-      if (!stripeCustomerId) {
-        alert("Could not open subscription management. Please try again.");
+      if (!stripeCustomerId || !String(stripeCustomerId).trim()) {
         return;
       }
       try {

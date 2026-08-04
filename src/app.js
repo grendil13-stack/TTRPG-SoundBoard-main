@@ -1649,15 +1649,16 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       }
       const signedIn = Boolean(lastAuthSession?.user);
       const isPro = userTier === "pro";
+      const showBilling = Boolean(stripeCustomerId && String(stripeCustomerId).trim());
       accountSubscribeBtn.hidden = !signedIn || isPro;
       if (accountManageWrap) {
         accountManageWrap.hidden = !signedIn;
       }
       if (accountBillingBtn) {
-        accountBillingBtn.hidden = !isPro;
+        accountBillingBtn.hidden = !showBilling;
       }
       if (accountManageMenuDivider) {
-        accountManageMenuDivider.hidden = !isPro;
+        accountManageMenuDivider.hidden = !showBilling;
       }
       if (!signedIn) {
         closeAccountManageMenu();
@@ -1716,6 +1717,9 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
 
     async function openCustomerPortal() {
+      if (!stripeCustomerId || !String(stripeCustomerId).trim()) {
+        return;
+      }
       try {
         const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
         const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
