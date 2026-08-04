@@ -127,7 +127,16 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const accountSignedInEl = document.getElementById("account-signed-in");
     const accountEmailEl = document.getElementById("account-email");
     const accountSubscribeBtn = document.getElementById("account-subscribe");
+    const accountManageWrap = document.getElementById("account-manage-wrap");
     const accountManageSubscriptionBtn = document.getElementById("account-manage-subscription");
+    const accountManageMenu = document.getElementById("account-manage-menu");
+    const accountBillingBtn = document.getElementById("account-billing");
+    const accountManageMenuDivider = document.getElementById("account-manage-menu-divider");
+    const accountDeleteBtn = document.getElementById("account-delete");
+    const deleteAccountModalBackdrop = document.getElementById("delete-account-modal-backdrop");
+    const deleteAccountConfirmInput = document.getElementById("delete-account-confirm-input");
+    const deleteAccountConfirmBtn = document.getElementById("delete-account-confirm");
+    const deleteAccountCancelBtn = document.getElementById("delete-account-cancel");
     const accountSignOutBtn = document.getElementById("account-sign-out");
     const authModalBackdrop = document.getElementById("auth-modal-backdrop");
     const authModalErrorEl = document.getElementById("auth-modal-error");
@@ -1639,8 +1648,54 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       const signedIn = Boolean(lastAuthSession?.user);
       const isPro = userTier === "pro";
       accountSubscribeBtn.hidden = !signedIn || isPro;
+      if (accountManageWrap) {
+        accountManageWrap.hidden = !signedIn;
+      }
+      if (accountBillingBtn) {
+        accountBillingBtn.hidden = !isPro;
+      }
+      if (accountManageMenuDivider) {
+        accountManageMenuDivider.hidden = !isPro;
+      }
+      if (!signedIn) {
+        closeAccountManageMenu();
+      }
+    }
+
+    function closeAccountManageMenu() {
+      if (accountManageMenu) {
+        accountManageMenu.hidden = true;
+      }
       if (accountManageSubscriptionBtn) {
-        accountManageSubscriptionBtn.hidden = !signedIn || !isPro;
+        accountManageSubscriptionBtn.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    function openDeleteAccountModal() {
+      closeAccountManageMenu();
+      if (deleteAccountConfirmInput) {
+        deleteAccountConfirmInput.value = "";
+      }
+      if (deleteAccountConfirmBtn) {
+        deleteAccountConfirmBtn.disabled = true;
+      }
+      if (deleteAccountModalBackdrop) {
+        deleteAccountModalBackdrop.classList.add("open");
+        deleteAccountModalBackdrop.setAttribute("aria-hidden", "false");
+      }
+      deleteAccountConfirmInput?.focus();
+    }
+
+    function closeDeleteAccountModal() {
+      if (deleteAccountModalBackdrop) {
+        deleteAccountModalBackdrop.classList.remove("open");
+        deleteAccountModalBackdrop.setAttribute("aria-hidden", "true");
+      }
+      if (deleteAccountConfirmInput) {
+        deleteAccountConfirmInput.value = "";
+      }
+      if (deleteAccountConfirmBtn) {
+        deleteAccountConfirmBtn.disabled = true;
       }
     }
 
@@ -4113,10 +4168,69 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       });
     }
     if (accountManageSubscriptionBtn) {
-      accountManageSubscriptionBtn.addEventListener("click", () => {
+      accountManageSubscriptionBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!accountManageMenu) {
+          return;
+        }
+        const open = accountManageMenu.hidden;
+        accountManageMenu.hidden = !open;
+        accountManageSubscriptionBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    if (accountBillingBtn) {
+      accountBillingBtn.addEventListener("click", () => {
+        closeAccountManageMenu();
         void openCustomerPortal();
       });
     }
+    if (accountDeleteBtn) {
+      accountDeleteBtn.addEventListener("click", () => {
+        openDeleteAccountModal();
+      });
+    }
+    if (deleteAccountConfirmInput) {
+      deleteAccountConfirmInput.addEventListener("input", () => {
+        if (deleteAccountConfirmBtn) {
+          deleteAccountConfirmBtn.disabled =
+            deleteAccountConfirmInput.value !== "DELETE";
+        }
+      });
+    }
+    if (deleteAccountConfirmBtn) {
+      deleteAccountConfirmBtn.addEventListener("click", () => {
+        if (deleteAccountConfirmInput?.value !== "DELETE") {
+          return;
+        }
+        console.log("Account deletion confirmed");
+        closeDeleteAccountModal();
+      });
+    }
+    if (deleteAccountCancelBtn) {
+      deleteAccountCancelBtn.addEventListener("click", () => {
+        closeDeleteAccountModal();
+      });
+    }
+    if (deleteAccountModalBackdrop) {
+      deleteAccountModalBackdrop.addEventListener("click", (e) => {
+        if (e.target === deleteAccountModalBackdrop) {
+          closeDeleteAccountModal();
+        }
+      });
+    }
+    document.addEventListener("click", (e) => {
+      if (accountManageWrap && !accountManageWrap.contains(e.target)) {
+        closeAccountManageMenu();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeAccountManageMenu();
+        if (deleteAccountModalBackdrop?.classList.contains("open")) {
+          closeDeleteAccountModal();
+        }
+      }
+    });
     if (authModalCancelBtn) {
       authModalCancelBtn.addEventListener("click", () => closeAuthModal());
     }

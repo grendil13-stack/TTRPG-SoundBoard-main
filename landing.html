@@ -221,6 +221,86 @@
       gap: 8px;
     }
 
+    .nav-account-menu {
+      position: relative;
+      display: none;
+    }
+
+    .nav-account-menu.is-visible {
+      display: inline-block;
+    }
+
+    .account-menu-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 168px;
+      padding: 6px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      z-index: 120;
+    }
+
+    [data-theme="parchment"] .account-menu-popover { border-width: 2px; }
+
+    .account-menu-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      font-size: 0.85rem;
+      padding: 8px 10px;
+      border: none;
+      border-radius: calc(var(--radius-sm) - 2px);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .account-menu-item:hover {
+      background: var(--btn-secondary-bg);
+    }
+
+    .account-menu-divider {
+      height: 1px;
+      margin: 4px 6px;
+      background: var(--border);
+    }
+
+    .account-menu-item--danger {
+      color: #e87878;
+    }
+
+    [data-theme="parchment"] .account-menu-item--danger {
+      color: #8b2020;
+    }
+
+    .account-menu-item--danger:hover {
+      background: rgba(232, 120, 120, 0.12);
+    }
+
+    [data-theme="parchment"] .account-menu-item--danger:hover {
+      background: rgba(139, 32, 32, 0.1);
+    }
+
+    .btn-danger {
+      background: #c44;
+      color: #fff;
+      border-color: #c44;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #d55;
+      border-color: #d55;
+    }
+
+    .btn-danger:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
     .theme-switcher {
       display: flex;
       align-items: center;
@@ -735,7 +815,8 @@
     }
 
     .field input[type="email"],
-    .field input[type="password"] {
+    .field input[type="password"],
+    .field input[type="text"] {
       font: inherit;
       padding: 10px 12px;
       border-radius: var(--radius-sm);
@@ -885,7 +966,21 @@
         </div>
         <div class="nav-auth-desktop">
           <span id="nav-user-email" style="display:none;font-size:0.75rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-          <button id="nav-manage-subscription" type="button" class="btn btn-ghost btn-sm" style="display:none;">Manage Subscription</button>
+          <div class="nav-account-menu" id="nav-manage-account-wrap">
+            <button
+              id="nav-manage-subscription"
+              type="button"
+              class="btn btn-ghost btn-sm"
+              aria-expanded="false"
+              aria-haspopup="true"
+              aria-controls="nav-account-menu"
+            >Manage Account</button>
+            <div id="nav-account-menu" class="account-menu-popover" hidden role="menu">
+              <button type="button" role="menuitem" id="nav-account-billing" class="account-menu-item">Billing</button>
+              <div class="account-menu-divider" id="nav-account-menu-divider" role="separator"></div>
+              <button type="button" role="menuitem" id="nav-account-delete" class="account-menu-item account-menu-item--danger">Delete Account</button>
+            </div>
+          </div>
           <a id="nav-open-skald" href="https://app.skaldsoundboard.com/" class="btn btn-ghost btn-sm" style="display:none;">Open Skald</a>
           <button id="nav-sign-out" type="button" class="btn btn-ghost btn-sm" style="display:none;">Sign Out</button>
           <a id="nav-signin" href="https://app.skaldsoundboard.com/?signin=true" class="btn btn-ghost btn-sm">Sign In</a>
@@ -1080,6 +1175,22 @@
     </div>
   </div>
 
+  <!-- Delete account modal -->
+  <div class="modal-backdrop" id="delete-account-modal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-labelledby="delete-account-title" aria-modal="true">
+      <h2 id="delete-account-title">Delete account?</h2>
+      <p class="sub">This permanently deletes your account, all scenes, sessions, and uploaded files. This cannot be undone.</p>
+      <div class="field">
+        <label for="delete-account-confirm-input">Type <strong>DELETE</strong> to confirm</label>
+        <input id="delete-account-confirm-input" type="text" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal="delete-account-modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="delete-account-confirm" disabled>Delete Account</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       var hasAuthHint = document.cookie.split(";").some(function (part) {
@@ -1152,11 +1263,13 @@
       document.getElementById("nav-signup")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-user-email").textContent = session.user.email;
       document.getElementById("nav-user-email")?.style.setProperty("display", "inline", "important");
-      if (userTier === "pro") {
-        document.getElementById("nav-manage-subscription")?.style.setProperty("display", "inline-block", "important");
-      } else {
-        document.getElementById("nav-manage-subscription")?.style.setProperty("display", "none", "important");
-      }
+      const manageWrap = document.getElementById("nav-manage-account-wrap");
+      manageWrap?.classList.add("is-visible");
+      const billingBtn = document.getElementById("nav-account-billing");
+      const billingDivider = document.getElementById("nav-account-menu-divider");
+      const showBilling = userTier === "pro";
+      if (billingBtn) billingBtn.hidden = !showBilling;
+      if (billingDivider) billingDivider.hidden = !showBilling;
       document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
       document.getElementById("nav-sign-out")?.style.setProperty("display", "inline-block", "important");
       document.getElementById("hero-signup")?.style.setProperty("display", "none", "important");
@@ -1167,7 +1280,8 @@
       document.getElementById("nav-signin")?.style.setProperty("display", "inline", "important");
       document.getElementById("nav-signup")?.style.setProperty("display", "inline-block", "important");
       document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
-      document.getElementById("nav-manage-subscription")?.style.setProperty("display", "none", "important");
+      document.getElementById("nav-manage-account-wrap")?.classList.remove("is-visible");
+      closeAccountMenu();
       document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-sign-out")?.style.setProperty("display", "none", "important");
       document.getElementById("hero-signup")?.style.setProperty("display", "inline-flex", "important");
@@ -1222,8 +1336,62 @@
       });
     }
 
-    document.getElementById("nav-manage-subscription")?.addEventListener("click", () => {
+    const manageAccountBtn = document.getElementById("nav-manage-subscription");
+    const accountMenu = document.getElementById("nav-account-menu");
+    const deleteConfirmInput = document.getElementById("delete-account-confirm-input");
+    const deleteConfirmBtn = document.getElementById("delete-account-confirm");
+
+    function closeAccountMenu() {
+      if (accountMenu) accountMenu.hidden = true;
+      if (manageAccountBtn) manageAccountBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function openDeleteAccountModal() {
+      closeAccountMenu();
+      if (deleteConfirmInput) deleteConfirmInput.value = "";
+      if (deleteConfirmBtn) deleteConfirmBtn.disabled = true;
+      openModal("delete-account-modal");
+      deleteConfirmInput?.focus();
+    }
+
+    manageAccountBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!accountMenu) return;
+      const open = accountMenu.hidden;
+      accountMenu.hidden = !open;
+      manageAccountBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    document.getElementById("nav-account-billing")?.addEventListener("click", () => {
+      closeAccountMenu();
       void openCustomerPortal();
+    });
+
+    document.getElementById("nav-account-delete")?.addEventListener("click", () => {
+      openDeleteAccountModal();
+    });
+
+    deleteConfirmInput?.addEventListener("input", () => {
+      if (deleteConfirmBtn) {
+        deleteConfirmBtn.disabled = deleteConfirmInput.value !== "DELETE";
+      }
+    });
+
+    deleteConfirmBtn?.addEventListener("click", () => {
+      if (deleteConfirmInput?.value !== "DELETE") return;
+      console.log("Account deletion confirmed");
+      closeModal("delete-account-modal");
+    });
+
+    document.addEventListener("click", (e) => {
+      const wrap = document.getElementById("nav-manage-account-wrap");
+      if (wrap && !wrap.contains(e.target)) {
+        closeAccountMenu();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAccountMenu();
     });
 
     document.getElementById("nav-sign-out")?.addEventListener("click", async () => {
@@ -1299,6 +1467,10 @@
       if (!el) return;
       el.classList.remove("open");
       el.setAttribute("aria-hidden", "true");
+      if (id === "delete-account-modal") {
+        if (deleteConfirmInput) deleteConfirmInput.value = "";
+        if (deleteConfirmBtn) deleteConfirmBtn.disabled = true;
+      }
     }
 
     document.querySelectorAll("[data-close-modal]").forEach((btn) => {
@@ -1307,15 +1479,14 @@
 
     document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
       backdrop.addEventListener("click", (e) => {
-        if (e.target === backdrop) backdrop.classList.remove("open");
+        if (e.target === backdrop) closeModal(backdrop.id);
       });
     });
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
       document.querySelectorAll(".modal-backdrop.open").forEach((m) => {
-        m.classList.remove("open");
-        m.setAttribute("aria-hidden", "true");
+        closeModal(m.id);
       });
     });
 

@@ -211,6 +211,60 @@
       background: #8f87e8;
     }
 
+    .account-manage-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .account-manage-wrap[hidden] {
+      display: none !important;
+    }
+
+    .account-menu-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 160px;
+      padding: 4px;
+      background: var(--panel);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      z-index: 1300;
+    }
+
+    .account-menu-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      font-size: 12px;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .account-menu-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .account-menu-divider {
+      height: 1px;
+      margin: 4px 6px;
+      background: var(--border);
+    }
+
+    .account-menu-item--danger {
+      color: #e87878;
+    }
+
+    .account-menu-item--danger:hover {
+      background: rgba(232, 120, 120, 0.12);
+    }
+
     .account-sign-out {
       font-size: 11px;
       padding: 4px 8px;
@@ -231,15 +285,29 @@
         max(24px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
     }
 
+    .delete-account-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 16, 0.72);
+      z-index: 1400;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(24px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+        max(24px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    }
+
     .auth-modal-backdrop.open,
     .scene-limit-modal-backdrop.open,
-    .feedback-modal-backdrop.open {
+    .feedback-modal-backdrop.open,
+    .delete-account-modal-backdrop.open {
       display: flex;
     }
 
     .auth-modal-panel,
     .scene-limit-modal-panel,
-    .feedback-modal-panel {
+    .feedback-modal-panel,
+    .delete-account-modal-panel {
       background: var(--panel);
       border: 0.5px solid var(--border);
       border-radius: 12px;
@@ -250,7 +318,8 @@
 
     .auth-modal-panel h3,
     .scene-limit-modal-panel h3,
-    .feedback-modal-panel h3 {
+    .feedback-modal-panel h3,
+    .delete-account-modal-panel h3 {
       margin: 0 0 10px;
       font-size: 1.15rem;
     }
@@ -267,7 +336,8 @@
     }
 
     .auth-modal-panel input[type="email"],
-    .auth-modal-panel input[type="password"] {
+    .auth-modal-panel input[type="password"],
+    .delete-account-modal-panel input[type="text"] {
       padding: 8px 10px;
       border-radius: 6px;
       border: 0.5px solid var(--border);
@@ -286,6 +356,45 @@
 
     .auth-modal-actions button.secondary {
       background: var(--panel-2);
+    }
+
+    .delete-account-modal-panel .delete-account-warn {
+      margin: 0 0 14px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .delete-account-modal-panel .auth-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .delete-account-modal-panel .auth-field label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .delete-account-modal-panel .auth-field label strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .delete-account-confirm-btn {
+      background: #c44 !important;
+      border-color: #c44 !important;
+      color: #fff !important;
+    }
+
+    .delete-account-confirm-btn:hover:not(:disabled) {
+      background: #d55 !important;
+      border-color: #d55 !important;
+    }
+
+    .delete-account-confirm-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
     .auth-modal-error {
@@ -3851,7 +3960,21 @@
           <div class="account-signed-in" id="account-signed-in" hidden>
             <span class="account-email" id="account-email" hidden aria-hidden="true"></span>
             <button type="button" id="account-subscribe" class="account-subscribe" hidden>Subscribe</button>
-            <button type="button" id="account-manage-subscription" class="account-subscribe" hidden>Manage Subscription</button>
+            <div class="account-manage-wrap" id="account-manage-wrap" hidden>
+              <button
+                type="button"
+                id="account-manage-subscription"
+                class="account-subscribe"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="account-manage-menu"
+              >Manage Account</button>
+              <div id="account-manage-menu" class="account-menu-popover" hidden role="menu">
+                <button type="button" role="menuitem" id="account-billing" class="account-menu-item">Billing</button>
+                <div class="account-menu-divider" id="account-manage-menu-divider" role="separator"></div>
+                <button type="button" role="menuitem" id="account-delete" class="account-menu-item account-menu-item--danger">Delete Account</button>
+              </div>
+            </div>
             <button type="button" id="account-sign-out" class="account-sign-out">Sign out</button>
           </div>
         </div>
@@ -4255,6 +4378,21 @@
       </div>
       <div id="feedback-modal-thanks" class="feedback-thanks-wrap" hidden>
         <p class="feedback-thanks-msg">Thank you — we appreciate your input.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="delete-account-modal-backdrop" id="delete-account-modal-backdrop" aria-hidden="true">
+    <div class="delete-account-modal-panel" role="dialog" aria-labelledby="delete-account-modal-title" aria-modal="true">
+      <h3 id="delete-account-modal-title">Delete account?</h3>
+      <p class="delete-account-warn">This permanently deletes your account, all scenes, sessions, and uploaded files. This cannot be undone.</p>
+      <div class="auth-field">
+        <label for="delete-account-confirm-input">Type <strong>DELETE</strong> to confirm</label>
+        <input id="delete-account-confirm-input" type="text" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="auth-modal-actions">
+        <button type="button" class="secondary" id="delete-account-cancel">Cancel</button>
+        <button type="button" class="delete-account-confirm-btn" id="delete-account-confirm" disabled>Delete Account</button>
       </div>
     </div>
   </div>
