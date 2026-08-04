@@ -1180,6 +1180,7 @@
     <div class="modal-panel" role="dialog" aria-labelledby="delete-account-title" aria-modal="true">
       <h2 id="delete-account-title">Delete account?</h2>
       <p class="sub">This permanently deletes your account, all scenes, sessions, and uploaded files. This cannot be undone.</p>
+      <p class="modal-error" id="delete-account-error" aria-live="polite"></p>
       <div class="field">
         <label for="delete-account-confirm-input">Type <strong>DELETE</strong> to confirm</label>
         <input id="delete-account-confirm-input" type="text" autocomplete="off" spellcheck="false" />
@@ -1217,6 +1218,28 @@
       banner.innerHTML =
         "You're subscribed! Welcome to Skald Pro. Sign in to access your account." +
         '<a href="https://app.skaldsoundboard.com/" style="margin-left:16px;padding:8px 16px;background:white;color:#333;border-radius:6px;text-decoration:none;font-weight:bold;">Open Skald</a>';
+      Object.assign(banner.style, {
+        position: "fixed",
+        top: "0",
+        left: "0",
+        right: "0",
+        zIndex: "9999",
+        padding: "16px 24px",
+        textAlign: "center",
+        fontWeight: "600",
+        fontSize: "0.95rem",
+        background: "var(--accent)",
+        color: "var(--bg)",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+      });
+      document.body.prepend(banner);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    if (new URLSearchParams(window.location.search).get("account") === "deleted") {
+      const banner = document.createElement("div");
+      banner.setAttribute("role", "status");
+      banner.textContent = "Your account has been deleted.";
       Object.assign(banner.style, {
         position: "fixed",
         top: "0",
@@ -1340,6 +1363,8 @@
     const accountMenu = document.getElementById("nav-account-menu");
     const deleteConfirmInput = document.getElementById("delete-account-confirm-input");
     const deleteConfirmBtn = document.getElementById("delete-account-confirm");
+    const deleteAccountError = document.getElementById("delete-account-error");
+    let deleteAccountInFlight = false;
 
     function closeAccountMenu() {
       if (accountMenu) accountMenu.hidden = true;
@@ -1348,8 +1373,16 @@
 
     function openDeleteAccountModal() {
       closeAccountMenu();
-      if (deleteConfirmInput) deleteConfirmInput.value = "";
-      if (deleteConfirmBtn) deleteConfirmBtn.disabled = true;
+      deleteAccountInFlight = false;
+      if (deleteConfirmInput) {
+        deleteConfirmInput.value = "";
+        deleteConfirmInput.disabled = false;
+      }
+      if (deleteConfirmBtn) {
+        deleteConfirmBtn.disabled = true;
+        deleteConfirmBtn.textContent = "Delete Account";
+      }
+      if (deleteAccountError) deleteAccountError.textContent = "";
       openModal("delete-account-modal");
       deleteConfirmInput?.focus();
     }
@@ -1372,15 +1405,57 @@
     });
 
     deleteConfirmInput?.addEventListener("input", () => {
-      if (deleteConfirmBtn) {
-        deleteConfirmBtn.disabled = deleteConfirmInput.value !== "DELETE";
-      }
+      if (deleteAccountInFlight || !deleteConfirmBtn) return;
+      deleteConfirmBtn.disabled = deleteConfirmInput.value !== "DELETE";
     });
 
-    deleteConfirmBtn?.addEventListener("click", () => {
+    deleteConfirmBtn?.addEventListener("click", async () => {
+      if (deleteAccountInFlight) return;
       if (deleteConfirmInput?.value !== "DELETE") return;
-      console.log("Account deletion confirmed");
-      closeModal("delete-account-modal");
+
+      deleteAccountInFlight = true;
+      deleteConfirmBtn.disabled = true;
+      deleteConfirmBtn.textContent = "Deleting…";
+      if (deleteConfirmInput) deleteConfirmInput.disabled = true;
+      if (deleteAccountError) deleteAccountError.textContent = "";
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+        if (!accessToken) {
+          throw new Error("not-authenticated");
+        }
+
+        const response = await fetch(
+          "https://kquiougzmjxtaneeedip.supabase.co/functions/v1/delete-account",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("delete-failed");
+        }
+
+        await supabase.auth.signOut();
+        window.location.href = "/?account=deleted";
+      } catch (_) {
+        deleteAccountInFlight = false;
+        if (deleteConfirmInput) {
+          deleteConfirmInput.disabled = false;
+        }
+        if (deleteConfirmBtn) {
+          deleteConfirmBtn.disabled = deleteConfirmInput?.value !== "DELETE";
+          deleteConfirmBtn.textContent = "Delete Account";
+        }
+        if (deleteAccountError) {
+          deleteAccountError.textContent =
+            "Something went wrong. Please contact support@skaldsoundboard.com";
+        }
+      }
     });
 
     document.addEventListener("click", (e) => {
@@ -1463,13 +1538,24 @@
     }
 
     function closeModal(id) {
+      if (id === "delete-account-modal" && deleteAccountInFlight) {
+        return;
+      }
       const el = document.getElementById(id);
       if (!el) return;
       el.classList.remove("open");
       el.setAttribute("aria-hidden", "true");
       if (id === "delete-account-modal") {
-        if (deleteConfirmInput) deleteConfirmInput.value = "";
-        if (deleteConfirmBtn) deleteConfirmBtn.disabled = true;
+        deleteAccountInFlight = false;
+        if (deleteConfirmInput) {
+          deleteConfirmInput.value = "";
+          deleteConfirmInput.disabled = false;
+        }
+        if (deleteConfirmBtn) {
+          deleteConfirmBtn.disabled = true;
+          deleteConfirmBtn.textContent = "Delete Account";
+        }
+        if (deleteAccountError) deleteAccountError.textContent = "";
       }
     }
 

@@ -137,6 +137,8 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const deleteAccountConfirmInput = document.getElementById("delete-account-confirm-input");
     const deleteAccountConfirmBtn = document.getElementById("delete-account-confirm");
     const deleteAccountCancelBtn = document.getElementById("delete-account-cancel");
+    const deleteAccountErrorEl = document.getElementById("delete-account-error");
+    let deleteAccountInFlight = false;
     const accountSignOutBtn = document.getElementById("account-sign-out");
     const authModalBackdrop = document.getElementById("auth-modal-backdrop");
     const authModalErrorEl = document.getElementById("auth-modal-error");
@@ -1673,11 +1675,17 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
 
     function openDeleteAccountModal() {
       closeAccountManageMenu();
+      deleteAccountInFlight = false;
       if (deleteAccountConfirmInput) {
         deleteAccountConfirmInput.value = "";
+        deleteAccountConfirmInput.disabled = false;
       }
       if (deleteAccountConfirmBtn) {
         deleteAccountConfirmBtn.disabled = true;
+        deleteAccountConfirmBtn.textContent = "Delete Account";
+      }
+      if (deleteAccountErrorEl) {
+        deleteAccountErrorEl.textContent = "";
       }
       if (deleteAccountModalBackdrop) {
         deleteAccountModalBackdrop.classList.add("open");
@@ -1687,15 +1695,23 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
 
     function closeDeleteAccountModal() {
+      if (deleteAccountInFlight) {
+        return;
+      }
       if (deleteAccountModalBackdrop) {
         deleteAccountModalBackdrop.classList.remove("open");
         deleteAccountModalBackdrop.setAttribute("aria-hidden", "true");
       }
       if (deleteAccountConfirmInput) {
         deleteAccountConfirmInput.value = "";
+        deleteAccountConfirmInput.disabled = false;
       }
       if (deleteAccountConfirmBtn) {
         deleteAccountConfirmBtn.disabled = true;
+        deleteAccountConfirmBtn.textContent = "Delete Account";
+      }
+      if (deleteAccountErrorEl) {
+        deleteAccountErrorEl.textContent = "";
       }
     }
 
@@ -4191,19 +4207,72 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
     if (deleteAccountConfirmInput) {
       deleteAccountConfirmInput.addEventListener("input", () => {
-        if (deleteAccountConfirmBtn) {
-          deleteAccountConfirmBtn.disabled =
-            deleteAccountConfirmInput.value !== "DELETE";
+        if (deleteAccountInFlight || !deleteAccountConfirmBtn) {
+          return;
         }
+        deleteAccountConfirmBtn.disabled =
+          deleteAccountConfirmInput.value !== "DELETE";
       });
     }
     if (deleteAccountConfirmBtn) {
-      deleteAccountConfirmBtn.addEventListener("click", () => {
+      deleteAccountConfirmBtn.addEventListener("click", async () => {
+        if (deleteAccountInFlight) {
+          return;
+        }
         if (deleteAccountConfirmInput?.value !== "DELETE") {
           return;
         }
-        console.log("Account deletion confirmed");
-        closeDeleteAccountModal();
+
+        deleteAccountInFlight = true;
+        deleteAccountConfirmBtn.disabled = true;
+        deleteAccountConfirmBtn.textContent = "Deleting…";
+        if (deleteAccountConfirmInput) {
+          deleteAccountConfirmInput.disabled = true;
+        }
+        if (deleteAccountErrorEl) {
+          deleteAccountErrorEl.textContent = "";
+        }
+
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          const accessToken = session?.access_token;
+          if (!accessToken) {
+            throw new Error("not-authenticated");
+          }
+
+          const response = await fetch(
+            "https://kquiougzmjxtaneeedip.supabase.co/functions/v1/delete-account",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error("delete-failed");
+          }
+
+          await supabase.auth.signOut();
+          window.location.href = landingPageUrl("/?account=deleted");
+        } catch (_) {
+          deleteAccountInFlight = false;
+          if (deleteAccountConfirmInput) {
+            deleteAccountConfirmInput.disabled = false;
+          }
+          if (deleteAccountConfirmBtn) {
+            deleteAccountConfirmBtn.disabled =
+              deleteAccountConfirmInput?.value !== "DELETE";
+            deleteAccountConfirmBtn.textContent = "Delete Account";
+          }
+          if (deleteAccountErrorEl) {
+            deleteAccountErrorEl.textContent =
+              "Something went wrong. Please contact support@skaldsoundboard.com";
+          }
+        }
       });
     }
     if (deleteAccountCancelBtn) {
