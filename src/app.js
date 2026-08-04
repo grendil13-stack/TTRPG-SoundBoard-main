@@ -130,8 +130,6 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     const accountManageWrap = document.getElementById("account-manage-wrap");
     const accountManageSubscriptionBtn = document.getElementById("account-manage-subscription");
     const accountManageMenu = document.getElementById("account-manage-menu");
-    const accountBillingBtn = document.getElementById("account-billing");
-    const accountManageMenuDivider = document.getElementById("account-manage-menu-divider");
     const accountDeleteBtn = document.getElementById("account-delete");
     const deleteAccountModalBackdrop = document.getElementById("delete-account-modal-backdrop");
     const deleteAccountConfirmInput = document.getElementById("delete-account-confirm-input");
@@ -1643,23 +1641,49 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       }
     }
 
+    function hasStripeCustomerId() {
+      return Boolean(stripeCustomerId && String(stripeCustomerId).trim());
+    }
+
+    function syncBillingMenuOption() {
+      if (!accountManageMenu || !accountDeleteBtn) {
+        return;
+      }
+      const existingBilling = document.getElementById("account-billing");
+      const existingDivider = document.getElementById("account-manage-menu-divider");
+      if (hasStripeCustomerId()) {
+        if (existingBilling) {
+          return;
+        }
+        const billingBtn = document.createElement("button");
+        billingBtn.type = "button";
+        billingBtn.id = "account-billing";
+        billingBtn.className = "account-menu-item";
+        billingBtn.setAttribute("role", "menuitem");
+        billingBtn.textContent = "Billing";
+        const divider = document.createElement("div");
+        divider.id = "account-manage-menu-divider";
+        divider.className = "account-menu-divider";
+        divider.setAttribute("role", "separator");
+        accountManageMenu.insertBefore(billingBtn, accountDeleteBtn);
+        accountManageMenu.insertBefore(divider, accountDeleteBtn);
+        return;
+      }
+      existingBilling?.remove();
+      existingDivider?.remove();
+    }
+
     function updateTopbarSubscribeButton() {
       if (!accountSubscribeBtn) {
         return;
       }
       const signedIn = Boolean(lastAuthSession?.user);
       const isPro = userTier === "pro";
-      const showBilling = Boolean(stripeCustomerId && String(stripeCustomerId).trim());
       accountSubscribeBtn.hidden = !signedIn || isPro;
       if (accountManageWrap) {
         accountManageWrap.hidden = !signedIn;
       }
-      if (accountBillingBtn) {
-        accountBillingBtn.hidden = !showBilling;
-      }
-      if (accountManageMenuDivider) {
-        accountManageMenuDivider.hidden = !showBilling;
-      }
+      syncBillingMenuOption();
       if (!signedIn) {
         closeAccountManageMenu();
       }
@@ -1717,7 +1741,7 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
     }
 
     async function openCustomerPortal() {
-      if (!stripeCustomerId || !String(stripeCustomerId).trim()) {
+      if (!hasStripeCustomerId()) {
         return;
       }
       try {
@@ -4188,18 +4212,35 @@ import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePic
       });
     }
     if (accountManageSubscriptionBtn) {
-      accountManageSubscriptionBtn.addEventListener("click", (e) => {
+      accountManageSubscriptionBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         if (!accountManageMenu) {
           return;
         }
-        const open = accountManageMenu.hidden;
-        accountManageMenu.hidden = !open;
-        accountManageSubscriptionBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        const opening = accountManageMenu.hidden;
+        if (opening) {
+          const uid = lastAuthSession?.user?.id;
+          if (uid) {
+            await fetchUserTier(uid);
+          } else {
+            stripeCustomerId = null;
+          }
+          syncBillingMenuOption();
+        }
+        accountManageMenu.hidden = !opening;
+        accountManageSubscriptionBtn.setAttribute(
+          "aria-expanded",
+          opening ? "true" : "false",
+        );
       });
     }
-    if (accountBillingBtn) {
-      accountBillingBtn.addEventListener("click", () => {
+    if (accountManageMenu) {
+      accountManageMenu.addEventListener("click", (e) => {
+        const target =
+          e.target instanceof Element ? e.target.closest("#account-billing") : null;
+        if (!target) {
+          return;
+        }
         closeAccountManageMenu();
         void openCustomerPortal();
       });

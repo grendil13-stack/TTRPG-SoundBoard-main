@@ -976,8 +976,6 @@
               aria-controls="nav-account-menu"
             >Manage Account</button>
             <div id="nav-account-menu" class="account-menu-popover" hidden role="menu">
-              <button type="button" role="menuitem" id="nav-account-billing" class="account-menu-item">Billing</button>
-              <div class="account-menu-divider" id="nav-account-menu-divider" role="separator"></div>
               <button type="button" role="menuitem" id="nav-account-delete" class="account-menu-item account-menu-item--danger">Delete Account</button>
             </div>
           </div>
@@ -1281,6 +1279,40 @@
       }
     }
 
+    function hasStripeCustomerId() {
+      return Boolean(stripeCustomerId && String(stripeCustomerId).trim());
+    }
+
+    function syncBillingMenuOption() {
+      const menu = document.getElementById("nav-account-menu");
+      const deleteBtn = document.getElementById("nav-account-delete");
+      if (!menu || !deleteBtn) {
+        return;
+      }
+      const existingBilling = document.getElementById("nav-account-billing");
+      const existingDivider = document.getElementById("nav-account-menu-divider");
+      if (hasStripeCustomerId()) {
+        if (existingBilling) {
+          return;
+        }
+        const billingBtn = document.createElement("button");
+        billingBtn.type = "button";
+        billingBtn.id = "nav-account-billing";
+        billingBtn.className = "account-menu-item";
+        billingBtn.setAttribute("role", "menuitem");
+        billingBtn.textContent = "Billing";
+        const divider = document.createElement("div");
+        divider.id = "nav-account-menu-divider";
+        divider.className = "account-menu-divider";
+        divider.setAttribute("role", "separator");
+        menu.insertBefore(billingBtn, deleteBtn);
+        menu.insertBefore(divider, deleteBtn);
+        return;
+      }
+      existingBilling?.remove();
+      existingDivider?.remove();
+    }
+
     function updateLoggedInNav(session) {
       document.getElementById("nav-signin")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-signup")?.style.setProperty("display", "none", "important");
@@ -1288,11 +1320,7 @@
       document.getElementById("nav-user-email")?.style.setProperty("display", "inline", "important");
       const manageWrap = document.getElementById("nav-manage-account-wrap");
       manageWrap?.classList.add("is-visible");
-      const billingBtn = document.getElementById("nav-account-billing");
-      const billingDivider = document.getElementById("nav-account-menu-divider");
-      const showBilling = Boolean(stripeCustomerId && String(stripeCustomerId).trim());
-      if (billingBtn) billingBtn.hidden = !showBilling;
-      if (billingDivider) billingDivider.hidden = !showBilling;
+      syncBillingMenuOption();
       document.getElementById("nav-open-skald")?.style.setProperty("display", "inline-block", "important");
       document.getElementById("nav-sign-out")?.style.setProperty("display", "inline-block", "important");
       document.getElementById("hero-signup")?.style.setProperty("display", "none", "important");
@@ -1305,6 +1333,7 @@
       document.getElementById("nav-user-email")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-manage-account-wrap")?.classList.remove("is-visible");
       closeAccountMenu();
+      syncBillingMenuOption();
       document.getElementById("nav-open-skald")?.style.setProperty("display", "none", "important");
       document.getElementById("nav-sign-out")?.style.setProperty("display", "none", "important");
       document.getElementById("hero-signup")?.style.setProperty("display", "inline-flex", "important");
@@ -1312,7 +1341,7 @@
     }
 
     async function openCustomerPortal() {
-      if (!stripeCustomerId || !String(stripeCustomerId).trim()) {
+      if (!hasStripeCustomerId()) {
         return;
       }
       try {
@@ -1386,15 +1415,32 @@
       deleteConfirmInput?.focus();
     }
 
-    manageAccountBtn?.addEventListener("click", (e) => {
+    manageAccountBtn?.addEventListener("click", async (e) => {
       e.stopPropagation();
       if (!accountMenu) return;
-      const open = accountMenu.hidden;
-      accountMenu.hidden = !open;
-      manageAccountBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      const opening = accountMenu.hidden;
+      if (opening) {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            await loadUserProfile(session.user.id);
+          } else {
+            stripeCustomerId = null;
+          }
+        } catch (_) {
+          /* keep existing stripeCustomerId */
+        }
+        syncBillingMenuOption();
+      }
+      accountMenu.hidden = !opening;
+      manageAccountBtn.setAttribute("aria-expanded", opening ? "true" : "false");
     });
 
-    document.getElementById("nav-account-billing")?.addEventListener("click", () => {
+    accountMenu?.addEventListener("click", (e) => {
+      const target = e.target instanceof Element ? e.target.closest("#nav-account-billing") : null;
+      if (!target) return;
       closeAccountMenu();
       void openCustomerPortal();
     });
