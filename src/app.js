@@ -5,6 +5,9 @@ import { Favorites } from "./favorites.js";
 import { UserTags, loadSuggestedTagsOnce, createUserTagButton, openUserTagPopover } from "./userTags.js";
 import { renderFxButtons, appendSfxTile, buildSfxSectionFilterPills } from "./sfx.js";
 import { openFilePicker, closeFilePicker, renderFilePickerList } from "./filePicker.js";
+import { inject } from "@vercel/analytics";
+
+inject();
 
     function createFavoriteStarButton(initialActive, onToggle) {
       const star = document.createElement("span");
