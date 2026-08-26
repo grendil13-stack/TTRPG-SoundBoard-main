@@ -1687,6 +1687,7 @@ inject();
         accountManageWrap.hidden = !signedIn;
       }
       syncBillingMenuOption();
+      syncMobileAccountMenuOptions();
       if (!signedIn) {
         closeAccountManageMenu();
       }
@@ -1698,6 +1699,68 @@ inject();
       }
       if (accountManageSubscriptionBtn) {
         accountManageSubscriptionBtn.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    function isMobileAccountLayout() {
+      return window.matchMedia("(max-width: 767px)").matches;
+    }
+
+    function syncMobileAccountMenuOptions() {
+      if (!accountManageMenu || !accountDeleteBtn) {
+        return;
+      }
+      const signedIn = Boolean(lastAuthSession?.user);
+      const isPro = userTier === "pro";
+      const mobile = isMobileAccountLayout();
+
+      let mobileSubscribeBtn = document.getElementById("account-subscribe-menu");
+      const wantSubscribe = mobile && signedIn && !isPro;
+      if (wantSubscribe) {
+        if (!mobileSubscribeBtn) {
+          mobileSubscribeBtn = document.createElement("button");
+          mobileSubscribeBtn.type = "button";
+          mobileSubscribeBtn.id = "account-subscribe-menu";
+          mobileSubscribeBtn.className = "account-menu-item";
+          mobileSubscribeBtn.setAttribute("role", "menuitem");
+          mobileSubscribeBtn.textContent = "Subscribe";
+          mobileSubscribeBtn.addEventListener("click", () => {
+            closeAccountManageMenu();
+            openUpgradeModal();
+          });
+          accountManageMenu.insertBefore(mobileSubscribeBtn, accountManageMenu.firstChild);
+        }
+      } else {
+        mobileSubscribeBtn?.remove();
+      }
+
+      let mobileSignOutBtn = document.getElementById("account-sign-out-menu");
+      let mobileSignOutDivider = document.getElementById("account-sign-out-menu-divider");
+      const wantSignOut = mobile && signedIn;
+      if (wantSignOut) {
+        if (!mobileSignOutDivider) {
+          mobileSignOutDivider = document.createElement("div");
+          mobileSignOutDivider.id = "account-sign-out-menu-divider";
+          mobileSignOutDivider.className = "account-menu-divider";
+          mobileSignOutDivider.setAttribute("role", "separator");
+          accountManageMenu.appendChild(mobileSignOutDivider);
+        }
+        if (!mobileSignOutBtn) {
+          mobileSignOutBtn = document.createElement("button");
+          mobileSignOutBtn.type = "button";
+          mobileSignOutBtn.id = "account-sign-out-menu";
+          mobileSignOutBtn.className = "account-menu-item";
+          mobileSignOutBtn.setAttribute("role", "menuitem");
+          mobileSignOutBtn.textContent = "Sign out";
+          mobileSignOutBtn.addEventListener("click", () => {
+            closeAccountManageMenu();
+            void supabase.auth.signOut();
+          });
+          accountManageMenu.appendChild(mobileSignOutBtn);
+        }
+      } else {
+        mobileSignOutBtn?.remove();
+        mobileSignOutDivider?.remove();
       }
     }
 
@@ -4229,6 +4292,7 @@ inject();
             stripeCustomerId = null;
           }
           syncBillingMenuOption();
+          syncMobileAccountMenuOptions();
         }
         accountManageMenu.hidden = !opening;
         accountManageSubscriptionBtn.setAttribute(
@@ -4339,6 +4403,9 @@ inject();
       if (accountManageWrap && !accountManageWrap.contains(e.target)) {
         closeAccountManageMenu();
       }
+    });
+    window.matchMedia("(max-width: 767px)").addEventListener("change", () => {
+      updateTopbarSubscribeButton();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
