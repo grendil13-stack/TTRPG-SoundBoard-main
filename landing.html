@@ -169,6 +169,7 @@
       padding: 0 20px;
       max-width: 1280px;
       margin: 0 auto;
+      min-width: 0;
     }
 
     .logo {
@@ -213,6 +214,7 @@
       align-items: center;
       gap: 12px;
       flex-shrink: 0;
+      min-width: 0;
     }
 
     .nav-auth-desktop {
@@ -912,7 +914,12 @@
 
       .nav-inner { flex-wrap: wrap; }
 
-      .nav-right { margin-left: 0; }
+      .nav-right {
+        margin-left: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        row-gap: 8px;
+      }
 
       .features-grid,
       .steps {
