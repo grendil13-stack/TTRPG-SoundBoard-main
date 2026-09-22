@@ -1,6 +1,6 @@
 {
   "_readme": {
-    "description": "Skald Sound Board — master audio manifest v3. Ambient uses three-layer system: base / texture / foreground.",
+    "description": "Skald Sound Board \u2014 master audio manifest v3. Ambient uses three-layer system: base / texture / foreground.",
     "version": "3.0",
     "filter_system": {
       "music": "Two-step: select setting_tag first, then mood_tag.",
@@ -8,10 +8,10 @@
       "sfx": "Single filter: section column only (Combat, Magic, Nature, Creature, Object, Stinger, Social)"
     },
     "counts": {
-      "music": 423,
+      "music": 474,
       "ambient": 67,
       "sfx": 88,
-      "total": 578
+      "total": 628
     },
     "all_mood_tags": [
       "chaotic",
@@ -42,6 +42,7 @@
       "magical",
       "plains",
       "pregame",
+      "primal",
       "prison",
       "ruins",
       "sea",
@@ -168,6 +169,26 @@
       "mastered": true
     },
     {
+      "id": "alzamrod-opera",
+      "title": "Al'Zamrod Opera",
+      "filename": "alzamrod-opera.ogg",
+      "path": "sounds/music/songs-story/alzamrod-opera.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "pregame",
+        "story"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true,
+      "has_lyrics": true
+    },
+    {
       "id": "ale-of-tomorrow",
       "title": "ale of tomorrow",
       "filename": "ale-of-tomorrow.ogg",
@@ -208,26 +229,6 @@
         "dwarf"
       ],
       "mastered": true
-    },
-    {
-      "id": "alzamrod-opera",
-      "title": "Al'Zamrod Opera",
-      "filename": "alzamrod-opera.ogg",
-      "path": "sounds/music/songs-story/alzamrod-opera.ogg",
-      "type": "music",
-      "audio_type": "instrumental",
-      "song_type": "Instrumental",
-      "mood_tags": [
-        "exciting"
-      ],
-      "setting_tags": [
-        "pregame",
-        "story"
-      ],
-      "intensity": "mid",
-      "faction_tags": [],
-      "mastered": true,
-      "has_lyrics": true
     },
     {
       "id": "amethyst-road",
@@ -313,6 +314,27 @@
       "faction_tags": [
         "orc"
       ],
+      "mastered": true
+    },
+    {
+      "id": "arctic-battle",
+      "title": "Arctic Battle",
+      "filename": "arctic-battle.ogg",
+      "path": "sounds/music/battle-bgm/arctic-battle.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "arctic",
+        "dungeon"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
       "mastered": true
     },
     {
@@ -402,6 +424,45 @@
       "mastered": true
     },
     {
+      "id": "aurora-speaks",
+      "title": "Aurora Speaks",
+      "filename": "aurora-speaks.ogg",
+      "path": "sounds/music/peaceful-bgm/aurora-speaks.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "triumphant"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "battle-drums",
+      "title": "Battle Drums",
+      "filename": "battle-drums.ogg",
+      "path": "sounds/music/battle-bgm/battle-drums.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "battle-in-the-deep",
       "title": "Battle in the Deep",
       "filename": "battle-in-the-deep.ogg",
@@ -438,6 +499,24 @@
         "desert"
       ],
       "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "battle-in-the-jungle",
+      "title": "Battle in the Jungle",
+      "filename": "battle-in-the-jungle.ogg",
+      "path": "sounds/music/battle-bgm/battle-in-the-jungle.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
       "faction_tags": [],
       "mastered": true
     },
@@ -606,6 +685,28 @@
       "mastered": true
     },
     {
+      "id": "beasts-of-the-north",
+      "title": "Beasts of the North",
+      "filename": "beasts-of-the-north.ogg",
+      "path": "sounds/music/battle-bgm/beasts-of-the-north.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "suspense"
+      ],
+      "setting_tags": [
+        "battle",
+        "arctic",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "below-foundations",
       "title": "Below Foundations",
       "filename": "below-foundations.ogg",
@@ -645,6 +746,27 @@
         "wilderness"
       ],
       "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "beneath-the-ice",
+      "title": "Beneath the Ice",
+      "filename": "beneath-the-ice.ogg",
+      "path": "sounds/music/suspense-bgm/beneath-the-ice.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "arctic",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "mid",
       "faction_tags": [],
       "mastered": true
     },
@@ -897,6 +1019,80 @@
       "has_lyrics": true
     },
     {
+      "id": "campfire-circle",
+      "title": "Campfire Circle",
+      "filename": "campfire-circle.ogg",
+      "path": "sounds/music/peaceful-bgm/campfire-circle.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "campfire-clan",
+      "title": "Campfire Clan",
+      "filename": "campfire-clan.ogg",
+      "path": "sounds/music/peaceful-bgm/campfire-clan.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "campfire-feast",
+      "title": "Campfire Feast",
+      "filename": "campfire-feast.ogg",
+      "path": "sounds/music/peaceful-bgm/campfire-feast.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "campfire-pulse",
+      "title": "Campfire Pulse",
+      "filename": "campfire-pulse.ogg",
+      "path": "sounds/music/peaceful-bgm/campfire-pulse.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "canyon-market",
       "title": "Canyon Market",
       "filename": "canyon-market.ogg",
@@ -1086,6 +1282,26 @@
       "has_lyrics": true
     },
     {
+      "id": "cold-lights",
+      "title": "Cold Lights",
+      "filename": "cold-lights.ogg",
+      "path": "sounds/music/peaceful-bgm/cold-lights.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "mysterious",
+        "peaceful"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "color-between-colors",
       "title": "Color Between Colors",
       "filename": "color-between-colors.ogg",
@@ -1107,6 +1323,27 @@
       ],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "cracks-in-crystal",
+      "title": "Cracks in Crystal",
+      "filename": "cracks-in-crystal.ogg",
+      "path": "sounds/music/battle-bgm/cracks-in-crystal.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "creep-in-the-shadow-realm",
@@ -1256,6 +1493,71 @@
         "prison"
       ],
       "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "crystal-chamber",
+      "title": "Crystal Chamber",
+      "filename": "crystal-chamber.ogg",
+      "path": "sounds/music/suspense-bgm/crystal-chamber.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "crystal-entry",
+      "title": "Crystal Entry",
+      "filename": "crystal-entry.ogg",
+      "path": "sounds/music/battle-bgm/crystal-entry.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "crystal-room",
+      "title": "Crystal Room",
+      "filename": "crystal-room.ogg",
+      "path": "sounds/music/battle-bgm/crystal-room.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "mid",
       "faction_tags": [],
       "mastered": true
     },
@@ -1567,6 +1869,27 @@
       "faction_tags": [
         "dwarf"
       ],
+      "mastered": true
+    },
+    {
+      "id": "delayed",
+      "title": "Delayed",
+      "filename": "delayed.ogg",
+      "path": "sounds/music/battle-bgm/delayed.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
       "mastered": true
     },
     {
@@ -3055,6 +3378,27 @@
       "has_lyrics": true
     },
     {
+      "id": "fractured-crystal",
+      "title": "Fractured Crystal",
+      "filename": "fractured-crystal.ogg",
+      "path": "sounds/music/battle-bgm/fractured-crystal.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "fractured-light",
       "title": "Fractured Light",
       "filename": "fractured-light.ogg",
@@ -3098,6 +3442,47 @@
       "has_lyrics": true
     },
     {
+      "id": "frozen-lake",
+      "title": "Frozen Lake",
+      "filename": "frozen-lake.ogg",
+      "path": "sounds/music/suspense-bgm/frozen-lake.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "arctic",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "frozen-waste",
+      "title": "Frozen Waste",
+      "filename": "frozen-waste.ogg",
+      "path": "sounds/music/peaceful-bgm/frozen-waste.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "mysterious",
+        "peaceful"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "fun-in-the-village",
       "title": "Fun in the Village",
       "filename": "fun-in-the-village.ogg",
@@ -3115,6 +3500,25 @@
         "tavern"
       ],
       "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "gathering-clan",
+      "title": "Gathering Clan",
+      "filename": "gathering-clan.ogg",
+      "path": "sounds/music/peaceful-bgm/gathering-clan.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "reverent"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
       "faction_tags": [],
       "mastered": true
     },
@@ -3847,6 +4251,27 @@
       "has_lyrics": true
     },
     {
+      "id": "jagged-ice",
+      "title": "Jagged Ice",
+      "filename": "jagged-ice.ogg",
+      "path": "sounds/music/battle-bgm/jagged-ice.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "arctic",
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "judgement-begins",
       "title": "Judgement Begins",
       "filename": "judgement-begins.ogg",
@@ -3866,6 +4291,26 @@
       "faction_tags": [
         "law"
       ],
+      "mastered": true
+    },
+    {
+      "id": "land-of-ice",
+      "title": "Land of Ice",
+      "filename": "land-of-ice.ogg",
+      "path": "sounds/music/peaceful-bgm/land-of-ice.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "mysterious",
+        "peaceful"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
       "mastered": true
     },
     {
@@ -3910,6 +4355,27 @@
       ],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "library-troubles",
+      "title": "Library Troubles",
+      "filename": "library-troubles.ogg",
+      "path": "sounds/music/battle-bgm/library-troubles.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "life-and-growth",
@@ -3988,6 +4454,25 @@
         "magical"
       ],
       "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "light-the-campfire",
+      "title": "Light the Campfire",
+      "filename": "light-the-campfire.ogg",
+      "path": "sounds/music/peaceful-bgm/light-the-campfire.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
       "faction_tags": [],
       "mastered": true
     },
@@ -4075,6 +4560,25 @@
       ],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "low-campfire",
+      "title": "Low Campfire",
+      "filename": "low-campfire.ogg",
+      "path": "sounds/music/peaceful-bgm/low-campfire.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "low-stake",
@@ -4602,6 +5106,26 @@
       "mastered": true
     },
     {
+      "id": "northern-lights",
+      "title": "Northern Lights",
+      "filename": "northern-lights.ogg",
+      "path": "sounds/music/peaceful-bgm/northern-lights.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "mysterious",
+        "peaceful"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "on-the-edge",
       "title": "On the Edge",
       "filename": "on-the-edge.ogg",
@@ -4751,6 +5275,27 @@
         "ruins"
       ],
       "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "over-the-snow",
+      "title": "Over the Snow",
+      "filename": "over-the-snow.ogg",
+      "path": "sounds/music/peaceful-bgm/over-the-snow.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "festival"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness",
+        "village"
+      ],
+      "intensity": "mid",
       "faction_tags": [],
       "mastered": true
     },
@@ -4999,6 +5544,227 @@
       "mastered": true
     },
     {
+      "id": "primal-battles",
+      "title": "Primal Battle",
+      "filename": "primal-battles.ogg",
+      "path": "sounds/music/battle-bgm/primal-battles.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-boss",
+      "title": "Primal Boss",
+      "filename": "primal-boss.ogg",
+      "path": "sounds/music/battle-bgm/primal-boss.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-chase",
+      "title": "Primal Chase",
+      "filename": "primal-chase.ogg",
+      "path": "sounds/music/battle-bgm/primal-chase.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-creepy",
+      "title": "Primal Creepy",
+      "filename": "primal-creepy.ogg",
+      "path": "sounds/music/suspense-bgm/primal-creepy.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-fear",
+      "title": "Primal Fear",
+      "filename": "primal-fear.ogg",
+      "path": "sounds/music/suspense-bgm/primal-fear.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-fight",
+      "title": "Primal Fight",
+      "filename": "primal-fight.ogg",
+      "path": "sounds/music/battle-bgm/primal-fight.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-forest-walk",
+      "title": "Primal Forest Walk",
+      "filename": "primal-forest-walk.ogg",
+      "path": "sounds/music/exciting-bgm/primal-forest-walk.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-journey",
+      "title": "Primal Journey",
+      "filename": "primal-journey.ogg",
+      "path": "sounds/music/exciting-bgm/primal-journey.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-monsters",
+      "title": "Primal Monsters",
+      "filename": "primal-monsters.ogg",
+      "path": "sounds/music/suspense-bgm/primal-monsters.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-travel",
+      "title": "Primal Travel",
+      "filename": "primal-travel.ogg",
+      "path": "sounds/music/exciting-bgm/primal-travel.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-walk",
+      "title": "Primal Walk",
+      "filename": "primal-walk.ogg",
+      "path": "sounds/music/exciting-bgm/primal-walk.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "primal-warriors",
+      "title": "Primal Warriors",
+      "filename": "primal-warriors.ogg",
+      "path": "sounds/music/battle-bgm/primal-warriors.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "pull-of-the-river",
       "title": "Pull of the river",
       "filename": "pull-of-the-river.ogg",
@@ -5202,6 +5968,48 @@
       "mastered": true
     },
     {
+      "id": "quiet-on-the-snow",
+      "title": "Quiet on the Snow",
+      "filename": "quiet-on-the-snow.ogg",
+      "path": "sounds/music/peaceful-bgm/quiet-on-the-snow.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "mysterious",
+        "peaceful"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness",
+        "village"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "quiet-please",
+      "title": "Quiet Please",
+      "filename": "quiet-please.ogg",
+      "path": "sounds/music/battle-bgm/quiet-please.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "quiet-shrine",
       "title": "Quiet Shrine",
       "filename": "quiet-shrine.ogg",
@@ -5282,6 +6090,26 @@
       "faction_tags": [
         "dragonborn"
       ],
+      "mastered": true
+    },
+    {
+      "id": "refreshing-cold",
+      "title": "Refreshing Cold",
+      "filename": "refreshing-cold.ogg",
+      "path": "sounds/music/peaceful-bgm/refreshing-cold.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "mysterious",
+        "peaceful"
+      ],
+      "setting_tags": [
+        "arctic",
+        "wilderness"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
       "mastered": true
     },
     {
@@ -5582,6 +6410,64 @@
       "mastered": true
     },
     {
+      "id": "shaman-fire",
+      "title": "Shaman Fire",
+      "filename": "shaman-fire.ogg",
+      "path": "sounds/music/peaceful-bgm/shaman-fire.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "reverent",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "shaman-tale",
+      "title": "Shaman Tale",
+      "filename": "shaman-tale.ogg",
+      "path": "sounds/music/peaceful-bgm/shaman-tale.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "reverent",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "shared-fire",
+      "title": "Shared Fire",
+      "filename": "shared-fire.ogg",
+      "path": "sounds/music/peaceful-bgm/shared-fire.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful"
+      ],
+      "setting_tags": [
+        "primal"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "shen-marches",
       "title": "Shen Marches",
       "filename": "shen-marches.ogg",
@@ -5814,6 +6700,28 @@
       ],
       "setting_tags": [
         "underground",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "slowing-crystals",
+      "title": "Slowing Crystals",
+      "filename": "slowing-crystals.ogg",
+      "path": "sounds/music/suspense-bgm/slowing-crystals.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
         "dungeon",
         "ruins"
       ],
@@ -6457,26 +7365,6 @@
       "mastered": true
     },
     {
-      "id": "temple-of-the-wind",
-      "title": "Temple of the Wind",
-      "filename": "temple-of-the-wind.ogg",
-      "path": "sounds/music/peaceful-bgm/temple-of-the-wind.ogg",
-      "type": "music",
-      "audio_type": "instrumental",
-      "song_type": "Instrumental",
-      "mood_tags": [
-        "peaceful",
-        "holy"
-      ],
-      "setting_tags": [
-        "plains",
-        "temple"
-      ],
-      "intensity": "low",
-      "faction_tags": [],
-      "mastered": true
-    },
-    {
       "id": "temple-of-the-sky",
       "title": "Temple of the Sky",
       "filename": "temple-of-the-sky.ogg",
@@ -6498,6 +7386,26 @@
       "faction_tags": [],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "temple-of-the-wind",
+      "title": "Temple of the Wind",
+      "filename": "temple-of-the-wind.ogg",
+      "path": "sounds/music/peaceful-bgm/temple-of-the-wind.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "holy"
+      ],
+      "setting_tags": [
+        "plains",
+        "temple"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "tension-in-the-shadows",
@@ -6876,6 +7784,27 @@
       ],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "the-ice-cracks",
+      "title": "The Ice Cracks",
+      "filename": "the-ice-cracks.ogg",
+      "path": "sounds/music/suspense-bgm/the-ice-cracks.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "arctic",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "the-ice-march",
@@ -8412,6 +9341,27 @@
       "has_lyrics": true
     },
     {
+      "id": "under-the-frost",
+      "title": "Under the Frost",
+      "filename": "under-the-frost.ogg",
+      "path": "sounds/music/suspense-bgm/under-the-frost.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "arctic",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "unknown-below",
       "title": "Unknown Below",
       "filename": "unknown-below.ogg",
@@ -8601,6 +9551,27 @@
         "magical"
       ],
       "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "wait-for-it",
+      "title": "Wait for It",
+      "filename": "wait-for-it.ogg",
+      "path": "sounds/music/battle-bgm/wait-for-it.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "magical",
+        "dungeon"
+      ],
+      "intensity": "high",
       "faction_tags": [],
       "mastered": true
     },
@@ -8950,6 +9921,50 @@
       ],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "white-death",
+      "title": "White Death",
+      "filename": "white-death.ogg",
+      "path": "sounds/music/battle-bgm/white-death.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "arctic",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "white-dragon",
+      "title": "White Dragon",
+      "filename": "white-dragon.ogg",
+      "path": "sounds/music/battle-bgm/white-dragon.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting",
+        "tense"
+      ],
+      "setting_tags": [
+        "battle",
+        "arctic",
+        "dungeon",
+        "ruins"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "wildness-of-fey",
