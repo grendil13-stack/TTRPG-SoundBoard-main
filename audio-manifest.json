@@ -5544,10 +5544,10 @@
       "mastered": true
     },
     {
-      "id": "primal-battles",
+      "id": "primal-battle",
       "title": "Primal Battle",
-      "filename": "primal-battles.ogg",
-      "path": "sounds/music/battle-bgm/primal-battles.ogg",
+      "filename": "primal-battle.ogg",
+      "path": "sounds/music/battle-bgm/primal-battle.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
