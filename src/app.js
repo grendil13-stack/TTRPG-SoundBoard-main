@@ -357,6 +357,27 @@ inject();
     let musicRepeatMode = "list"; // "list" | "one"
     let musicQueuedNextTrackIndex = null;
     let musicShuffleEnabled = false;
+    let musicShuffleRemaining = [];
+    let musicShuffleSceneKey = null;
+    let musicShuffleTrackCount = 0;
+
+    function pickNextShuffleIndex(tracks, currentIndex, sceneKey) {
+      if (musicShuffleSceneKey !== sceneKey || musicShuffleTrackCount !== tracks.length) {
+        musicShuffleRemaining = [];
+      }
+      musicShuffleSceneKey = sceneKey;
+      musicShuffleTrackCount = tracks.length;
+      musicShuffleRemaining = musicShuffleRemaining.filter((i) => i !== currentIndex);
+      if (!musicShuffleRemaining.length) {
+        for (let i = 0; i < tracks.length; i += 1) {
+          if (i !== currentIndex) {
+            musicShuffleRemaining.push(i);
+          }
+        }
+      }
+      const pick = Math.floor(Math.random() * musicShuffleRemaining.length);
+      return musicShuffleRemaining.splice(pick, 1)[0];
+    }
     const MUSIC_SELECTION_STORAGE_KEY = "ttrpg_music_selection_v1";
 
     function clampPlaylistIndex(index, tracks) {
@@ -3046,7 +3067,11 @@ inject();
             return;
           }
           cancelMusicVolumeAnim();
-          currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+          if (musicShuffleEnabled && tracks.length > 1) {
+            currentTrackIndex = pickNextShuffleIndex(tracks, currentTrackIndex, musicPlaybackScene);
+          } else {
+            currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+          }
           void loadCurrentTrack().then((ok) => {
             if (!ok) {
               return;
@@ -3081,13 +3106,7 @@ inject();
 
       cancelMusicVolumeAnim();
       if (musicShuffleEnabled && tracks.length > 1) {
-        let next = currentTrackIndex;
-        let guard = 0;
-        while (next === currentTrackIndex && guard < 48) {
-          next = Math.floor(Math.random() * tracks.length);
-          guard += 1;
-        }
-        currentTrackIndex = next;
+        currentTrackIndex = pickNextShuffleIndex(tracks, currentTrackIndex, musicPlaybackScene);
       } else {
         currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
       }
