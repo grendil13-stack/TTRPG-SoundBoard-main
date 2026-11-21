@@ -8,10 +8,10 @@
       "sfx": "Single filter: section column only (Combat, Magic, Nature, Creature, Object, Stinger, Social)"
     },
     "counts": {
-      "music": 474,
-      "ambient": 67,
-      "sfx": 88,
-      "total": 628
+      "music": 499,
+      "ambient": 65,
+      "sfx": 89,
+      "total": 653
     },
     "all_mood_tags": [
       "chaotic",
@@ -54,6 +54,7 @@
       "underground",
       "village",
       "vision",
+      "weird west",
       "wilderness"
     ],
     "all_sfx_sections": [
@@ -124,6 +125,25 @@
         "tavern"
       ],
       "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "across-the-sky",
+      "title": "Across the sky",
+      "filename": "across-the-sky.ogg",
+      "path": "sounds/music/peaceful-bgm/across-the-sky.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "temple"
+      ],
+      "intensity": "low",
       "faction_tags": [],
       "mastered": true
     },
@@ -317,6 +337,25 @@
       "mastered": true
     },
     {
+      "id": "angry-red-dragon",
+      "title": "Angry Red Dragon",
+      "filename": "angry-red-dragon.ogg",
+      "path": "sounds/music/battle-bgm/angry-red-dragon.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "battle",
+        "dungeon"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "arctic-battle",
       "title": "Arctic Battle",
       "filename": "arctic-battle.ogg",
@@ -424,6 +463,25 @@
       "mastered": true
     },
     {
+      "id": "attack-on-the-wind-temple",
+      "title": "Attack on the Wind Temple",
+      "filename": "attack-on-the-wind-temple.ogg",
+      "path": "sounds/music/battle-bgm/attack-on-the-wind-temple.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "battle",
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "aurora-speaks",
       "title": "Aurora Speaks",
       "filename": "aurora-speaks.ogg",
@@ -444,6 +502,24 @@
       "mastered": true
     },
     {
+      "id": "balte-at-temple-of-wind",
+      "title": "Battle at temple of wind",
+      "filename": "balte-at-temple-of-wind.ogg",
+      "path": "sounds/music/battle-bgm/balte-at-temple-of-wind.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "battle"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "battle-drums",
       "title": "Battle Drums",
       "filename": "battle-drums.ogg",
@@ -457,6 +533,25 @@
       ],
       "setting_tags": [
         "primal"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "battle-for-the-west",
+      "title": "Battle for the West",
+      "filename": "battle-for-the-west.ogg",
+      "path": "sounds/music/battle-bgm/battle-for-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "weird west",
+        "battle"
       ],
       "intensity": "high",
       "faction_tags": [],
@@ -660,6 +755,25 @@
       "setting_tags": [
         "battle",
         "plains"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "battle-with-a-red-dragon",
+      "title": "Battle with a Red Dragon",
+      "filename": "battle-with-a-red-dragon.ogg",
+      "path": "sounds/music/battle-bgm/battle-with-a-red-dragon.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "battle",
+        "dungeon"
       ],
       "intensity": "high",
       "faction_tags": [],
@@ -1607,6 +1721,44 @@
       "mastered": true
     },
     {
+      "id": "danger-appears-in-the-west",
+      "title": "Danger Appears in the West",
+      "filename": "danger-appears-in-the-west.ogg",
+      "path": "sounds/music/battle-bgm/danger-appears-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "weird west",
+        "battle"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "danger-in-the-west",
+      "title": "Danger in the West",
+      "filename": "danger-in-the-west.ogg",
+      "path": "sounds/music/battle-bgm/danger-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "weird west",
+        "battle"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "dark-ambush",
       "title": "Dark Ambush",
       "filename": "dark-ambush.ogg",
@@ -1755,6 +1907,46 @@
         "magical"
       ],
       "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "dawn-in-the-west",
+      "title": "Dawn in the West",
+      "filename": "dawn-in-the-west.ogg",
+      "path": "sounds/music/peaceful-bgm/dawn-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "weird west",
+        "village"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "days-in-the-west",
+      "title": "Days in the West",
+      "filename": "days-in-the-west.ogg",
+      "path": "sounds/music/peaceful-bgm/days-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "weird west",
+        "village"
+      ],
+      "intensity": "low",
       "faction_tags": [],
       "mastered": true
     },
@@ -3226,6 +3418,25 @@
       "mastered": true
     },
     {
+      "id": "fight-in-the-west",
+      "title": "Fight in the West",
+      "filename": "fight-in-the-west.ogg",
+      "path": "sounds/music/battle-bgm/fight-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "weird west",
+        "battle"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "final-bridge",
       "title": "Final Bridge",
       "filename": "final-bridge.ogg",
@@ -3927,6 +4138,25 @@
       "mastered": true
     },
     {
+      "id": "hell-comes-to-the-wind-temple",
+      "title": "Hell Comes to the Wind Temple",
+      "filename": "hell-comes-to-the-wind-temple.ogg",
+      "path": "sounds/music/battle-bgm/hell-comes-to-the-wind-temple.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "battle",
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "here-the-dead-walk",
       "title": "Here, The Dead Walk",
       "filename": "here-the-dead-walk.ogg",
@@ -4251,6 +4481,26 @@
       "has_lyrics": true
     },
     {
+      "id": "its-hear",
+      "title": "It's Here",
+      "filename": "its-hear.ogg",
+      "path": "sounds/music/suspense-bgm/its-hear.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "weird west",
+        "battle"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "jagged-ice",
       "title": "Jagged Ice",
       "filename": "jagged-ice.ogg",
@@ -4473,6 +4723,26 @@
         "primal"
       ],
       "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "long-days-in-the-west",
+      "title": "Long Days in the West",
+      "filename": "long-days-in-the-west.ogg",
+      "path": "sounds/music/peaceful-bgm/long-days-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "weird west",
+        "village"
+      ],
+      "intensity": "low",
       "faction_tags": [],
       "mastered": true
     },
@@ -5765,6 +6035,25 @@
       "mastered": true
     },
     {
+      "id": "procession-of-the-sacred",
+      "title": "Procession of the Sacred",
+      "filename": "procession-of-the-sacred.ogg",
+      "path": "sounds/music/peaceful-bgm/procession-of-the-sacred.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "temple"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "pull-of-the-river",
       "title": "Pull of the river",
       "filename": "pull-of-the-river.ogg",
@@ -6071,6 +6360,44 @@
       "has_lyrics": true
     },
     {
+      "id": "red-dragon-hunting",
+      "title": "Red Dragon Hunting",
+      "filename": "red-dragon-hunting.ogg",
+      "path": "sounds/music/suspense-bgm/red-dragon-hunting.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "red-dragon-theme",
+      "title": "Red Dragon Theme",
+      "filename": "red-dragon-theme.ogg",
+      "path": "sounds/music/suspense-bgm/red-dragon-theme.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "dungeon"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "reflections-of-dragonborn",
       "title": "Reflections of Dragonborn",
       "filename": "reflections-of-dragonborn.ogg",
@@ -6322,6 +6649,25 @@
         "sea"
       ],
       "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "rush-through-the-sky",
+      "title": "Rush Through the Sky",
+      "filename": "rush-through-the-sky.ogg",
+      "path": "sounds/music/suspense-bgm/rush-through-the-sky.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "temple"
+      ],
+      "intensity": "mid",
       "faction_tags": [],
       "mastered": true
     },
@@ -6670,6 +7016,24 @@
       "mastered": true
     },
     {
+      "id": "sky-battle",
+      "title": "Sky Battle",
+      "filename": "sky-battle.ogg",
+      "path": "sounds/music/battle-bgm/sky-battle.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "battle"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "sky-of-smoke",
       "title": "Sky of Smoke",
       "filename": "sky-of-smoke.ogg",
@@ -6875,6 +7239,26 @@
       "faction_tags": [],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "something-approaches",
+      "title": "Something Approaches",
+      "filename": "something-approaches.ogg",
+      "path": "sounds/music/suspense-bgm/something-approaches.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "weird west",
+        "battle"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "soul-of-scales",
@@ -7302,6 +7686,26 @@
       "mastered": true
     },
     {
+      "id": "suspense-in-the-west",
+      "title": "Suspense in the West",
+      "filename": "suspense-in-the-west.ogg",
+      "path": "sounds/music/suspense-bgm/suspense-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "weird west",
+        "village"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "tango-in-the-desert",
       "title": "Tango in the desert",
       "filename": "tango-in-the-desert.ogg",
@@ -7408,6 +7812,25 @@
       "mastered": true
     },
     {
+      "id": "temple-of-wind",
+      "title": "Temple of Wind",
+      "filename": "temple-of-wind.ogg",
+      "path": "sounds/music/peaceful-bgm/temple-of-wind.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "peaceful",
+        "mysterious"
+      ],
+      "setting_tags": [
+        "temple"
+      ],
+      "intensity": "low",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
       "id": "tension-in-the-shadows",
       "title": "Tension in the Shadows",
       "filename": "tension-in-the-shadows.ogg",
@@ -7423,6 +7846,44 @@
         "dungeon",
         "ruins",
         "magical"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "tension-in-the-west",
+      "title": "Tension in the West",
+      "filename": "tension-in-the-west.ogg",
+      "path": "sounds/music/suspense-bgm/tension-in-the-west.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "tense"
+      ],
+      "setting_tags": [
+        "weird west",
+        "village"
+      ],
+      "intensity": "high",
+      "faction_tags": [],
+      "mastered": true
+    },
+    {
+      "id": "the-air-is-on-fire",
+      "title": "The Air is on Fire",
+      "filename": "the-air-is-on-fire.ogg",
+      "path": "sounds/music/suspense-bgm/the-air-is-on-fire.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "suspense",
+        "tense"
+      ],
+      "setting_tags": [
+        "temple"
       ],
       "intensity": "mid",
       "faction_tags": [],
@@ -10008,6 +10469,25 @@
       "faction_tags": [],
       "mastered": true,
       "has_lyrics": true
+    },
+    {
+      "id": "wind-temple-battle",
+      "title": "Wind Temple Battle",
+      "filename": "wind-temple-battle.ogg",
+      "path": "sounds/music/battle-bgm/wind-temple-battle.ogg",
+      "type": "music",
+      "audio_type": "instrumental",
+      "song_type": "Instrumental",
+      "mood_tags": [
+        "exciting"
+      ],
+      "setting_tags": [
+        "battle",
+        "dungeon"
+      ],
+      "intensity": "mid",
+      "faction_tags": [],
+      "mastered": true
     },
     {
       "id": "wine-for-the-oarsman",
