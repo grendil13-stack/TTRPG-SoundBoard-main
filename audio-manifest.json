@@ -4481,9 +4481,9 @@
       "has_lyrics": true
     },
     {
-      "id": "its-hear",
+      "id": "its-here",
       "title": "It's Here",
-      "filename": "its-hear.ogg",
+      "filename": "its-here.ogg",
       "path": "sounds/music/suspense-bgm/its-hear.ogg",
       "type": "music",
       "audio_type": "instrumental",
