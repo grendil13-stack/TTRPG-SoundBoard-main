@@ -502,10 +502,10 @@
       "mastered": true
     },
     {
-      "id": "balte-at-temple-of-wind",
+      "id": "battle-at-temple-of-wind",
       "title": "Battle at temple of wind",
-      "filename": "balte-at-temple-of-wind.ogg",
-      "path": "sounds/music/battle-bgm/balte-at-temple-of-wind.ogg",
+      "filename": "battle-at-temple-of-wind.ogg",
+      "path": "sounds/music/battle-bgm/battle-at-temple-of-wind.ogg",
       "type": "music",
       "audio_type": "instrumental",
       "song_type": "Instrumental",
